@@ -80,6 +80,7 @@ endfunction()
 set(OBJ1_SOURCES
     shr_kind_mod.F90
     shr_const_mod.F90
+    precision_mod.F90
 )
 
 # OBJ2: Core modules
