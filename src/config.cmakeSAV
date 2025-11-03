@@ -1,0 +1,100 @@
+# CMake Configuration Template for MAMBOX
+# 
+# This file replaces cambox_config.make.in and cambox_config.cpp.in
+
+#-----------------------------------------------------------------------------
+# Compiler Selection
+#-----------------------------------------------------------------------------
+# Options: gfortran, ifort, pgfortran, nagfor, etc.
+set(CMAKE_Fortran_COMPILER "gfortran" CACHE STRING "Fortran compiler")
+
+#-----------------------------------------------------------------------------
+# C Preprocessor
+#-----------------------------------------------------------------------------
+set(CPP "cpp" CACHE STRING "C preprocessor command")
+
+#-----------------------------------------------------------------------------
+# Preprocessor Flags
+#-----------------------------------------------------------------------------
+# Common flags:
+# -DLINUX          : Linux system
+# -DDEBUG          : Enable debug mode
+# -DMAM_CONFIG=X   : MAM configuration number
+# -D_OPENMP        : Enable OpenMP
+set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES  -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO  -DPCNST=54 -DPCOLS=1 -DPVER=1 -DNBC=1 -DNPOA=1 -DNSOA=1 " CACHE STRING "C preprocessor flags")
+
+#-----------------------------------------------------------------------------
+# Fortran Compiler Flags
+#-----------------------------------------------------------------------------
+set(CMAKE_Fortran_COMPILER "gfortran" CACHE STRING "")
+# GNU Fortran (gfortran) - CHOOSE ONE:
+# Development/Debug:
+# set(FCFLAGS "-g -O0 -Wall -Wextra -fcheck=all -fbacktrace -ffpe-trap=invalid,zero,overflow" CACHE STRING "")
+# Production:
+#set(FCFLAGS "-O2 -march=native -cpp" CACHE STRING "Fortran compiler flags")
+
+set(FCFLAGS "-g -O0  -fno-range-check -ffree-line-length-none -I${NETCDF_INCLUDE}" CACHE STRING "Fortran compiler flags")
+
+
+# Intel Fortran (ifort) - CHOOSE ONE:
+# Development/Debug:
+# set(FCFLAGS "-g -O0 -check all -traceback -fpe0 -fpp" CACHE STRING "")
+# Production:
+# set(FCFLAGS "-O3 -xHost -fp-model precise -fpp" CACHE STRING "")
+
+
+#-----------------------------------------------------------------------------
+# Linker Flags and Libraries
+#-----------------------------------------------------------------------------
+# Common libraries: -lnetcdf, -lnetcdff, -lmpi, -lhdf5, etc.
+#set(LDFLAGS "" CACHE STRING "Linker flags and libraries")
+# Example with NetCDF:
+# set(LDFLAGS "-L/usr/local/lib -lnetcdff -lnetcdf" CACHE STRING "")
+set(LDFLAGS "L${NETCDF_LIB} -lnetcdff -lnetcdf" CACHE STRING "")
+# Example with MPI and NetCDF:
+
+# set(LDFLAGS "-L/usr/local/lib -lnetcdff -lnetcdf -lmpi" CACHE STRING "")
+
+#-----------------------------------------------------------------------------
+# Executable Name
+#-----------------------------------------------------------------------------
+set(EXE "MAMBOX.exe" CACHE STRING "Executable name")
+
+#-----------------------------------------------------------------------------
+# Additional Options
+#-----------------------------------------------------------------------------
+
+# Enable OpenMP (if needed)
+# set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp" CACHE STRING "")  # gfortran
+# set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -qopenmp" CACHE STRING "")  # ifort
+
+# Set module output directory (already handled in CMakeLists.txt)
+# set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/modules" CACHE STRING "")
+
+#-----------------------------------------------------------------------------
+# System-Specific Paths (optional)
+#-----------------------------------------------------------------------------
+
+# NetCDF paths (if not in standard locations)
+# set(NETCDF_ROOT "/usr/local/netcdf" CACHE PATH "")
+# set(CMAKE_PREFIX_PATH "${NETCDF_ROOT}" CACHE PATH "")
+
+# MPI paths (if not in standard locations)
+# set(MPI_ROOT "/usr/local/mpi" CACHE PATH "")
+# set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${MPI_ROOT}" CACHE PATH "")
+
+#-----------------------------------------------------------------------------
+# Notes
+#-----------------------------------------------------------------------------
+#
+# 1. The -cpp flag (or equivalent) is usually needed to enable preprocessing
+#    of .F and .F90 files
+#
+# 2. For parallel builds, use: cmake --build . -j8
+#
+# 3. To see all compiler commands: cmake --build . --verbose
+#
+# 4. To change config after initial cmake: 
+#    - Delete CMakeCache.txt and rerun cmake, OR
+#    - Use ccmake .. for interactive configuration
+#
