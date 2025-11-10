@@ -1,10 +1,7 @@
 module modal_aero_initialize_data
-  use cam_logfile,           only : iulog
-  use cam_abortutils,            only: endrun
-  use spmd_utils,            only: masterproc, iam
-  use ppgrid,                only: pcols, pver, begchunk, endchunk
+  use mam_utils,             only : iulog, endrun, masterproc, iam, pcols, pver, begchunk, endchunk
   use modal_aero_data
-  use time_manager,          only: is_first_step
+  use mam_utils,             only: is_first_step
   use physconst,             only: spec_class_undefined, spec_class_cldphysics, &
        spec_class_aerosol, spec_class_gas, spec_class_other
 
@@ -14,6 +11,8 @@ module modal_aero_initialize_data
   public :: modal_aero_register
   public :: modal_aero_initialize
   public :: modal_aero_initialize_q
+!FAB added for GC interface
+  public :: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start
 
   logical :: convproc_do_gas, convproc_do_aer 
 contains
@@ -21,7 +20,7 @@ contains
   subroutine modal_aero_register(species_class)
     use constituents,only: pcnst, cnst_name
     use physics_buffer, only : pbuf_add_field, dtype_r8
-    use seasalt_model, only: n_ocean_data, has_mam_mom
+    use mam_utils, only: n_ocean_data, has_mam_mom
 
   character(len=5), dimension(n_ocean_data), parameter :: & ! ocean data names
        ocean_data_names = (/'chla ', 'mpoly', 'mprot', 'mlip '/)
@@ -373,7 +372,6 @@ contains
 
        enddo
 
-       if ( masterproc ) write(iulog,*)
 
 
        !   set names for aodvis and ssavis
@@ -423,11 +421,11 @@ contains
        use modal_aero_amicphys,   only: modal_aero_amicphys_init
        use modal_aero_calcsize,   only: modal_aero_calcsize_init
        use modal_aero_coag,       only: modal_aero_coag_init
-       use modal_aero_deposition, only: modal_aero_deposition_init
+       !FAB-done in GC       use modal_aero_deposition, only: modal_aero_deposition_init
        use modal_aero_gasaerexch, only: modal_aero_gasaerexch_init
        use modal_aero_newnuc,     only: modal_aero_newnuc_init
        use modal_aero_rename,     only: modal_aero_rename_init
-       use modal_aero_convproc,   only: ma_convproc_init
+       !FAB-done in GC       use modal_aero_convproc,   only: ma_convproc_init
 #if ( defined MOSAIC_SPECIES )
        use module_mosaic_cam_init,only: mosaic_cam_init
 #endif  
@@ -435,7 +433,7 @@ contains
        use phys_control,          only: phys_getopts
        use rad_constituents,      only: rad_cnst_get_info, rad_cnst_get_aer_props, &
                                         rad_cnst_get_mode_props
-       use aerodep_flx,           only: aerodep_flx_prescribed
+!FAB       use aerodep_flx,           only: aerodep_flx_prescribed
        use physics_buffer,        only: physics_buffer_desc, pbuf_get_chunk
 
        type(physics_buffer_desc), pointer :: pbuf2d(:,:)
@@ -601,9 +599,10 @@ contains
           end do
 
        ! if using MMF, define cld physics and species_class for gas species
-!FAB       call phys_getopts(use_MMF_out     = use_MMF)
+!FAB  do not use MMF      call phys_getopts(use_MMF_out     = use_MMF)
 !       call phys_getopts(microp_scheme_out = microp_scheme)
-       if (use_MMF) then
+        use_MMF=.false. 
+        if (use_MMF) then
          if ( microp_scheme .eq. 'MG' ) then
             icldphy = 5
          else if ( microp_scheme .eq. 'RK' ) then
@@ -696,9 +695,9 @@ loop:    do i = icldphy+1, pcnst
 
        ! call modal_aero_deposition_init only if the user has not specified 
        ! prescribed aerosol deposition fluxes
-       if (.not.aerodep_flx_prescribed()) then
-          call modal_aero_deposition_init
-       endif
+!       if (.not.aerodep_flx_prescribed()) then
+!FAB-done in GC          call modal_aero_deposition_init
+!       endif
 
        if (is_first_step()) then
           ! initialize cloud bourne constituents in physics buffer
@@ -714,7 +713,7 @@ loop:    do i = icldphy+1, pcnst
        end if
 
        if(convproc_do_aer .or. convproc_do_gas) then
-          call ma_convproc_init
+!FAB done in GC         call ma_convproc_init
        endif
 
        return
@@ -1246,8 +1245,8 @@ loop:    do i = icldphy+1, pcnst
        !    test runs are working with non-zero values
        !
        use constituents, only: pcnst, cnst_name
-       use pmgrid,      only: plat, plon, plev
-
+       !use pmgrid,      only: plat, plon, plev
+       use mam_utils, only: plat, plon, plev 
        implicit none
 
        !--------------------------------------------------------------
@@ -1360,7 +1359,487 @@ loop:    do i = icldphy+1, pcnst
        return
      end subroutine modal_aero_initialize_q
 
+!--------------------------------------------------------------------
+!--------------------------------------------------------------------
+! This routine was added for facilitating use in Geos-chem and GCMAMBOX 
+SUBROUTINE MAM_init_basics(pbuf)
+! equivqlent to the cambox_init_basics
 
+use precision_mod, only :r8 => f8
+use constituents, only:   cnst_name, species_class , cnst_get_ind 
+use chem_mods, only: adv_mass, gas_pcnst, imozart
+use mam_utils, only: solsym, endrun,  iulog, begchunk,           &
+                     l_h2so4g, l_soag, l_hno3g, l_so2g, l_hclg, l_nh3g
+use physics_buffer, only: physics_buffer_desc, pbuf_initialize,\
+                          pbuf_init_time, pbuf_add_field, pbuf_get_chunk
+use buffer, only: dtype_r8
+use modal_aero_data, only: nbc, npoa, nsoa, nsoag
+use modal_aero_amicphys, only: mosaic,gaexch_h2so4_uptake_optaa, newnuc_h2so4_conc_optaa
+use modal_aero_calcsize, only: modal_aero_calcsize_reg
+use modal_aero_wateruptake, only: modal_aero_wateruptake_reg, modal_aero_wateruptake_init
+
+implicit none
+
+type(physics_buffer_desc), pointer :: pbuf(:)
+type(physics_buffer_desc), pointer :: pbuf2d(:,:)
+
+
+
+integer :: l, l2, n, s, idx,lchnk
+
+!-----------------------------------------------------------------------------
+
+if (masterproc) then 
+  OPEN( unit=iulog , file='mam.log',  status='replace', &
+        action='write') 
+end if
+
+! configure simulation type
+! now only MODAL_AERO_4MODE options are  enabled 
+
+
+#if ( ( defined MODAL_AERO_7MODE ) && ( defined MOSAIC_SPECIES ) )
+      n = 60
+#elif ( defined MODAL_AERO_7MODE ) 
+      n = 42
+!#elif ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined RAIN_EVAP_TO_COARSE_AERO ) ) 
+!      n = 35 FAB j teste confing ming
+#elif ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined RAIN_EVAP_TO_COARSE_AERO ) && ( defined MOSAIC_SPECIES ) ) 
+      n = 54 
+#elif ( defined MODAL_AERO_4MODE_MOM ) 
+      n = 31
+#elif ( defined MODAL_AERO_4MODE ) 
+      n = 28
+#elif ( defined MODAL_AERO_3MODE ) 
+      n = 25
+#else
+      call endrun( 'MODAL_AERO_3/4/4MOM/7MODE are all undefined' )
+#endif
+      n = n + 2*(nbc-1) + 2*(npoa-1) + 2*(nsoa-1)
+      l = n - (imozart-1)
+
+
+      write(*,'(/a,3i5 )') 'pcols, pver               =', pcols, pver
+      print*, 'pcnst, gas_pcnst, imozart =', pcnst, gas_pcnst, l, imozart, nbc,npoa,nsoa,n
+      if (pcnst /= gas_pcnst+imozart-1) call endrun( '*** bad pcnst aa' )
+      if (pcnst /= n                  ) call endrun( '*** bad pcnst bb' )
+
+
+#if (( defined MODAL_AERO_4MODE_MOM ) && ( defined RAIN_EVAP_TO_COARSE_AERO ) && ( defined MOSAIC_SPECIES )) 
+
+print* ,'FAB je passe dans COARSE+MOM+MOSAIC', l  
+
+solsym(:l) = &
+      (/ 'H2O2          ', 'H2SO4         ', 'SO2           ', 'DMS           ', 'NH3           ',  &
+         'HNO3          ', 'HCL           ', 'SOAG          ',                   & 
+         'so4_a1        ', 'pom_a1        ', 'soa_a1        ', 'bc_a1         ', 'dst_a1        ', &
+         'ncl_a1        ', 'mom_a1        ', 'nh4_a1        ', 'no3_a1        ', 'ca_a1         ', &
+         'co3_a1        ', 'cl_a1         ', 'num_a1        ', 'so4_a2        ', 'soa_a2        ', &
+         'dst_a2        ', &
+         'ncl_a2        ', 'mom_a2        ', 'nh4_a2        ', 'no3_a2        ', 'ca_a2         ', &
+         'co3_a2        ', 'cl_a2         ', 'num_a2        ', 'dst_a3        ', 'ncl_a3        ', &
+         'so4_a3        ', &
+         'bc_a3         ', 'pom_a3        ', 'soa_a3        ', 'mom_a3        ', 'nh4_a3        ', &
+         'no3_a3        ', 'ca_a3         ', 'co3_a3        ', 'cl_a3         ', 'num_a3        ', &
+         'pom_a4        ', &
+         'bc_a4         ', 'mom_a4        ', 'num_a4        '/)
+adv_mass(:l) = -999._r8
+
+do s = 1, l
+   if (solsym(s)(1:3) == 'SO2') adv_mass(s) = 64.0647964_r8 
+
+   if (solsym(s)(1:5) == 'H2SO4') adv_mass(s) = 98.078400_r8 
+   if (solsym(s)(1:4) == 'HNO3') adv_mass(s) = 63.0123400_r8
+   if (solsym(s)(1:3) == 'NH3') adv_mass(s) =  17.0289402_r8
+   if (solsym(s)(1:3) == 'HCL') adv_mass(s) = 36.4601000_r8
+   if (solsym(s)(1:4) == 'SOAG') adv_mass(s) = 98.078400_r8
+   
+   if (solsym(s)(1:3) == 'so4') adv_mass(s) = 96.0635986_r8 
+   if (solsym(s)(1:3) == 'pom') adv_mass(s) = 12.011000_r8 
+   if (solsym(s)(1:3) == 'soa') adv_mass(s) = 150._r8
+   if (solsym(s)(1:2) == 'bc') adv_mass(s) =  12.011000_r8
+   if (solsym(s)(1:3) == 'nh4') adv_mass(s) = 18.0363407_r8   
+   if (solsym(s)(1:3) == 'no3') adv_mass(s) = 62.0049400_r8 
+   if (solsym(s)(1:2) == 'ca') adv_mass(s) =  40.0780000_r8 
+   if (solsym(s)(1:3) == 'co3') adv_mass(s) = 60.0092000_r8
+   if (solsym(s)(1:3) == 'dst') adv_mass(s) = 135.064039_r8
+   if (solsym(s)(1:3) == 'ncl') adv_mass(s) = 22.9897667_r8 ! if def mosaic eqv Na 
+   if (solsym(s)(1:2) == 'cl') adv_mass(s) =  35.4527000_r8
+   if (solsym(s)(1:3) == 'mom') adv_mass(s) = 150._r8
+
+   if (solsym(s)(1:3) == 'num') adv_mass(s) = 1._r8
+
+   
+! nacl  58.4424667
+! cl    35.4527000
+! na    22.9897667
+! hcl   36.4601000
+! hno3  63.0123400
+! no3   62.0049400
+! ca    40.0780000
+! co3   60.0092000
+   
+end do  
+
+
+#elif ( defined MODAL_AERO_4MODE )
+      
+print*, 'FAB je passe MODAL_AERO_4MODE'
+
+      solsym(:l) = &
+      (/ 'H2O2    ', 'H2SO4   ', 'SO2     ', 'DMS     ',             &
+         'SOAG    ', 'so4_a1  ',             'pom_a1  ', 'soa_a1  ', &
+         'bc_a1   ', 'ncl_a1  ', 'dst_a1  ', 'num_a1  ', 'so4_a2  ', &
+         'soa_a2  ', 'ncl_a2  ', 'num_a2  ',                         &
+         'dst_a3  ', 'ncl_a3  ', 'so4_a3  ', 'num_a3  ',             &
+         'pom_a4  ', 'bc_a4   ', 'num_a4  ' /)
+      adv_mass(:l) = &
+      (/ 34.0135994_r8, 98.0783997_r8, 64.0647964_r8, 62.1324005_r8,                &
+         12.0109997_r8, 115.107340_r8,                12.0109997_r8, 12.0109997_r8, &
+         12.0109997_r8, 58.4424667_r8, 135.064041_r8, 1.00740004_r8, 115.107340_r8, &
+         12.0109997_r8, 58.4424667_r8, 1.00740004_r8,                               &
+         135.064041_r8, 58.4424667_r8, 115.107340_r8, 1.00740004_r8,                &
+         12.0109997_r8, 12.0109997_r8, 1.00740004_r8 /)
+#endif
+
+      cnst_name(1) = 'QVAPOR'
+      cnst_name(2) = 'CLDLIQ'
+      cnst_name(3) = 'CLDICE'
+      cnst_name(4) = 'NUMLIQ'
+      cnst_name(5) = 'NUMICE'
+      cnst_name(imozart:pcnst) = solsym(1:gas_pcnst)
+      species_class = -1       
+      call modal_aero_register(species_class)
+      call modal_aero_calcsize_reg()
+      call modal_aero_wateruptake_reg()
+
+      call pbuf_init_time()
+      call pbuf_add_field( 'CLD',  'global', dtype_r8, (/pcols, pver/), idx )
+      call pbuf_initialize( pbuf2d)
+
+      call modal_aero_initialize(pbuf2d, imozart, species_class )
+      call modal_aero_wateruptake_init( pbuf2d )
+
+              gaexch_h2so4_uptake_optaa =  2
+              newnuc_h2so4_conc_optaa   =  2
+              mosaic = .true.
+              lchnk = begchunk
+              pbuf => pbuf_get_chunk( pbuf2d, lchnk)
+         
+              ! initialize gas phase indices relative to state % q 
+              call cnst_get_ind( 'SOAG',  l_soag,   .false. )
+              call cnst_get_ind( 'SO2',   l_so2g,   .false. )
+              call cnst_get_ind( 'H2SO4', l_h2so4g, .false. )
+!              call cnst_get_ind( 'H2O2', l_h2o2g,   .false. )
+!              call cnst_get_ind( 'DMS', l_dmsg,   .false. )
+              call cnst_get_ind( 'NH3',   l_nh3g,   .false. )
+              call cnst_get_ind( 'HNO3',  l_hno3g,  .false. )
+              call cnst_get_ind( 'HCL',   l_hclg,   .false. )
+        !
+
+        END SUBROUTINE MAM_init_basics   
+
+
+!---------------------------------------------------------------------------------
+        SUBROUTINE MAM_ALLOCATE (state,ptend) 
+        
+        use physics_types, only : physics_state, physics_ptend 
+        use modal_aero_data, only : ntot_amode
+        ! FAB peut etre remplacer physics_type par un MAM type .. 
+
+        implicit none  
+        type(physics_state),  intent(inout) :: state       ! Physics state variables
+        type(physics_ptend),  intent(inout) :: ptend       ! indivdual parameterization tendencies
+
+        !
+        ! FAB: for now use parameter defined in mod_mam_utils        
+
+        !TYPE(physics_state), intent(out)  :: physta
+
+        integer ::  as 
+
+        allocate (state%pblh(pcols) , stat=as)
+
+        allocate (state%t(pcols,pver),stat=as)
+        allocate (state%pmid(pcols,pver),stat=as)
+        allocate (state%pdel(pcols,pver),stat=as)
+        allocate (state%zm(pcols,pver), stat=as) 
+        allocate (state%cld(pcols,pver), stat=as) 
+        allocate (state%relhum(pcols,pver) , stat=as)
+        allocate (state%qv(pcols,pver) , stat=as)
+        allocate (state%aircon(pcols,pver) , stat=as)
+        allocate (state%ph2so4(pcols,pver) , stat=as)
+        allocate (state%paqso4(pcols,pver) , stat=as)
+
+
+        allocate (state%q(pcols,pver,pcnst),stat=as)
+        allocate (state%qqcw(pcols,pver,pcnst),stat=as) 
+
+        allocate (state%dgncur_a(pcols,pver,ntot_amode),stat=as)
+        allocate(state%dgncur_awet(pcols,pver,ntot_amode),stat=as)
+        allocate(state%qaerwat(pcols,pver,ntot_amode),stat=as)
+        allocate(state%wetdens(pcols,pver,ntot_amode),stat=as)
+        allocate(state%hygro(pcols,pver,ntot_amode),stat=as)
+
+        allocate(ptend%q(pcols,pver,pcnst))
+        allocate(ptend%lq(pcnst))
+
+
+
+        state%pblh=0._r8 
+        state%t=0._r8
+        state%pmid=0._r8
+        state%pdel=0._r8
+        state%zm=0._r8
+        state%cld=0._r8
+        state%relhum =0._r8
+        state%qv =0._r8
+        state%q = 0._r8
+        state%qqcw =0._r8
+        state%dgncur_a =0._r8
+        state%dgncur_awet =0._r8
+        state%hygro =0._r8
+        state%qaerwat =0._r8
+        state%wetdens =0._r8
+        state%aircon = 0._r8
+        ptend%lq=.false.
+        ptend%q=0._r8
+
+        END SUBROUTINE MAM_ALLOCATE
+
+
+        SUBROUTINE MAM_cold_start (state)!
+
+        use physconst, only: pi, mwdry 
+        use mam_utils, only: pcols,pver, endrun, & 
+                l_h2so4g, l_soag, l_hno3g, l_so2g, l_hclg, l_nh3g
+
+        use modal_aero_amicphys, only :&
+                   dens_aer, iaer_bc, iaer_pom, iaer_so4, iaer_soa, iaer_ncl, &
+                   iaer_mom, iaer_dst        
+
+        use modal_aero_data
+        use physics_types, only : physics_state
+        type(physics_state),  intent(in) :: state   
+
+        !initial composition for q  
+        ! should go on a namelist or initialized somehow from geos 
+        real(r8) :: numc1, numc2, numc3, numc4,                     &
+                          mfso41, mfpom1, mfsoa1, mfbc1, mfdst1, mfncl1,  &
+                          mfso42, mfsoa2, mfncl2,                         &
+                          mfdst3, mfncl3, mfso43, mfbc3, mfpom3,  mfsoa3, &
+                          mfpom4, mfbc4,                                  &
+                          qso2, qh2so4, qsoag, qhno3,qnh3
+        real(r8) :: tmpfso4, tmpfnh4, tmpfsoa, tmpfpom, &
+                          tmpfbcx, tmpfncl, tmpfdst, tmpfmom
+        real(r8) :: tmpfno3, tmpfclx, tmpfcax, tmpfco3
+
+        real(r8) :: tmpdens, tmpvol, tmpmass, sx
+
+
+        real(r8), pointer :: q(:,:,:), aircon(:,:), dgncur_a(:,:,:)
+!         real(r8), dimension(pcols,pver,pcnst):: q
+!         real(r8), dimension(pcols,pver):: aircon
+!         real(r8), dimension(pcols,pver,ntot_amode):: dgncur_a(pcols,pver,ntot_amode)
+
+        integer :: l_num_a1, l_num_a2, l_nh4_a1, l_nh4_a2, &
+                         l_so4_a1, l_so4_a2, l_soa_a1, l_soa_a2
+        integer :: l_numa, l_so4a, l_nh4a, l_soaa, l_poma, l_bcxa, l_ncla, &
+                         l_dsta, l_no3a, l_clxa, l_caxa, l_co3a, l_moma
+
+        integer :: i,k,n
+
+
+        !------------------------------------------------------------------------------
+
+        !initialize gas phase and aerosol state for dev test only TEMPORARY
+        ! be aware of modal_aero_initialize_q in modal_aero_initialize_data.F90
+        ! which is not called but could be usefull
+       q => state%q
+       dgncur_a => state%dgncur_a
+       aircon => state%aircon
+
+       
+              
+q(:,:,l_so2g)   = 1.e-4
+q(:,:,l_soag)   = 5.e-10
+q(:,:,l_nh3g)    = 5.e-10
+q(:,:,l_h2so4g) = 1.e-13
+
+numc1          = 1.E6_r8    ! unit: #/m3
+numc2          = 1.E6_r8
+numc3          = 1.E2_r8
+numc4          = 1.E5_r8
+
+mfso41         = 0.8_r8
+mfpom1         = 0.1_r8
+mfsoa1         = 0.1_r8
+mfbc1          = 0._r8
+mfdst1         = 0._r8
+mfncl1         = 0._r8
+
+mfso42         = 0.8_r8
+mfsoa2         = 0.1_r8
+mfncl2         = 0.1_r8
+
+mfdst3         = 0.8_r8
+mfncl3         = 0.1_r8
+mfso43         = 0.1_r8
+mfbc3          = 0._r8
+mfpom3         = 0._r8
+mfsoa3         = 0._r8
+
+mfpom4         = 0.8_r8
+mfbc4          = 0.2_r8
+
+      ! check if mass fraction is larger than one
+      if (mfso41+mfpom1+mfsoa1+mfbc1+mfdst1+mfncl1 .gt. 1._r8) then
+          print *, "The summed mass fraction is > 1 in mode 1"
+          stop
+      end if
+      if (mfso42+mfsoa2+mfncl2 .gt. 1._r8) then
+          print *, "The summed mass fraction is > 1 in mode 2"
+          stop
+      end if
+      if (mfdst3+mfncl3+mfso43+mfbc3+mfpom3+mfsoa3 .gt. 1._r8) then
+          print *, "The summed mass fraction is > 1 in mode 3"
+          stop
+      end if
+      if (mfpom4+mfbc4 .gt. 1._r8) then
+          print *, "The summed mass fraction is > 1 in mode 4"
+          stop
+      end if
+      
+! initialize the aerosol/number mixing ratio for cold start.
+! adapted to mam4 box model for now , only on the first 10 levels  
+       do k = 1, pver 
+         do i = 1, pcols
+            do  n = 1, ntot_amode
+
+                sx = log( sigmag_amode(n) )
+
+                if      (n == 1) then
+                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 0.20e-6_r8 ! m
+                   tmpfsoa      = mfsoa1
+                   tmpfso4      = mfso41
+                   tmpfncl      = mfncl1
+                   tmpfdst      = mfdst1
+                   tmpfpom      = mfpom1
+                   tmpfbcx      = mfbc1
+                 !  tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
+                 !                 tmpfncl - tmpfdst - tmpfpom - tmpfbcx
+                else if (n == 2) then
+                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 0.04e-6_r8
+                   tmpfsoa      = mfsoa2
+                   tmpfso4      = mfso42
+                   tmpfncl      = mfncl2
+                   tmpfdst      = 0._r8
+                   tmpfpom      = 0._r8
+                   tmpfbcx      = 0._r8
+                 !  tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
+                 !                 tmpfncl - tmpfdst - tmpfpom - tmpfbcx
+                else if (n == 3) then
+                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 2.00e-6_r8
+                   tmpfsoa      = mfsoa3
+                   tmpfso4      = mfso43
+                   tmpfncl      = mfncl3
+                   tmpfdst      = mfdst3
+                   tmpfpom      = mfpom3
+                   tmpfbcx      = mfbc3
+                  ! tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
+                  !                tmpfncl - tmpfdst - tmpfpom - tmpfbcx
+                else if (n == 4) then
+                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 0.08e-6_r8
+                   tmpfsoa      = 0._r8
+                   tmpfso4      = 0._r8
+                   tmpfncl      = 0._r8
+                   tmpfdst      = 0._r8
+                   tmpfpom      = mfpom4
+                   tmpfbcx      = mfbc4
+                  ! tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
+                  !                tmpfncl - tmpfdst - tmpfpom - tmpfbcx
+                end if
+                ! q(i,k,numptr_amode(n)) = #/kg-air
+                if (n == modeptr_aitken) then
+                   q(i,k,numptr_amode(n)) = numc2 / aircon(i,k) / mwdry
+                   l_num_a2 = numptr_amode(n)
+                   l_so4_a2 = lptr_so4_a_amode(n)
+                else if (n == modeptr_accum) then
+                   q(i,k,numptr_amode(n)) = numc1 / aircon(i,k) / mwdry
+                   l_num_a1 = numptr_amode(n)
+                   l_so4_a1 = lptr_so4_a_amode(n)
+                else if (n == modeptr_pcarbon) then
+                   q(i,k,numptr_amode(n)) = numc4 / aircon(i,k) / mwdry
+                else
+                   q(i,k,numptr_amode(n)) = numc3 / aircon(i,k) / mwdry
+                end if
+
+                ! tmpvol: m3-dry-aerosol/kg-air
+                tmpvol  = q(i,k,numptr_amode(n)) * &
+                          (dgncur_a(i,k,n)**3) * &
+                          (pi/6.0_r8) * exp(4.5_r8*sx*sx)
+
+                 tmpdens = 1.0_r8 /                           &
+                          ( (tmpfsoa / dens_aer(iaer_soa)) + &
+                            (tmpfso4 / dens_aer(iaer_so4)) + &
+                            (tmpfbcx / dens_aer(iaer_bc )) + &
+                            (tmpfpom / dens_aer(iaer_pom)) + &
+                            (tmpfncl / dens_aer(iaer_ncl)) + &
+                            (tmpfdst / dens_aer(iaer_dst)) )
+!                            (tmpfmom / dens_aer(iaer_mom))   )
+                tmpmass = tmpvol*tmpdens   ! kg-dry-aerosol/kg-air
+                l_so4a = lptr_so4_a_amode(n)
+                l_nh4a = -1
+                l_soaa = lptr_soa_a_amode(n)
+                l_poma = lptr_pom_a_amode(n)
+!                if (npoa == 2) l_poma = lptr_poma_a_amode(n)
+                l_bcxa = lptr_bc_a_amode(n)
+!                if (nbc  == 2) l_bcxa = lptr_bca_a_amode(n)
+                l_ncla = lptr_nacl_a_amode(n)
+                l_dsta = lptr_dust_a_amode(n)
+                l_moma = lptr_mom_a_amode(n)
+
+#if ( defined MOSAIC_SPECIES )
+                l_nh4a = lptr_nh4_a_amode(n)
+                l_no3a = lptr_no3_a_amode(n)
+                l_clxa = lptr_cl_a_amode(n)
+                l_caxa = lptr_ca_a_amode(n)
+                l_co3a = lptr_co3_a_amode(n)
+#else
+                l_nh4a = -1
+                l_no3a = -1
+                l_clxa = -1
+                l_caxa = -1
+                l_co3a = -1
+#endif
+
+
+                ! q array return kg-aer/kg-air
+                if (l_so4a > 0) q(i,k,l_so4a) = tmpmass*tmpfso4
+                if (l_nh4a > 0) q(i,k,l_nh4a) = tmpmass*tmpfnh4
+                if (l_soaa > 0) q(i,k,l_soaa) = tmpmass*tmpfsoa
+                if (l_poma > 0) q(i,k,l_poma) = tmpmass*tmpfpom
+                if (l_bcxa > 0) q(i,k,l_bcxa) = tmpmass*tmpfbcx
+                if (l_dsta > 0) q(i,k,l_dsta) = tmpmass*tmpfdst
+                if (l_ncla > 0) q(i,k,l_ncla) = tmpmass*tmpfncl
+                if (l_moma > 0) q(i,k,l_moma) = tmpmass*tmpfmom
+                if (l_no3a > 0) q(i,k,l_no3a) = tmpmass*tmpfno3
+                if (l_clxa > 0) q(i,k,l_clxa) = tmpmass*tmpfclx
+                if (l_caxa > 0) q(i,k,l_caxa) = tmpmass*tmpfcax
+                if (l_co3a > 0) q(i,k,l_co3a) = tmpmass*tmpfco3
+
+
+                ! initialize the gas mixing ratio
+                if (l_so2g > 0) q(:,:,l_so2g)   = qso2
+                if (l_soag > 0) q(:,:,l_soag)   = qsoag
+                if (l_h2so4g > 0)  q(:,:,l_h2so4g) = qh2so4
+                if (l_hno3g> 0) q(:,:,l_hno3g) =   qhno3
+                if (l_nh3g > 0) q(:,:,l_nh3g) =   qnh3
+            end do ! n
+         end do ! i
+      end do ! k   
+
+END SUBROUTINE MAM_cold_start
 
      !==============================================================
    end module modal_aero_initialize_data

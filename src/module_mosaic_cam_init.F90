@@ -1,6 +1,6 @@
 module module_mosaic_cam_init
   
-  use shr_kind_mod,            only: r8 => shr_kind_r8
+  use precision_mod,           only: r8 => f8
 
   !---------------------------------------------------------------------------------------!
   !BSINGH: This module initilizes Mosaic chemistry variables.
@@ -21,8 +21,7 @@ contains
     !BSINGH: This subroutine initialzies some Mosaic conastans and inpput parameters
     ! Called by: modal_aero_initialize_data.F90
     !---------------------------------------------------------------------------------------!
-    use spmd_utils,                   only: masterproc
-    use cam_logfile,                  only: iulog
+    use mam_utils,                    only: masterproc, iulog
 
     use modal_aero_amicphys,          only: max_mode, mam_amicphys_check_mosaic_mw
 

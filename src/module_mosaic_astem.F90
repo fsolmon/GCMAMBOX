@@ -1,6 +1,6 @@
   module module_mosaic_astem
 
-  use shr_kind_mod,  only: r8 => shr_kind_r8
+  use precision_mod, only: r8 => f8
   use module_mosaic_support, only: mosaic_warn_mess, mosaic_err_mess
 
   implicit none

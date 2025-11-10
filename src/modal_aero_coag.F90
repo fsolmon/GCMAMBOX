@@ -10,8 +10,8 @@
    module modal_aero_coag
 
 ! !USES:
-   use shr_kind_mod,    only:  r8 => shr_kind_r8
-   use cam_logfile,     only:  iulog
+   use precision_mod,   only:  r8 => f8
+   use mam_utils,       only:  iulog
    use chem_mods,       only:  gas_pcnst
    use modal_aero_data, only:  maxd_aspectype
 
@@ -82,19 +82,16 @@
 !----------------------------------------------------------------------
 
 ! !USES:
-   use mo_constants,     only: pi
    use modal_aero_data
    use modal_aero_gasaerexch, only:  n_so4_monolayers_pcage, &
                                      soa_equivso4_factor
 
-   use cam_abortutils,   only: endrun
-   use cam_history,      only: outfld, fieldname_len
+   use mam_utils,        only: endrun, outfld, fieldname_len, pcols, pver, iam, masterproc, &
+                               top_lev => clim_modal_aero_top_lev
+   use physconst,        only: pi
    use chem_mods,        only: adv_mass
    use constituents,     only: pcnst, cnst_name
    use physconst,        only: gravit, mwdry, r_universal
-   use ppgrid,           only: pcols, pver
-   use spmd_utils,       only: iam, masterproc
-   use ref_pres,         only: top_lev => clim_modal_aero_top_lev
 
    implicit none
 
@@ -760,10 +757,8 @@ main_ipair2: do ipair = 1, npair_acoag
 	use modal_aero_gasaerexch, only:  &
 		modefrm_pcage, nspecfrm_pcage, lspecfrm_pcage, lspectoo_pcage
 
-	use cam_abortutils,      only: endrun
-	use cam_history,     only: addfld, horiz_only, add_default, fieldname_len
+	use mam_utils,       only: endrun, addfld, horiz_only, add_default, fieldname_len, masterproc
 	use constituents,    only: pcnst, cnst_name
-	use spmd_utils,      only: masterproc
         use phys_control,    only: phys_getopts
 
 	implicit none

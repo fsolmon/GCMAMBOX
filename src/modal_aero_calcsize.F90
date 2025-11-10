@@ -2,11 +2,12 @@ module modal_aero_calcsize
 
 !   RCE 07.04.13:  Adapted from MIRAGE2 code
 
-use shr_kind_mod,     only: r8 => shr_kind_r8
-use spmd_utils,       only: masterproc
+use precision_mod,    only: r8 => f8
+use mam_utils,        only: masterproc, pcols, pver, iulog, endrun, &
+                            addfld, horiz_only, add_default, fieldname_len, outfld, &
+                            top_lev => clim_modal_aero_top_lev
 use physconst,        only: pi, rhoh2o, gravit
 
-use ppgrid,           only: pcols, pver
 use physics_types,    only: physics_state, physics_ptend
 use physics_buffer,   only: physics_buffer_desc, pbuf_get_index, pbuf_old_tim_idx, pbuf_get_field
 
@@ -14,12 +15,7 @@ use phys_control,     only: phys_getopts
 use rad_constituents, only: rad_cnst_get_info, rad_cnst_get_aer_mmr, rad_cnst_get_aer_props, &
                             rad_cnst_get_mode_props, rad_cnst_get_mode_num
 
-use cam_logfile,      only: iulog
-use cam_abortutils,       only: endrun
-use cam_history,      only: addfld, horiz_only, add_default, fieldname_len, outfld
 use constituents,     only: pcnst, cnst_name
-
-use ref_pres,         only: top_lev => clim_modal_aero_top_lev
 
 #ifdef MODAL_AERO
 
@@ -92,7 +88,8 @@ end subroutine modal_aero_calcsize_reg
 !===============================================================================
 
 subroutine modal_aero_calcsize_init( pbuf2d, species_class)
-   use time_manager,  only: is_first_step
+!   use time_manager,  only: is_first_step
+   use mam_utils, only : is_first_step
    use physics_buffer,only: pbuf_set_field
 
    !-----------------------------------------------------------------------

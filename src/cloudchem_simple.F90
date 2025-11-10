@@ -3,7 +3,7 @@
    module cloudchem_simple
 
 ! !USES:
-  use shr_kind_mod,    only:  r8 => shr_kind_r8
+  use precision_mod,  only: r8 => f8
   use chem_mods,       only:  gas_pcnst
 
   implicit none
@@ -29,11 +29,9 @@ subroutine cloudchem_simple_sub(            &
 ! !USES:
 !use modal_aero_data
 
-use cam_logfile,       only:  iulog
+use mam_utils  ,       only:  iulog,pcols,pver,endrun
 use constituents,      only:  pcnst, cnst_name, cnst_get_ind
-use ppgrid,            only:  pcols, pver
                                                                                                                                             
-use abortutils,        only : endrun
 
 use modal_aero_data
 
@@ -47,11 +45,11 @@ implicit none
    integer,  intent(in)    :: loffset              ! offset applied to modal aero "ptrs"
    real(r8), intent(in)    :: deltat               ! time step (s)
 
-   real(r8), intent(inout) :: q(ncol,pver,pcnstxx) ! tracer mixing ratio (TMR) array
+   real(r8), intent(inout) :: q(ncol,pver,pcnst) ! tracer mixing ratio (TMR) array
                                                    ! *** MUST BE  #/kmol-air for number
                                                    ! *** MUST BE mol/mol-air for mass
                                                    ! *** NOTE ncol dimension
-   real(r8), intent(inout) :: qqcw(ncol,pver,pcnstxx) ! like q but for cloud-borner tracers
+   real(r8), intent(inout) :: qqcw(ncol,pver,pcnst) ! like q but for cloud-borner tracers
    real(r8), intent(in)    :: cldn(ncol,pver)      ! cloud fraction
 
 ! !DESCRIPTION: 

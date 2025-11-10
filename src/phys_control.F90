@@ -8,7 +8,7 @@
 
       module phys_control
 
-      use shr_kind_mod, only: r8 => shr_kind_r8
+      use precision_mod, only: r8 => f8
 
      implicit none
 

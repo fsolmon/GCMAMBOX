@@ -10,8 +10,8 @@
   module modal_aero_rename
 
 ! !USES:
-  use shr_kind_mod,    only: r8 => shr_kind_r8
-  use cam_abortutils,      only: endrun
+  use precision_mod,   only: r8 => f8
+  use mam_utils,       only: endrun
   use modal_aero_data, only: maxd_aspectype
   use chem_mods,       only: gas_pcnst
 
@@ -72,12 +72,10 @@
 ! !USES:
    use modal_aero_data
 
-   use ppgrid, only:  pcols, pver
    use constituents, only: pcnst, cnst_name
-   use mo_constants,  only:  pi
-   use physconst, only: gravit, mwdry
-   use units, only: getunit
-   use shr_spfn_mod, only: erfc => shr_spfn_erfc
+   use physconst, only: pi, gravit, mwdry
+   use mam_utils, only: getunit,pcols,pver
+   use error_function, only: erfc 
 
    implicit none
 
@@ -501,7 +499,7 @@ mainloop1_ipair:  do ipair = 1, npair_renamexf
 !
 	use modal_aero_data
 	use constituents, only: pcnst, cnst_name
-	use spmd_utils,   only: masterproc
+	use mam_utils,    only: masterproc
 
 	implicit none
 

@@ -2,20 +2,17 @@ module modal_aero_wateruptake
 
 !   RCE 07.04.13:  Adapted from MIRAGE2 code
 
-use shr_kind_mod,     only: r8 => shr_kind_r8
+use precision_mod,    only: r8 => f8
+use mam_utils,        only: pcols, pver, iulog, endrun, addfld, add_default, outfld, &
+                            top_lev => clim_modal_aero_top_lev
 use physconst,        only: pi, rhoh2o
-use ppgrid,           only: pcols, pver
 use physics_types,    only: physics_state
 use physics_buffer,   only: physics_buffer_desc, pbuf_get_index, pbuf_old_tim_idx, pbuf_get_field
 
 use wv_saturation,    only: qsat_water
 use rad_constituents, only: rad_cnst_get_info, rad_cnst_get_aer_mmr, rad_cnst_get_aer_props, &
                             rad_cnst_get_mode_props, rad_cnst_get_mode_num
-use cam_history,      only: addfld, add_default, outfld
-use cam_logfile,      only: iulog
-use ref_pres,         only: top_lev => clim_modal_aero_top_lev
 use phys_control,     only: phys_getopts
-use cam_abortutils,       only: endrun
 #if ( defined MOSAIC_SPECIES )
 !FAB use time_manager,              only: get_nstep, get_step_size
 use module_mosaic_box_aerchem, only: MOSAIC_aerosol_water_only
@@ -101,8 +98,9 @@ end subroutine modal_aero_wateruptake_reg
 !===============================================================================
 
 subroutine modal_aero_wateruptake_init(pbuf2d)
-   use time_manager,   only: is_first_step
-   use physics_buffer, only: pbuf_set_field
+!   use time_manager,   only: is_first_step
+    use mam_utils, only: is_first_step 
+    use physics_buffer, only: pbuf_set_field
 !   use shr_log_mod ,   only: errmsg => shr_log_errmsg
 
    type(physics_buffer_desc), pointer :: pbuf2d(:,:)

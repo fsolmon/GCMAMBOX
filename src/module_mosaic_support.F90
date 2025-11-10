@@ -5,8 +5,7 @@ module module_mosaic_support
   !         which depends on the host code
 
 #ifdef CAM
-  use cam_logfile,    only: iulog
-  use cam_abortutils, only: endrun
+  use mam_utils, only: iulog, endrun
 #endif
 
   implicit none

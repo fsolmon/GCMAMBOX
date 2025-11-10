@@ -11,15 +11,11 @@
    module modal_aero_amicphys
 
 ! !USES:
-  use shr_kind_mod,    only:  r8 => shr_kind_r8
-  use cam_abortutils,  only:  endrun
-  use cam_logfile,     only:  iulog
+  use precision_mod,   only:  r8 => f8
+  use mam_utils,       only:  endrun, iulog, pcols, pver, top_lev => trop_cloud_top_lev
   use chem_mods,       only:  gas_pcnst
   use physconst,       only:  pi
-  use ppgrid,          only:  pcols, pver
   use modal_aero_data, only:  ntot_aspectype, ntot_amode, nsoa, npoa, nbc
-! use ref_pres,        only:  top_lev => clim_modal_aero_top_lev  ! this is for gg02a
-  use ref_pres,        only:  top_lev => trop_cloud_top_lev       ! this is for ee02c
 
   implicit none
   private
@@ -175,7 +171,8 @@
   !    when nsoa > 1, igas_soa and iaer_soa are indices of the first soa species
   !    when nbc  > 1, iaer_bc  is index of the first bc  species
   !    when npom > 1, iaer_pom is index of the first pom species
-  integer :: iaer_bc, iaer_dst, iaer_ncl, iaer_nh4, iaer_pom, iaer_soa, iaer_so4, &
+  ! FAB made public for cold start
+  integer, public :: iaer_bc, iaer_dst, iaer_ncl, iaer_nh4, iaer_pom, iaer_soa, iaer_so4, &
              iaer_mpoly, iaer_mprot, iaer_mlip, iaer_mhum, iaer_mproc, iaer_mom, &
              iaer_no3, iaer_cl, iaer_ca, iaer_co3
   integer :: i_agepair_pca, i_agepair_macc, i_agepair_mait
@@ -201,7 +198,7 @@
   real(r8) :: accom_coef_gas(max_gas)
   real(r8) :: alnsg_aer(max_mode)
   real(r8) :: dgnum_aer(max_mode), dgnumhi_aer(max_mode), dgnumlo_aer(max_mode)
-  real(r8) :: dens_aer(max_aer)
+  real(r8), public :: dens_aer(max_aer)
   real(r8) :: dens_so4a_host
   real(r8) :: fac_m2v_aer(max_aer)        ! converts (mol-aero/mol-air) to (m3-aero/mol-air)
   real(r8) :: fac_eqvso4hyg_aer(max_aer)  ! converts a species volume to a volume of so4
@@ -289,7 +286,7 @@ subroutine modal_aero_amicphys_intr(                             &
 
 
 ! !USES:
-use cam_history,       only:  outfld, fieldname_len
+use mam_utils,        only:  outfld, fieldname_len
 use chem_mods,         only:  adv_mass
 use constituents,      only:  pcnst, cnst_name
 use physconst,         only:  gravit, mwdry, r_universal
@@ -2536,8 +2533,7 @@ do_newnuc_if_block50: &
         !Use statements
         use module_mosaic_box_aerchem, only: mosaic_box_aerchemistry
 ! ++MW
-!        use infnan,                    only: nan, assignment(=)
-        use infnan, only: nan
+        use mam_utils, only: nan
 !FAB   
 ! --MW
         use physconst,                 only: mwh2o
@@ -2549,7 +2545,7 @@ do_newnuc_if_block50: &
              nbin_a, nbin_a_max, ngas_volatile, nmax_astem, nmax_mesa, nsalt, &
              mosaic_vars_aa_type
 #ifdef SPMD
-        use spmd_utils,                only: iam
+        use mam_utils,                 only: iam
         use units,                     only: getunit, freeunit
 #endif
 
@@ -3753,11 +3749,7 @@ time_loop: &
          qnumcw_cur,                                                &
          qaercw_cur,        qaercw_del_grow4rnam                    )
 
-#if ( defined CAM_VERSION_IS_ACME ) 
-      use shr_spfn_mod, only: erfc => shr_spfn_erfc  ! acme version of cam
-#else
       use error_function,  only: erfc                ! mozart-mosaic version of cam
-#endif
 
       logical,  intent(in)    :: iscldy_subarea        ! true if sub-area is cloudy
       integer,  intent(in)    :: nstep                 ! model time-step number
@@ -5257,14 +5249,10 @@ agepair_loop1: &
 !
 !-----------------------------------------------------------------------
 
-use cam_history, only  :  fieldname_len
-use cam_logfile, only  :  iulog
+use mam_utils, only    :  fieldname_len, iulog, masterproc, get_spc_ndx, solsym
 use chem_mods, only    :  adv_mass
 use constituents, only :  pcnst, cnst_get_ind, cnst_name
-use mo_chem_utls, only :  get_spc_ndx
-use mo_tracname,  only :  solsym
 use physconst, only    :  mwdry, mwh2o
-use spmd_utils, only   :  masterproc
 use phys_control,only  :  phys_getopts
 
 use modal_aero_data, only : &
@@ -5908,8 +5896,7 @@ dr_so4_monolayers_pcage = n_so4_monolayers_pcage * 4.76e-10
 !--------------------------------------------------------------------------------
       subroutine mam_amicphys_check_mosaic_mw
 
-      use spmd_utils,  only:  masterproc
-      use cam_logfile, only:  iulog
+      use mam_utils,   only:  masterproc, iulog
       use module_data_mosaic_aero, only: &
          ih2so4_g, ihno3_g, ihcl_g, inh3_g, ilim2_g, &
          iso4_a, ino3_a, icl_a, inh4_a, ina_a, ioin_a, ica_a, ico3_a, &
@@ -6025,7 +6012,7 @@ dr_so4_monolayers_pcage = n_so4_monolayers_pcage * 4.76e-10
 ! when the multiple nbc/npoa/nsoa flavors is implemented,
 !    this can be done in modal_aero_initialize_data
 !
-      use cam_logfile, only  :  iulog
+      use mam_utils, only    :  iulog
       use constituents, only :  pcnst, cnst_get_ind, cnst_name
 
       use modal_aero_data, only : &
@@ -6083,10 +6070,8 @@ dr_so4_monolayers_pcage = n_so4_monolayers_pcage * 4.76e-10
 !
 !-----------------------------------------------------------------------
 
-use cam_history, only  :  addfld, horiz_only, add_default, fieldname_len
-use cam_logfile, only  :  iulog
+use mam_utils, only    :  addfld, horiz_only, add_default, fieldname_len, iulog, masterproc
 use constituents, only :  pcnst, cnst_get_ind, cnst_name
-use spmd_utils, only   :  masterproc
 use phys_control,only  :  phys_getopts
 
 use modal_aero_data, only : &

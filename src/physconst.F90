@@ -1,4 +1,6 @@
 ! physconst.F90
+! FAB : interface between constant used in MAM and GEOS-Chem
+
 !    This F90 module file is a special version of the equivalent ACME (and CAM5) module.
 !    It provides the functionality needed by the cambox offline code
 !    that is used for development and testing of the modal aerosol module (MAM),
@@ -8,23 +10,23 @@
 
 module physconst
 
-   ! Physical constants.  Use CCSM shared values whenever available.
+   ! Physical constants.  Use GEOS-Chem shared values whenever available.
 
-   use shr_kind_mod, only: r8 => shr_kind_r8
-   use shr_const_mod, only: shr_const_g,      shr_const_stebol, shr_const_tkfrz,  &
-                            shr_const_mwdair, shr_const_rdair,  shr_const_mwwv,   &
-                            shr_const_latice, shr_const_latvap, shr_const_cpdair, &
-                            shr_const_rhofw,  shr_const_cpwv,   shr_const_rgas,   &
-                            shr_const_karman, shr_const_pstd,   shr_const_rhodair,&
-                            shr_const_avogad, shr_const_boltz,  shr_const_cpfw,   &
-                            shr_const_rwv,    shr_const_zvir,   shr_const_pi,     &
-                            shr_const_rearth, shr_const_sday,   shr_const_cday,   &
-                            shr_const_spval         
+   use Precision_Mod, only: r8 => f8
+ 
+   use Physconstants, only : g0, airmw, avo, boltzm=>boltz
+
+!   use shr_const_mod, only: shr_const_g,      shr_const_stebol, shr_const_tkfrz,  &
+!                            shr_const_mwdair, shr_const_rdair,  shr_const_mwwv,   &
+!                            shr_const_latice, shr_const_latvap, shr_const_cpdair, &
+!                            shr_const_rhofw,  shr_const_cpwv,   shr_const_rgas,   &
+!                            shr_const_karman, shr_const_pstd,   shr_const_rhodair,&
+!                            shr_const_avogad, shr_const_boltz,  shr_const_cpfw,   &
+!                            shr_const_rwv,    shr_const_zvir,   shr_const_pi,     &
+!                            shr_const_rearth, shr_const_sday,   shr_const_cday,   &
+!                            shr_const_spval         
    implicit none
    private
-#if ( ! defined( CAMBOX_DEACTIVATE_THIS ) )
-   public  :: physconst_readnl
-#endif
    save
 
    ! Constantants for MAM spciesi classes
@@ -35,24 +37,42 @@ module physconst
    integer, public, parameter :: spec_class_other      = 4
 
    ! Constants based off share code or defined in physconst
+    real(r8), public, parameter :: pi= 3.14159265358979323_r8  
 
-   real(r8), public, parameter :: avogad      = shr_const_avogad     ! Avogadro's number (molecules/kmole)
-   real(r8), public, parameter :: boltz       = shr_const_boltz      ! Boltzman's constant (J/K/molecule)
-   real(r8), public, parameter :: cday        = shr_const_cday       ! sec in calendar day ~ sec
-   real(r8), public, parameter :: cpair       = shr_const_cpdair     ! specific heat of dry air (J/K/kg)
-   real(r8), public, parameter :: cpliq       = shr_const_cpfw       ! specific heat of fresh h2o (J/K/kg)
-   real(r8), public, parameter :: karman      = shr_const_karman     ! Von Karman constant
-   real(r8), public, parameter :: latice      = shr_const_latice     ! Latent heat of fusion (J/kg)
-   real(r8), public, parameter :: latvap      = shr_const_latvap     ! Latent heat of vaporization (J/kg)
-   real(r8), public, parameter :: pi          = shr_const_pi         ! 3.14...
-   real(r8), public, parameter :: pstd        = shr_const_pstd       ! Standard pressure (Pascals)
-   real(r8), public, parameter :: r_universal = shr_const_rgas       ! Universal gas constant (J/K/kmol)
-   real(r8), public, parameter :: rhoh2o      = shr_const_rhofw      ! Density of liquid water (STP)
-   real(r8), public, parameter :: spval       = shr_const_spval      !special value 
-   real(r8), public, parameter :: stebol      = shr_const_stebol     ! Stefan-Boltzmann's constant (W/m^2/K^4)
+   !
+    real(r8), public, parameter :: gravit=g0  
+    real(r8), public, parameter :: mwdry=airmw 
+    real(r8), public, parameter :: avogadro = avo * 1.E3_r8 ! Avogadro's number (1/kmol) 
+    real(r8), public, parameter :: boltz = boltzm
+    real(r8), public, parameter :: r_universal = avogadro*boltz  ! Universal gas constant (J/K/kmol)   
+    real(r8),  public, parameter :: rgas = r_universal *1.E-3_r8 ! same in (J/K/mol)  
+    real(r8), public, parameter :: pstd        = 101325.0_r8       ! Standard pressure (Pascals)
+    
+    real(r8), public           :: vmdry        = 20.1_r8     ! molecular diffusion volume of dry air (unitless)    
+    real(r8), public, parameter :: mwh2o      = 18.016_r8 
+    real(r8), public, parameter :: rhoh2o      = 1.000E3_r8    
+    real(r8), public           :: tmelt    = 273.15_r8
+    real(r8), public, parameter :: rair        = r_universal/mwdry 
+     !   SHR_CONST_BOLTZ   = 1.38065e-23_R8  ! Boltzmann's constant ~ J/K/molecule
+!   real(R8),parameter :: SHR_CONST_AVOGAD  = 6.02214e26_R8   ! Avogadro's number ~ molecules/kmole
 
-   real(r8), public, parameter :: c0          = 2.99792458e8_r8      ! Speed of light in a vacuum (m/s)
-   real(r8), public, parameter :: planck      = 6.6260755e-34_r8     ! Planck's constant (J.s)
+!   real(r8), public, parameter :: avogad      = shr_const_avogad     ! Avogadro's number (molecules/kmole)
+!   real(r8), public, parameter :: boltz       = shr_const_boltz      ! Boltzman's constant (J/K/molecule)
+!   real(r8), public, parameter :: cday        = shr_const_cday       ! sec in calendar day ~ sec
+   real(r8), public, parameter :: cpair       = 1.00464e3_R8     ! specific heat of dry air (J/K/kg)
+!   real(r8), public, parameter :: cpliq       = shr_const_cpfw       ! specific heat of fresh h2o (J/K/kg)
+!   real(r8), public, parameter :: karman      = shr_const_karman     ! Von Karman constant
+   real(r8), public, parameter :: latice      = 3.337e5_R8      ! Latent heat of fusion (J/kg)
+   real(r8), public, parameter :: latvap      = 2.501e6_R8     ! Latent heat of vaporization (J/kg)
+!   real(r8), public, parameter :: pi          = shr_const_pi         ! 3.14...
+!   real(r8), public, parameter :: pstd        = shr_const_pstd       ! Standard pressure (Pascals)
+!   real(r8), public, parameter :: r_universal = shr_const_rgas       ! Universal gas constant (J/K/kmol)
+!   real(r8), public, parameter :: rhoh2o      = shr_const_rhofw      ! Density of liquid water (STP)
+!   real(r8), public, parameter :: spval       = shr_const_spval      !special value 
+!   real(r8), public, parameter :: stebol      = shr_const_stebol     ! Stefan-Boltzmann's constant (W/m^2/K^4)
+
+!   real(r8), public, parameter :: c0          = 2.99792458e8_r8      ! Speed of light in a vacuum (m/s)
+!   real(r8), public, parameter :: planck      = 6.6260755e-34_r8     ! Planck's constant (J.s)
 
    ! Molecular weights
    real(r8), public, parameter :: mwco2       =  44._r8             ! molecular weight co2
@@ -68,31 +88,21 @@ module physconst
    real(r8), public, parameter :: mwnh4       =  18._r8
 
 
-   ! modifiable physical constants for aquaplanet
-
-   real(r8), public           :: gravit       = shr_const_g     ! gravitational acceleration (m/s**2)
-   real(r8), public           :: sday         = shr_const_sday  ! sec in siderial day ~ sec
-   real(r8), public           :: mwh2o        = shr_const_mwwv  ! molecular weight h2o
-   real(r8), public           :: cpwv         = shr_const_cpwv  ! specific heat of water vapor (J/K/kg)
-   real(r8), public           :: mwdry        = shr_const_mwdair! molecular weight dry air
-   real(r8), public           :: rearth       = shr_const_rearth! radius of earth (m)
-   real(r8), public           :: tmelt        = shr_const_tkfrz ! Freezing point of water (K)
-   real(r8), public           :: vmdry        = 20.1_r8         ! molecular diffusion volume of dry air (unitless)
 
 !---------------  Variables below here are derived from those above -----------------------
 
-   real(r8), public           :: rga          = 1._r8/shr_const_g                 ! reciprocal of gravit
-   real(r8), public           :: ra           = 1._r8/shr_const_rearth            ! reciprocal of earth radius
-   real(r8), public           :: omega        = 2.0_R8*shr_const_pi/shr_const_sday! earth rot ~ rad/sec
-   real(r8), public           :: rh2o         = shr_const_rgas/shr_const_mwwv     ! Water vapor gas constant ~ J/K/kg
-   real(r8), public           :: rair         = shr_const_rdair   ! Dry air gas constant     ~ J/K/kg
-   real(r8), public           :: epsilo       = shr_const_mwwv/shr_const_mwdair   ! ratio of h2o to dry air molecular weights 
-   real(r8), public           :: zvir         = (shr_const_rwv/shr_const_rdair)-1.0_R8 ! (rh2o/rair) - 1
-   real(r8), public           :: cpvir        = (shr_const_cpwv/shr_const_cpdair)-1.0_R8 ! CPWV/CPDAIR - 1.0
-   real(r8), public           :: rhodair      = shr_const_pstd/(shr_const_rdair*shr_const_tkfrz)
-   real(r8), public           :: cappa        = (shr_const_rgas/shr_const_mwdair)/shr_const_cpdair  ! R/Cp
-   real(r8), public           :: ez           ! Coriolis expansion coeff -> omega/sqrt(0.375)   
-   real(r8), public           :: Cpd_on_Cpv   = shr_const_cpdair/shr_const_cpwv
+!   real(r8), public           :: rga          = 1._r8/shr_const_g                 ! reciprocal of gravit
+!   real(r8), public           :: ra           = 1._r8/shr_const_rearth            ! reciprocal of earth radius
+!   real(r8), public           :: omega        = 2.0_R8*shr_const_pi/shr_const_sday! earth rot ~ rad/sec
+   real(r8), public           :: rh2o         = r_universal/mwh2o     ! Water vapor gas constant ~ J/K/kg
+!   real(r8), public           :: rair         = shr_const_rdair   ! Dry air gas constant     ~ J/K/kg
+   real(r8), public           :: epsilo       = mwh2o/mwdry   ! ratio of h2o to dry air molecular weights 
+!   real(r8), public           :: zvir         = (shr_const_rwv/shr_const_rdair)-1.0_R8 ! (rh2o/rair) - 1
+!   real(r8), public           :: cpvir        = (shr_const_cpwv/shr_const_cpdair)-1.0_R8 ! CPWV/CPDAIR - 1.0
+!   real(r8), public           :: rhodair      = shr_const_pstd/(shr_const_rdair*shr_const_tkfrz)
+!   real(r8), public           :: cappa        = (shr_const_rgas/shr_const_mwdair)/shr_const_cpdair  ! R/Cp
+!   real(r8), public           :: ez           ! Coriolis expansion coeff -> omega/sqrt(0.375)   
+!   real(r8), public           :: Cpd_on_Cpv   = shr_const_cpdair/shr_const_cpwv
 
 !!---------------  Variables below here are for Gauss-Hermite quadrature points  -----------------------                         
 
@@ -237,106 +247,4 @@ module physconst
    real(r8), public, parameter :: xghq2(1:2) = (/ -7.0710678118654746e-01_r8,  7.0710678118654746e-01_r8 /)
    real(r8), public, parameter :: wghq2(1:2) = (/  8.8622692545275794e-01_r8,  8.8622692545275794e-01_r8 /)
 
-#if ( ! defined( CAMBOX_DEACTIVATE_THIS ) )
-!================================================================================================
-contains
-!================================================================================================
-
-   ! Read namelist variables.
-   subroutine physconst_readnl(nlfile)
-
-      use namelist_utils,  only: find_group_name
-      use units,           only: getunit, freeunit
-      use mpishorthand
-      use spmd_utils,      only: masterproc
-      use abortutils,      only: endrun
-      use cam_logfile,     only: iulog
-
-      character(len=*), intent(in) :: nlfile  ! filepath for file containing namelist input
-
-      ! Local variables
-      integer :: unitn, ierr
-      character(len=*), parameter :: subname = 'physconst_readnl'
-      logical       newg, newsday, newmwh2o, newcpwv, newmwdry, newrearth, newtmelt
-
-      ! Physical constants needing to be reset (ie. for aqua planet experiments)
-      namelist /physconst_nl/  cpwv, gravit, mwdry, mwh2o, rearth, sday, tmelt
-
-      !-----------------------------------------------------------------------------
-
-      if (masterproc) then
-         unitn = getunit()
-         open( unitn, file=trim(nlfile), status='old' )
-         call find_group_name(unitn, 'physconst_nl', status=ierr)
-         if (ierr == 0) then
-            read(unitn, physconst_nl, iostat=ierr)
-            if (ierr /= 0) then
-               call endrun(subname // ':: ERROR reading namelist')
-            end if
-         end if
-         close(unitn)
-         call freeunit(unitn)
-      end if
-
-#ifdef SPMD
-      ! Broadcast namelist variables
-      call mpibcast(cpwv,      1,                   mpir8,   0, mpicom)
-      call mpibcast(gravit,    1,                   mpir8,   0, mpicom)
-      call mpibcast(mwdry,     1,                   mpir8,   0, mpicom)
-      call mpibcast(mwh2o,     1,                   mpir8,   0, mpicom)
-      call mpibcast(rearth,    1,                   mpir8,   0, mpicom)
-      call mpibcast(sday,      1,                   mpir8,   0, mpicom)
-      call mpibcast(tmelt,     1,                   mpir8,   0, mpicom)
-#endif
-
-
-      
-      newg     =  gravit .ne. shr_const_g 
-      newsday  =  sday   .ne. shr_const_sday
-      newmwh2o =  mwh2o  .ne. shr_const_mwwv
-      newcpwv  =  cpwv   .ne. shr_const_cpwv
-      newmwdry =  mwdry  .ne. shr_const_mwdair
-      newrearth=  rearth .ne. shr_const_rearth
-      newtmelt =  tmelt  .ne. shr_const_tkfrz
-      
-      
-      
-      if (newg .or. newsday .or. newmwh2o .or. newcpwv .or. newmwdry .or. newrearth .or. newtmelt) then
-         if (masterproc) then
-            write(iulog,*)'****************************************************************************'
-            write(iulog,*)'***    New Physical Constant Values set via namelist                     ***'
-            write(iulog,*)'***                                                                      ***'
-            write(iulog,*)'***    Physical Constant    Old Value                  New Value         ***'
-            if (newg)       write(iulog,*)'***       GRAVITY   ',shr_const_g,gravit,'***'
-            if (newsday)    write(iulog,*)'***       SDAY      ',shr_const_sday,sday,'***'
-            if (newmwh2o)   write(iulog,*)'***       MWH20     ',shr_const_mwwv,mwh2o,'***'
-            if (newcpwv)    write(iulog,*)'***       CPWV      ',shr_const_cpwv,cpwv,'***'
-            if (newmwdry)   write(iulog,*)'***       MWDRY     ',shr_const_mwdair,mwdry,'***'
-            if (newrearth)  write(iulog,*)'***       REARTH    ',shr_const_rearth,rearth,'***'
-            if (newtmelt)   write(iulog,*)'***       TMELT     ',shr_const_tkfrz,tmelt,'***'
-            write(iulog,*)'****************************************************************************'
-         end if
-         rga         = 1._r8/gravit 
-         ra          = 1._r8/rearth
-         omega       = 2.0_R8*pi/sday
-         cpvir       = cpwv/cpair - 1._r8
-         epsilo      = mwh2o/mwdry      
-         
-         !  rair and rh2o have to be defined before any of the variables that use them
-         
-         rair        = r_universal/mwdry
-         rh2o        = r_universal/mwh2o  
-         
-         cappa       = rair/cpair       
-         rhodair     = pstd/(rair*tmelt)
-         zvir        =  (rh2o/rair)-1.0_R8
-         ez          = omega / sqrt(0.375_r8)
-         Cpd_on_Cpv  = cpair/cpwv
-         
-      else	
-         ez          = omega / sqrt(0.375_r8)
-      end if
-      
-    end subroutine physconst_readnl
-#endif
-  end module physconst
+ end module physconst

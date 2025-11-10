@@ -3,7 +3,7 @@
 !--------------------------------------------------------------
 ! ... Basic aerosol mode parameters and arrays
 !--------------------------------------------------------------
-      use shr_kind_mod,  only: r8 => shr_kind_r8
+      use precision_mod, only: r8 => f8
       use constituents,  only: pcnst
       use radconstants,  only: nswbands, nlwbands
 
@@ -310,8 +310,7 @@
       contains
 
         subroutine qqcw_set_ptr(index, iptr)
-          use cam_abortutils, only : endrun
-          use time_manager, only : is_first_step
+          use mam_utils, only : endrun,  is_first_step
           
 
           integer, intent(in) :: index, iptr
@@ -324,7 +323,7 @@
         end subroutine qqcw_set_ptr
 
         function qqcw_get_field(pbuf, index, lchnk, errorhandle)
-          use cam_abortutils, only : endrun
+          use mam_utils, only : endrun
           use physics_buffer, only : physics_buffer_desc, pbuf_get_field
 
           integer, intent(in) :: index, lchnk

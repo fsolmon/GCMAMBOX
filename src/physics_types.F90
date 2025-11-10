@@ -11,8 +11,10 @@
 !-------------------------------------------------------------------------------
 module physics_types
 
-  use shr_kind_mod, only: r8 => shr_kind_r8
-  use ppgrid,       only: pcols, pver
+!  use shr_kind_mod, only: r8 => shr_kind_r8
+!  use ppgrid,       only: pcols, pver
+  use precision_mod, only: r8 => f8
+!  use mam_utils, only: pcols, pver
   use constituents, only: pcnst, cnst_name
 
   implicit none
@@ -25,6 +27,12 @@ module physics_types
   public physics_ptend
   
 
+! FAB make the state variables allocatable 
+!  to do improve the readibility 
+! extend the physics_state to other met and aerosol variable for a better readibility
+! PERHAPS think about defining a MAM_state and modify the few MAM box routine accordingly
+! that would be more elegant in fact DO IT !! 
+! question should be declared as pointer ?like in GC metstate for example ??
 !-------------------------------------------------------------------------------
   type physics_state
      integer                                     :: &
@@ -40,50 +48,35 @@ module physics_types
 !          phis,    &! surface geopotential
 !          ulat,    &! unique latitudes  (radians)
 !          ulon      ! unique longitudes (radians)
-     real(r8), dimension(pcols,pver)        :: &
-          t,       &! temperature (K)
-          pmid,    &! midpoint pressure (Pa) 
-          pdel      ! layer thickness (Pa)
-!     real(r8), dimension(:,:),allocatable        :: &
-!          t,       &! temperature (K)
-!          u,       &! zonal wind (m/s)
-!          v,       &! meridional wind (m/s)
-!          s,       &! dry static energy
-!          omega,   &! vertical pressure velocity (Pa/s) 
-!          pmid,    &! midpoint pressure (Pa) 
-!          pmiddry, &! midpoint pressure dry (Pa) 
-!          pdel,    &! layer thickness (Pa)
-!          pdeldry, &! layer thickness dry (Pa)
-!          rpdel,   &! reciprocal of layer thickness (Pa)
-!          rpdeldry,&! recipricol layer thickness dry (Pa)
-!          lnpmid,  &! ln(pmid)
-!          lnpmiddry,&! log midpoint pressure dry (Pa) 
-!          exner,   &! inverse exner function w.r.t. surface pressure (ps/p)^(R/cp)
-!          zm        ! geopotential height above surface at midpoints (m)
 
-!     real(r8), dimension(:,:,:),allocatable      :: &
-     real(r8), dimension(pcols,pver,pcnst)      :: &
-          q         ! constituent mixing ratio (kg/kg moist or dry air depending on type)
+! real(r8), dimension(pcols,pver)        :: &
 
-!     real(r8), dimension(:,:),allocatable        :: &
-!          pint,    &! interface pressure (Pa)
-!          pintdry, &! interface pressure dry (Pa) 
-!          lnpint,  &! ln(pint)
-!          lnpintdry,&! log interface pressure dry (Pa) 
-!          zi        ! geopotential height above surface at interfaces (m)
+real(r8), dimension(:),   pointer  :: &
+          pblh
 
-!     real(r8), dimension(:),allocatable          :: &
-!          te_ini,  &! vertically integrated total (kinetic + static) energy of initial state
-!          te_cur,  &! vertically integrated total (kinetic + static) energy of current state
-!          tw_ini,  &! vertically integrated total water of initial state
-!          tw_cur    ! vertically integrated total water of new state
-!     integer :: count ! count of values with significant energy or water imbalances
-!     integer, dimension(:),allocatable           :: &
-!          latmapback, &! map from column to unique lat for that column
-!          lonmapback, &! map from column to unique lon for that column
-!          cid        ! unique column id
-!     integer :: ulatcnt, &! number of unique lats in chunk
-!                uloncnt   ! number of unique lons in chunk
+
+real(r8), dimension(:,:), pointer :: &   
+           t,       &! temperature (K)
+          pmid,     &! midpoint pressure (Pa) 
+          pdel,     & ! layer thickness (Pa)
+          zm,       &! midpoint height above surface (m)
+          cld,      &    ! stratiform cloud fraction
+          relhum,   & ! layer relative humidity
+          qv,       &     ! layer specific humidity
+          aircon
+real(r8), dimension(:,:), pointer :: &
+           ph2so4,       &! prod h2so4 kg/kg/s 
+           paqso4         ! aq prod so4 kg/kg/s  
+
+real(r8), dimension(:,:,:), pointer     :: &    
+          q, &         ! constituent mixing ratio (kg/kg moist or dry air depending on type)
+          qqcw, &      ! Cloudborne aerosol MR array
+          dgncur_a, &  !
+          dgncur_awet,&! 
+          qaerwat, &    !
+          wetdens, &
+          hygro 
+
 
   end type physics_state
 
@@ -169,19 +162,19 @@ module physics_types
           lu = .false.,               &! true if dudt is returned
           lv = .false.                 ! true if dvdt is returned
 
-     logical,dimension(pcnst) ::  lq = .false.  ! true if dqdt() is returned
+     logical,dimension(:), allocatable :: lq  ! true if dqdt() is returned
 
      integer ::             &
           top_level,        &! top level index for which nonzero tendencies have been set
           bot_level          ! bottom level index for which nonzero tendencies have been set
 
-!    real(r8), dimension(:,:),allocatable   :: &
-     real(r8), dimension(pcols,pver)   :: &
+     real(r8), dimension(:,:),allocatable   :: &
+!FAB     real(r8), dimension(pcols,pver)   :: &
           s,                &! heating rate (J/kg/s)
           u,                &! u momentum tendency (m/s/s)
           v                  ! v momentum tendency (m/s/s)
-!    real(r8), dimension(:,:,:),allocatable :: &
-     real(r8), dimension(pcols,pver,pcnst) :: &
+    real(r8), dimension(:,:,:),allocatable :: &
+!     real(r8), dimension(pcols,pver,pcnst) :: &
           q                  ! consituent tendencies (kg/kg/s)
 
 !! boundary fluxes

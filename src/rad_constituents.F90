@@ -15,10 +15,9 @@
 !    modal_aero_wateruptake.F90
 !
 
-      use shr_kind_mod,   only: r8 => shr_kind_r8
+      use precision_mod,  only: r8 => f8
 
-      use abortutils,     only: endrun
-      use cam_logfile,    only: iulog
+      use mam_utils,      only: endrun, iulog
       use radconstants,   only: nlwbands, nswbands
       use physics_types,  only: physics_state, physics_ptend
       use physics_buffer, only: physics_buffer_desc
@@ -485,7 +484,7 @@ m_loop: do m = 1, ntot_amode
 ! Return pointer to mass mixing ratio for the modal aerosol specie from the specified
 ! climate or diagnostic list.
 
-      use ppgrid, only: pver
+      use mam_utils, only: pver
       use constituents, only: pcnst
       use modal_aero_data, only:  lmassptr_amode, nspec_amode
 

@@ -11,10 +11,10 @@
 #if (defined MODAL_AERO)
 
 ! !USES:
-   use shr_kind_mod,  only:  r8 => shr_kind_r8
-   use shr_kind_mod,  only:  r4 => shr_kind_r4
-   use cam_logfile,   only:  iulog
-   use mo_constants,  only:  pi
+   use precision_mod, only:  r8 => f8
+   use precision_mod, only:  r4 => f4
+   use mam_utils,     only:  iulog
+   use physconst,  only:  pi
    use chem_mods,     only:  gas_pcnst
 
   implicit none
@@ -83,15 +83,12 @@
 
 ! !USES:
    use modal_aero_data
-   use cam_abortutils, only: endrun
-   use cam_history,    only: outfld, fieldname_len
+   use mam_utils,      only: endrun, outfld, fieldname_len, pcols, pver, iam, masterproc, &
+                             top_lev => clim_modal_aero_top_lev
    use chem_mods,      only: adv_mass
    use constituents,   only: pcnst, cnst_name
    use physconst,      only: gravit, mwdry, r_universal
-   use ppgrid,         only: pcols, pver
-   use spmd_utils,     only: iam, masterproc
    use wv_saturation,  only: qsat
-   use ref_pres,       only: top_lev=>clim_modal_aero_top_lev
 
    implicit none
 
@@ -605,7 +602,7 @@ main_i:	do i = 1, ncol
            qh2so4_del, qnh3_del, dens_nh4so4a, ldiagaa,   &
            dnclusterdt )
 
-          use mo_constants, only: rgas, &               ! Gas constant (J/K/kmol)
+          use physconst, only: rgas, &               ! Gas constant (J/K/kmol)
                                   avogad => avogadro    ! Avogadro's number (1/kmol)
           use physconst,    only: mw_so4a => mwso4, &   ! Molecular weight of sulfate
                                   mw_nh4a => mwnh4      ! Molecular weight of ammonium
@@ -1467,10 +1464,8 @@ subroutine modal_aero_newnuc_init( mam_amicphys_optaa )
 use modal_aero_data
 use modal_aero_rename
 
-use cam_abortutils,   only:  endrun
-use cam_history,  only:  addfld, horiz_only, add_default, fieldname_len
+use mam_utils,    only:  endrun, addfld, horiz_only, add_default, fieldname_len, masterproc
 use constituents, only:  pcnst, cnst_get_ind, cnst_name
-use spmd_utils,   only:  masterproc
 use phys_control, only: phys_getopts
 
 

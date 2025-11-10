@@ -3,8 +3,8 @@ module radconstants
 ! This module contains constants that are specific to the radiative transfer
 ! code used in the RRTMG model.
 
-use shr_kind_mod,   only: r8 => shr_kind_r8
-use cam_abortutils,     only: endrun
+use precision_mod, only: r8 => f8
+use mam_utils,     only: endrun
 
 implicit none
 private

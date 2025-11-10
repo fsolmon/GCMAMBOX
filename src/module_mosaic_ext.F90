@@ -1,6 +1,6 @@
 module module_mosaic_ext
 
-use shr_kind_mod,  only: r8 => shr_kind_r8
+use precision_mod, only: r8 => f8
 use physconst,     only: pi
 
 contains

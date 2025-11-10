@@ -18,26 +18,85 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.cmake")
     message(STATUS "Found config.cmake")
 endif()
 
-
 # Compiler settings
 # You can override these with: cmake -DCMAKE_Fortran_COMPILER=gfortran ...
 if(NOT CMAKE_Fortran_COMPILER_ID)
     message(WARNING "Fortran compiler not explicitly set")
 endif()
 
+#-----------------------------------------------------------------------------
+# Find NetCDF Libraries
+#-----------------------------------------------------------------------------
+# Option 1: Use pkg-config (recommended)
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+    pkg_check_modules(NETCDF IMPORTED_TARGET netcdf-fortran netcdf)
+    if(NETCDF_FOUND)
+        message(STATUS "Found NetCDF via pkg-config")
+        message(STATUS "  NetCDF include dirs: ${NETCDF_INCLUDE_DIRS}")
+        message(STATUS "  NetCDF library dirs: ${NETCDF_LIBRARY_DIRS}")
+        message(STATUS "  NetCDF libraries: ${NETCDF_LIBRARIES}")
+    endif()
+endif()
+
+# Option 2: Manual search if pkg-config fails
+if(NOT NETCDF_FOUND)
+    message(STATUS "Searching for NetCDF manually...")
+    
+    # Set potential search paths
+    set(NETCDF_SEARCH_PATHS
+        /home/fsolmon/miniconda3
+        /usr
+        /usr/local
+        $ENV{NETCDF_DIR}
+        $ENV{NETCDF_ROOT}
+        $ENV{NETCDF_FORTRAN_HOME}
+    )
+    
+    # Find NetCDF C library
+    find_library(NETCDF_C_LIB
+        NAMES netcdf
+        PATHS ${NETCDF_SEARCH_PATHS}
+        PATH_SUFFIXES lib lib64
+    )
+    
+    # Find NetCDF Fortran library
+    find_library(NETCDF_F_LIB
+        NAMES netcdff
+        PATHS ${NETCDF_SEARCH_PATHS}
+        PATH_SUFFIXES lib lib64
+    )
+    
+    # Find NetCDF include directory
+    find_path(NETCDF_INCLUDE_DIR
+        NAMES netcdf.mod netcdf.inc
+        PATHS ${NETCDF_SEARCH_PATHS}
+        PATH_SUFFIXES include Include
+    )
+    
+    if(NETCDF_C_LIB AND NETCDF_F_LIB AND NETCDF_INCLUDE_DIR)
+        set(NETCDF_FOUND TRUE)
+        set(NETCDF_LIBRARIES ${NETCDF_F_LIB} ${NETCDF_C_LIB})
+        set(NETCDF_INCLUDE_DIRS ${NETCDF_INCLUDE_DIR})
+        message(STATUS "Found NetCDF manually")
+        message(STATUS "  NetCDF C library: ${NETCDF_C_LIB}")
+        message(STATUS "  NetCDF Fortran library: ${NETCDF_F_LIB}")
+        message(STATUS "  NetCDF include dir: ${NETCDF_INCLUDE_DIR}")
+    else()
+        message(FATAL_ERROR "NetCDF libraries not found. Please install NetCDF or set NETCDF_DIR environment variable.")
+    endif()
+endif()
+
 # Preprocessor settings
 # Set your CPP and CPPFLAGS here or via command line
 set(CPP "cpp" CACHE STRING "C preprocessor")
-set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES  -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO  -DPCNST=54 -DPCOLS=1 -DPVER=1 -DNBC=1 -DNPOA=1 -DNSOA=1"  CACHE STRING "C preprocessor flags")
+set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
 
 # Fortran compiler flags
-# Set your FCFLAGS here or via command line
-set(FCFLAGS "-g -O0  -fno-range-check -ffree-line-length-none -I/usr/local/netcdf-4.6.1-4.4.4-gnu-7.4.1/include/" CACHE STRING "Fortran compiler flags")
-#set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FCFLAGS}")
+set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
+
+# Build the full Fortran flags
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FCFLAGS} ${CPPFLAGS}")
-# Linker flags
-set(LDFLAGS "-L/usr/local/netcdf-4.6.1-4.4.4-gnu-7.4.1/lib -lnetcdff -lnetcdf" CACHE STRING "Linker flags")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDFLAGS}")
 
 # Executable name
 set(EXE "gcmambox" CACHE STRING "Executable name")
@@ -74,61 +133,38 @@ endfunction()
 
 #-----------------------------------------------------------------------------
 # Source file lists
+# normally the OBJ1-OBJ5 are sources that are used in the MAM lib in GeosCore
+# OBJ 9 is the driver 
 #-----------------------------------------------------------------------------
 
 # OBJ1: Shared modules
 set(OBJ1_SOURCES
-    shr_kind_mod.F90
-    shr_const_mod.F90
     precision_mod.F90
+    physconstants.F90
+    mam_utils.F90
 )
 
-# OBJ2: Core modules
+# OBJ2: declaration and utilities from CAM env.  
 set(OBJ2_SOURCES
-    cam_logfile.F90
-    spmd_utils.F90
-    abortutils.F90
-    cam_abortutils.F90
-    ppgrid.F90
-    pmgrid.F90
     constituents.F90
     radconstants.F90
     physconst.F90
-    cam_history.F90
-    units.F90
-    ref_pres.F90
-    dyn_grid.F90
     buffer.F90
     physics_buffer.F90
     physics_types.F90
     phys_control.F90
-    mo_constants.F90
     chem_mods.F90
-    mo_tracname.F90
-    mo_chem_utls.F90
-    gffgch.F90
     wv_saturation.F90
     error_function.F90
-    shr_spfn_mod.F90
-    infnan.F90
-    seasalt_model.F90
-    time_manager.F90
-    aerodep_flx.F90
-    modal_aero_convproc.F90
-    modal_aero_deposition.F90
 )
 
 # OBJ3: Modal aerosol data
 set(OBJ3_SOURCES
     modal_aero_data.F90
-)
-
-# OBJ4: Radiation constituents
-set(OBJ4_SOURCES
     rad_constituents.F90
 )
 
-# OBJ5: MOSAIC and modal aerosol modules
+# OBJ5: MOSAIC and MAM aerosol modules
 set(OBJ5_SOURCES
     module_data_mosaic_aero.F90
     module_mosaic_support.F90
@@ -150,7 +186,7 @@ set(OBJ5_SOURCES
     modal_aero_initialize_data.F90
 )
 
-# OBJ9: Driver and main
+# OBJ9: Driver and utilitie for box model  
 set(OBJ9_SOURCES
     gaschem_simple.F90
     cloudchem_simple.F90
@@ -163,7 +199,6 @@ set(ALL_SOURCES
     ${OBJ1_SOURCES}
     ${OBJ2_SOURCES}
     ${OBJ3_SOURCES}
-    ${OBJ4_SOURCES}
     ${OBJ5_SOURCES}
     ${OBJ9_SOURCES}
 )
@@ -192,14 +227,23 @@ endforeach()
 #-----------------------------------------------------------------------------
 add_executable(${EXE} ${VERIFIED_SOURCES})
 
-# Set up dependencies between object groups
-# OBJ1 -> OBJ2 -> OBJ3 -> OBJ4 -> OBJ5 -> OBJ9
-
 # Target properties
 set_target_properties(${EXE} PROPERTIES
     Fortran_MODULE_DIRECTORY ${OUT_DIR}
     RUNTIME_OUTPUT_DIRECTORY ${OUT_DIR}
 )
+
+#-----------------------------------------------------------------------------
+# Link NetCDF libraries to the executable
+#-----------------------------------------------------------------------------
+if(PkgConfig_FOUND AND TARGET PkgConfig::NETCDF)
+    # If using pkg-config, link with the imported target
+    target_link_libraries(${EXE} PRIVATE PkgConfig::NETCDF)
+else()
+    # Manual linking
+    target_include_directories(${EXE} PRIVATE ${NETCDF_INCLUDE_DIRS})
+    target_link_libraries(${EXE} PRIVATE ${NETCDF_LIBRARIES})
+endif()
 
 # Clean targets
 add_custom_target(clean-all
@@ -228,7 +272,11 @@ message(STATUS "Fortran Compiler: ${CMAKE_Fortran_COMPILER}")
 message(STATUS "Fortran Flags: ${CMAKE_Fortran_FLAGS}")
 message(STATUS "CPP: ${CPP}")
 message(STATUS "CPP Flags: ${CPPFLAGS}")
-message(STATUS "Linker Flags: ${CMAKE_EXE_LINKER_FLAGS}")
+message(STATUS "NetCDF Found: ${NETCDF_FOUND}")
+if(NETCDF_FOUND)
+    message(STATUS "NetCDF Include Dirs: ${NETCDF_INCLUDE_DIRS}")
+    message(STATUS "NetCDF Libraries: ${NETCDF_LIBRARIES}")
+endif()
 message(STATUS "Output Directory: ${OUT_DIR}")
 message(STATUS "Executable: ${EXE}")
 message(STATUS "=============================================")

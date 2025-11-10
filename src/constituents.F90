@@ -8,17 +8,18 @@
 
       module constituents
 
-      use abortutils, only:  endrun
-      use cam_logfile, only:  iulog
+!      use mam_utils, only:  endrun, iulog
 
       implicit none
 
       public
-
+!FAB      integer, parameter :: pcnst = PCNST 
+! Depend de quel MAM , pour MAM4 sans MOM 
+! a faire : fixe pcnst en fonction de option ( plutot que le test dumb ) 
+!declare toute les variables dependant de pcnst en allocation dynamique et alloue apres choix option
       integer, parameter :: pcnst = 54 
-
       character(len=16) :: cnst_name(pcnst)     ! constituent names
-
+      integer           :: species_class(pcnst)
       contains
 
 !==============================================================================
@@ -54,9 +55,8 @@
     if ( present(abort) ) abort_on_error = abort
 
     if ( abort_on_error ) then
-       write(iulog,*) 'CNST_GET_IND, name:', name, &
+       write(*,*) 'CNST_GET_IND, name:', name, &
                       ' not found in list:', cnst_name(:)
-       call endrun('CNST_GET_IND: name not found')
     end if
 
 ! error return
