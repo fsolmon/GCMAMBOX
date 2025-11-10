@@ -1361,7 +1361,7 @@ loop:    do i = icldphy+1, pcnst
 
 !--------------------------------------------------------------------
 !--------------------------------------------------------------------
-! This routine was added for facilitating use in Geos-chem and GCMAMBOX 
+! FAB This routine was added for facilitating use in Geos-chem and GCMAMBOX 
 SUBROUTINE MAM_init_basics(pbuf)
 ! equivqlent to the cambox_init_basics
 
@@ -1463,7 +1463,7 @@ do s = 1, l
    if (solsym(s)(1:2) == 'ca') adv_mass(s) =  40.0780000_r8 
    if (solsym(s)(1:3) == 'co3') adv_mass(s) = 60.0092000_r8
    if (solsym(s)(1:3) == 'dst') adv_mass(s) = 135.064039_r8
-   if (solsym(s)(1:3) == 'ncl') adv_mass(s) = 22.9897667_r8 ! if def mosaic eqv Na 
+   if (solsym(s)(1:3) == 'ncl') adv_mass(s) = 22.9897667_r8 !! if def mosaic eqv Na!! 
    if (solsym(s)(1:2) == 'cl') adv_mass(s) =  35.4527000_r8
    if (solsym(s)(1:3) == 'mom') adv_mass(s) = 150._r8
 
@@ -1501,9 +1501,9 @@ print*, 'FAB je passe MODAL_AERO_4MODE'
          135.064041_r8, 58.4424667_r8, 115.107340_r8, 1.00740004_r8,                &
          12.0109997_r8, 12.0109997_r8, 1.00740004_r8 /)
 #endif
-
+! FAB 2,3,4,5 not used in GC context : perhaps supress to save mem ?- must be consistant with imozart (here fixed to 5) shift
       cnst_name(1) = 'QVAPOR'
-      cnst_name(2) = 'CLDLIQ'
+      cnst_name(2) = 'CLDLIQ' 
       cnst_name(3) = 'CLDICE'
       cnst_name(4) = 'NUMLIQ'
       cnst_name(5) = 'NUMICE'
@@ -1607,47 +1607,58 @@ print*, 'FAB je passe MODAL_AERO_4MODE'
 
         END SUBROUTINE MAM_ALLOCATE
 
-
-        SUBROUTINE MAM_cold_start (state)!
-
-        use physconst, only: pi, mwdry 
+SUBROUTINE MAM_cold_start (physta,nstop,deltat)
+!
+!rewritten FAB
+        use physconst, only: pi, mwdry,r_universal 
         use mam_utils, only: pcols,pver, endrun, & 
-                l_h2so4g, l_soag, l_hno3g, l_so2g, l_hclg, l_nh3g
+                l_h2so4g, l_soag, l_hno3g, l_so2g, l_hclg, l_nh3g, &
+                mdo_gaschem, mdo_cloudchem,&
+                mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
 
         use modal_aero_amicphys, only :&
                    dens_aer, iaer_bc, iaer_pom, iaer_so4, iaer_soa, iaer_ncl, &
-                   iaer_mom, iaer_dst        
+                   iaer_mom, iaer_dst, iaer_co3, iaer_nh4, iaer_no3 
 
         use modal_aero_data
         use physics_types, only : physics_state
-        type(physics_state),  intent(in) :: state   
+        type(physics_state),  intent(in) :: physta   
 
-        !initial composition for q  
-        ! should go on a namelist or initialized somehow from geos 
-        real(r8) :: numc1, numc2, numc3, numc4,                     &
-                          mfso41, mfpom1, mfsoa1, mfbc1, mfdst1, mfncl1,  &
-                          mfso42, mfsoa2, mfncl2,                         &
-                          mfdst3, mfncl3, mfso43, mfbc3, mfpom3,  mfsoa3, &
-                          mfpom4, mfbc4,                                  &
-                          qso2, qh2so4, qsoag, qhno3,qnh3
+        integer, intent(out), optional :: nstop
+        real(r8), intent(out), optional :: deltat
+
+
+!local 
         real(r8) :: tmpfso4, tmpfnh4, tmpfsoa, tmpfpom, &
-                          tmpfbcx, tmpfncl, tmpfdst, tmpfmom
-        real(r8) :: tmpfno3, tmpfclx, tmpfcax, tmpfco3
+                    tmpfbc, tmpfncl, tmpfdst, tmpfmom
+        real(r8) :: tmpfno3, tmpfcl, tmpfca, tmpfco3, tmpfna
 
         real(r8) :: tmpdens, tmpvol, tmpmass, sx
 
 
         real(r8), pointer :: q(:,:,:), aircon(:,:), dgncur_a(:,:,:)
-!         real(r8), dimension(pcols,pver,pcnst):: q
-!         real(r8), dimension(pcols,pver):: aircon
-!         real(r8), dimension(pcols,pver,ntot_amode):: dgncur_a(pcols,pver,ntot_amode)
 
-        integer :: l_num_a1, l_num_a2, l_nh4_a1, l_nh4_a2, &
-                         l_so4_a1, l_so4_a2, l_soa_a1, l_soa_a2
-        integer :: l_numa, l_so4a, l_nh4a, l_soaa, l_poma, l_bcxa, l_ncla, &
-                         l_dsta, l_no3a, l_clxa, l_caxa, l_co3a, l_moma
 
         integer :: i,k,n
+
+
+        !
+! namelist variable
+!
+      integer  :: mam_dt, mam_nstep
+      real(r8) :: temp, press, RH_CLEA
+      real(r8),  dimension(:), allocatable  :: numc, mfso4, mfpom, mfsoa, mfbc, & 
+                                    mfdst, mfncl, mfno3, mfnh4, mfco3, mfna
+      real(r8)  ::          qso2, qh2so4, qsoag,qhno3,qnh3,qhcl
+
+      namelist /time_input/ mam_dt, mam_nstep
+      namelist /cntl_input/ mdo_gaschem, mdo_gasaerexch, &
+                            mdo_rename, mdo_newnuc, mdo_coag
+      namelist /met_input/ temp, press, RH_CLEA
+      namelist /chem_input/ qso2, qh2so4, qsoag, qhno3, qnh3, qhcl, &
+                          numc, mfso4, mfpom, mfsoa, mfbc, mfdst, & 
+                          mfncl, mfno3, mfnh4, mfco3
+
 
 
         !------------------------------------------------------------------------------
@@ -1655,61 +1666,64 @@ print*, 'FAB je passe MODAL_AERO_4MODE'
         !initialize gas phase and aerosol state for dev test only TEMPORARY
         ! be aware of modal_aero_initialize_q in modal_aero_initialize_data.F90
         ! which is not called but could be usefull
-       q => state%q
-       dgncur_a => state%dgncur_a
-       aircon => state%aircon
+       q => physta%q
+       dgncur_a => physta%dgncur_a
+       aircon => physta%aircon
 
-       
-              
-q(:,:,l_so2g)   = 1.e-4
-q(:,:,l_soag)   = 5.e-10
-q(:,:,l_nh3g)    = 5.e-10
-q(:,:,l_h2so4g) = 1.e-13
 
-numc1          = 1.E6_r8    ! unit: #/m3
-numc2          = 1.E6_r8
-numc3          = 1.E2_r8
-numc4          = 1.E5_r8
+allocate(numc(ntot_amode))
+allocate(mfso4(ntot_amode))
+allocate(mfpom(ntot_amode))
+allocate(mfsoa(ntot_amode))
+allocate(mfbc(ntot_amode))
+allocate(mfdst(ntot_amode))
+allocate(mfncl(ntot_amode))
+allocate(mfno3(ntot_amode))
+allocate(mfnh4(ntot_amode))
+allocate(mfco3(ntot_amode))
 
-mfso41         = 0.8_r8
-mfpom1         = 0.1_r8
-mfsoa1         = 0.1_r8
-mfbc1          = 0._r8
-mfdst1         = 0._r8
-mfncl1         = 0._r8
 
-mfso42         = 0.8_r8
-mfsoa2         = 0.1_r8
-mfncl2         = 0.1_r8
+open (UNIT = 101, FILE = 'namelist', STATUS = 'OLD')
+          read (101, time_input)
+          read (101, cntl_input)
+          read (101, met_input)
+          read (101, chem_input)
+close (101)
 
-mfdst3         = 0.8_r8
-mfncl3         = 0.1_r8
-mfso43         = 0.1_r8
-mfbc3          = 0._r8
-mfpom3         = 0._r8
-mfsoa3         = 0._r8
+      !! time step 
+      deltat              = mam_dt * 1._r8
+      nstop               = mam_nstep
 
-mfpom4         = 0.8_r8
-mfbc4          = 0.2_r8
+      physta%pmid(:,:)           = press
+      physta%t(:,:)              = temp
+      physta%relhum(:,:)         = RH_CLEA
+      physta%pblh(:)             = 1.1e3_r8
+      physta%zm(:,:)             = 3.0e3_r8
+      physta%aircon(:,:)         = physta%pmid(:,:)/(r_universal*physta%t(:,:))
+      physta%cld         = 0.5_r8
 
-      ! check if mass fraction is larger than one
-      if (mfso41+mfpom1+mfsoa1+mfbc1+mfdst1+mfncl1 .gt. 1._r8) then
-          print *, "The summed mass fraction is > 1 in mode 1"
-          stop
-      end if
-      if (mfso42+mfsoa2+mfncl2 .gt. 1._r8) then
-          print *, "The summed mass fraction is > 1 in mode 2"
-          stop
-      end if
-      if (mfdst3+mfncl3+mfso43+mfbc3+mfpom3+mfsoa3 .gt. 1._r8) then
-          print *, "The summed mass fraction is > 1 in mode 3"
-          stop
-      end if
-      if (mfpom4+mfbc4 .gt. 1._r8) then
-          print *, "The summed mass fraction is > 1 in mode 4"
-          stop
-      end if
-      
+
+
+! initialize the gas mixing ratio
+if (l_so2g > 0) q(:,:,l_so2g)   = qso2
+if (l_soag > 0) q(:,:,l_soag)   = qsoag
+if (l_h2so4g > 0)  q(:,:,l_h2so4g) = qh2so4
+if (l_hno3g> 0) q(:,:,l_hno3g) =   qhno3
+if (l_nh3g > 0) q(:,:,l_nh3g) =   qnh3
+if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
+
+       print*,'so4',lptr_so4_a_amode(:)
+       print*,'nh4',lptr_nh4_a_amode(:)
+       print*,'no3',lptr_no3_a_amode(:)
+       print*,'soa',lptr_soa_a_amode(:)
+       print*,'pom',lptr_pom_a_amode(:)
+       print*,'bc',lptr_bc_a_amode(:)
+       print*,'dust',lptr_dust_a_amode(:)
+       print*,'co3',lptr_co3_a_amode(:)
+       print*,'ca',lptr_ca_a_amode(:)
+       print*,'nacl',lptr_nacl_a_amode(:)
+
+
 ! initialize the aerosol/number mixing ratio for cold start.
 ! adapted to mam4 box model for now , only on the first 10 levels  
        do k = 1, pver 
@@ -1718,128 +1732,60 @@ mfbc4          = 0.2_r8
 
                 sx = log( sigmag_amode(n) )
 
-                if      (n == 1) then
-                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 0.20e-6_r8 ! m
-                   tmpfsoa      = mfsoa1
-                   tmpfso4      = mfso41
-                   tmpfncl      = mfncl1
-                   tmpfdst      = mfdst1
-                   tmpfpom      = mfpom1
-                   tmpfbcx      = mfbc1
-                 !  tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
-                 !                 tmpfncl - tmpfdst - tmpfpom - tmpfbcx
-                else if (n == 2) then
-                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 0.04e-6_r8
-                   tmpfsoa      = mfsoa2
-                   tmpfso4      = mfso42
-                   tmpfncl      = mfncl2
-                   tmpfdst      = 0._r8
-                   tmpfpom      = 0._r8
-                   tmpfbcx      = 0._r8
-                 !  tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
-                 !                 tmpfncl - tmpfdst - tmpfpom - tmpfbcx
-                else if (n == 3) then
-                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 2.00e-6_r8
-                   tmpfsoa      = mfsoa3
-                   tmpfso4      = mfso43
-                   tmpfncl      = mfncl3
-                   tmpfdst      = mfdst3
-                   tmpfpom      = mfpom3
-                   tmpfbcx      = mfbc3
-                  ! tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
-                  !                tmpfncl - tmpfdst - tmpfpom - tmpfbcx
-                else if (n == 4) then
-                   dgncur_a(i,k,n) = dgnum_amode(n)  ! 0.08e-6_r8
-                   tmpfsoa      = 0._r8
-                   tmpfso4      = 0._r8
-                   tmpfncl      = 0._r8
-                   tmpfdst      = 0._r8
-                   tmpfpom      = mfpom4
-                   tmpfbcx      = mfbc4
-                  ! tmpfmom      = 1._r8 - tmpfsoa - tmpfso4 - &
-                  !                tmpfncl - tmpfdst - tmpfpom - tmpfbcx
-                end if
-                ! q(i,k,numptr_amode(n)) = #/kg-air
-                if (n == modeptr_aitken) then
-                   q(i,k,numptr_amode(n)) = numc2 / aircon(i,k) / mwdry
-                   l_num_a2 = numptr_amode(n)
-                   l_so4_a2 = lptr_so4_a_amode(n)
-                else if (n == modeptr_accum) then
-                   q(i,k,numptr_amode(n)) = numc1 / aircon(i,k) / mwdry
-                   l_num_a1 = numptr_amode(n)
-                   l_so4_a1 = lptr_so4_a_amode(n)
-                else if (n == modeptr_pcarbon) then
-                   q(i,k,numptr_amode(n)) = numc4 / aircon(i,k) / mwdry
-                else
-                   q(i,k,numptr_amode(n)) = numc3 / aircon(i,k) / mwdry
-                end if
+                   dgncur_a(i,k,n) = dgnum_amode(n)  
+                   q(i,k,numptr_amode(n)) = numc(n) / aircon(i,k) / mwdry ! .m-3 converted to .kg-1
+                   if (lptr_so4_a_amode(n) > 0) tmpfso4 = mfso4(n)
+                   if (lptr_pom_a_amode(n) > 0) tmpfpom = mfpom(n)
+                   if (lptr_soa_a_amode(n) > 0) tmpfsoa = mfsoa(n)
+                   if (lptr_bc_a_amode(n) > 0)  tmpfbc  = mfbc(n)
+                   if (lptr_dust_a_amode(n) > 0) tmpfdst = mfdst(n)
+                   if (lptr_nacl_a_amode(n) > 0) tmpfncl = mfncl(n)
+                   if (lptr_no3_a_amode(n) > 0) tmpfno3 = mfno3(n)
+                   if (lptr_nh4_a_amode(n) > 0) tmpfnh4 = mfnh4(n)
+                   if (lptr_co3_a_amode(n) > 0) tmpfco3 = mfco3(n)
 
-                ! tmpvol: m3-dry-aerosol/kg-air
-                tmpvol  = q(i,k,numptr_amode(n)) * &
+                   tmpvol  = q(i,k,numptr_amode(n)) * &
                           (dgncur_a(i,k,n)**3) * &
                           (pi/6.0_r8) * exp(4.5_r8*sx*sx)
+                   tmpdens = ( (tmpfsoa / dens_aer(iaer_soa)) + &
+                               (tmpfso4 / dens_aer(iaer_so4)) + &
+                               (tmpfpom / dens_aer(iaer_pom)) + &
+                               (tmpfbc  / dens_aer(iaer_bc))  + &
+                               (tmpfdst / dens_aer(iaer_dst)) + &
+                               (tmpfncl / dens_aer(iaer_ncl)) + &
+                               (tmpfno3 / dens_aer(iaer_no3)) + &
+                               (tmpfnh4 / dens_aer(iaer_nh4)) + &
+                               (tmpfco3 / dens_aer(iaer_co3))   & 
+                             )**(-1._r8)
 
-                 tmpdens = 1.0_r8 /                           &
-                          ( (tmpfsoa / dens_aer(iaer_soa)) + &
-                            (tmpfso4 / dens_aer(iaer_so4)) + &
-                            (tmpfbcx / dens_aer(iaer_bc )) + &
-                            (tmpfpom / dens_aer(iaer_pom)) + &
-                            (tmpfncl / dens_aer(iaer_ncl)) + &
-                            (tmpfdst / dens_aer(iaer_dst)) )
-!                            (tmpfmom / dens_aer(iaer_mom))   )
-                tmpmass = tmpvol*tmpdens   ! kg-dry-aerosol/kg-air
-                l_so4a = lptr_so4_a_amode(n)
-                l_nh4a = -1
-                l_soaa = lptr_soa_a_amode(n)
-                l_poma = lptr_pom_a_amode(n)
-!                if (npoa == 2) l_poma = lptr_poma_a_amode(n)
-                l_bcxa = lptr_bc_a_amode(n)
-!                if (nbc  == 2) l_bcxa = lptr_bca_a_amode(n)
-                l_ncla = lptr_nacl_a_amode(n)
-                l_dsta = lptr_dust_a_amode(n)
-                l_moma = lptr_mom_a_amode(n)
+                    tmpmass = tmpvol*tmpdens   ! kg-dry-aerosol/kg-air
+                    if (lptr_so4_a_amode(n) > 0) q(i,k,lptr_so4_a_amode(n)) = tmpmass*tmpfso4
+                    if (lptr_pom_a_amode(n) > 0) q(i,k,lptr_pom_a_amode(n)) = tmpmass*tmpfpom
+                    if (lptr_soa_a_amode(n) > 0) q(i,k,lptr_soa_a_amode(n)) = tmpmass*tmpfsoa
+                    if (lptr_bc_a_amode(n)  > 0) q(i,k,lptr_bc_a_amode(n))  = tmpmass*tmpfbc
+                    if (lptr_dust_a_amode(n) > 0) q(i,k,lptr_dust_a_amode(n)) = tmpmass*tmpfdst
+                    if (lptr_nacl_a_amode(n) > 0) q(i,k,lptr_nacl_a_amode(n)) = tmpmass*tmpfncl
+                    if (lptr_no3_a_amode(n) > 0) q(i,k,lptr_no3_a_amode(n)) = tmpmass*tmpfno3
+                    if (lptr_nh4_a_amode(n) > 0) q(i,k,lptr_nh4_a_amode(n)) = tmpmass*tmpfnh4
+                    if (lptr_co3_a_amode(n) > 0) q(i,k,lptr_co3_a_amode(n)) = tmpmass*tmpfco3
 
-#if ( defined MOSAIC_SPECIES )
-                l_nh4a = lptr_nh4_a_amode(n)
-                l_no3a = lptr_no3_a_amode(n)
-                l_clxa = lptr_cl_a_amode(n)
-                l_caxa = lptr_ca_a_amode(n)
-                l_co3a = lptr_co3_a_amode(n)
-#else
-                l_nh4a = -1
-                l_no3a = -1
-                l_clxa = -1
-                l_caxa = -1
-                l_co3a = -1
-#endif
-
-
-                ! q array return kg-aer/kg-air
-                if (l_so4a > 0) q(i,k,l_so4a) = tmpmass*tmpfso4
-                if (l_nh4a > 0) q(i,k,l_nh4a) = tmpmass*tmpfnh4
-                if (l_soaa > 0) q(i,k,l_soaa) = tmpmass*tmpfsoa
-                if (l_poma > 0) q(i,k,l_poma) = tmpmass*tmpfpom
-                if (l_bcxa > 0) q(i,k,l_bcxa) = tmpmass*tmpfbcx
-                if (l_dsta > 0) q(i,k,l_dsta) = tmpmass*tmpfdst
-                if (l_ncla > 0) q(i,k,l_ncla) = tmpmass*tmpfncl
-                if (l_moma > 0) q(i,k,l_moma) = tmpmass*tmpfmom
-                if (l_no3a > 0) q(i,k,l_no3a) = tmpmass*tmpfno3
-                if (l_clxa > 0) q(i,k,l_clxa) = tmpmass*tmpfclx
-                if (l_caxa > 0) q(i,k,l_caxa) = tmpmass*tmpfcax
-                if (l_co3a > 0) q(i,k,l_co3a) = tmpmass*tmpfco3
-
-
-                ! initialize the gas mixing ratio
-                if (l_so2g > 0) q(:,:,l_so2g)   = qso2
-                if (l_soag > 0) q(:,:,l_soag)   = qsoag
-                if (l_h2so4g > 0)  q(:,:,l_h2so4g) = qh2so4
-                if (l_hno3g> 0) q(:,:,l_hno3g) =   qhno3
-                if (l_nh3g > 0) q(:,:,l_nh3g) =   qnh3
             end do ! n
          end do ! i
       end do ! k   
 
-END SUBROUTINE MAM_cold_start
+deallocate(numc)
+deallocate(mfso4)
+deallocate(mfpom)
+deallocate(mfsoa)
+deallocate(mfbc)
+deallocate(mfdst)
+deallocate(mfncl)
+deallocate(mfno3)
+deallocate(mfnh4)
+deallocate(mfco3)
+
+        END SUBROUTINE MAM_cold_start
+
 
      !==============================================================
    end module modal_aero_initialize_data

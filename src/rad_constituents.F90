@@ -394,7 +394,6 @@ m_loop: do m = 1, ntot_amode
       itmpl = 0
       l2 = lspectype_amode(s_idx,m_idx)
       do l3 = 1, nspecs
-         print*, 'FAB from ' ,nspecs, specname_amode(l2), specname_amode_rc(l3)
          if (specname_amode(l2) == specname_amode_rc(l3)) then
             itmpl = l3
             exit

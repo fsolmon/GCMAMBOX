@@ -15,7 +15,10 @@
       module driver
 
       use precision_mod, only: r8 => f8,  fp, f8
-      use mam_utils, only: masterproc, endrun, iulog, pcols, pver,plev, begchunk, endchunk
+      use mam_utils, only: masterproc, endrun, iulog, pcols, pver,plev, begchunk, endchunk,&
+                           mdo_gaschem, mdo_cloudchem,&
+                           mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
+
       use constituents, only: pcnst, cnst_name, cnst_get_ind
       use modal_aero_data, only: ntot_amode
       use physics_buffer, only: physics_buffer_desc
@@ -29,8 +32,8 @@
       public
 
 ! similaire a  GeosCore mam_driv 
-      integer :: mdo_gaschem, mdo_cloudchem
-      integer :: mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
+!      integer :: mdo_gaschem, mdo_cloudchem
+!      integer :: mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
       integer:: loffset, lchnk
       real(r8) :: deltat
 
@@ -140,41 +143,7 @@
       real(r8) :: qv_sat(pcols,pver)
       real(r8) :: tmn, tmx, trice
       real(r8) :: tmpa, tmpq
-      real(r8) :: tmpfso4, tmpfnh4, tmpfsoa, tmpfpom, &
-                  tmpfbcx, tmpfncl, tmpfdst, tmpfmom
-      real(r8) :: tmpfno3, tmpfclx, tmpfcax, tmpfco3
-      real(r8) :: tmpfmact, tmpfnact 
-      real(r8) :: tmpdens, tmpvol, tmpmass, sx
 
-!
-! namelist variable
-!
-      integer  :: mam_dt, mam_nstep
-      real(r8) :: temp, press, RH_CLEA
-      real(r8) :: numc1, numc2, numc3, numc4,                     &
-                  mfso41, mfpom1, mfsoa1, mfbc1, mfdst1, mfncl1,  &
-                  mfso42, mfsoa2, mfncl2,                         &
-                  mfdst3, mfncl3, mfso43, mfbc3, mfpom3,  mfsoa3, &
-                  mfpom4, mfbc4,                                  &
-                  qso2, qh2so4, qsoag,qhno3,qnh3
-
-      namelist /time_input/ mam_dt, mam_nstep
-      namelist /cntl_input/ mdo_gaschem, mdo_gasaerexch, &
-                            mdo_rename, mdo_newnuc, mdo_coag
-      namelist /met_input/ temp, press, RH_CLEA
-      namelist /chem_input/ numc1, numc2, numc3, numc4,          &
-                  mfso41, mfpom1, mfsoa1, mfbc1, mfdst1, mfncl1, &
-                  mfso42, mfsoa2, mfncl2, &
-                  mfdst3, mfncl3, mfso43, mfbc3, mfpom3, mfsoa3, &
-                  mfpom4, mfbc4, &
-                  qso2, qh2so4, qsoag,qhno3,qnh3
-
-      open (UNIT = 101, FILE = 'namelist', STATUS = 'OLD')
-          read (101, time_input)
-          read (101, cntl_input)
-          read (101, met_input)
-          read (101, chem_input)
-      close (101)
 
 
 
@@ -185,24 +154,6 @@
       xopt_cloudf         = 0.6_r8
       i_cldy_sameas_clear = 0
 
-      !! time step 
-      deltat              = mam_dt * 1._r8 
-      nstop               = mam_nstep
-
-      physta%pmid(:,:)           = press
-      physta%t(:,:)              = temp
-      physta%relhum(:,:)         = RH_CLEA
-      physta%pblh(:)             = 1.1e3_r8
-      physta%zm(:,:)             = 3.0e3_r8
-      physta%aircon(:,:)         =physta%pmid(:,:)/(r_universal*physta%t(:,:))
-      physta%cld         = 0.5_r8
-
-      physta%q                   = 0.0_r8
-      physta%qqcw                = 0.0_r8
-      physta%dgncur_a            = 0.0_r8
-      physta%dgncur_awet         = 0.0_r8
-      physta%qaerwat             = 0.0_r8
-      physta%wetdens             = 0.0_r8
 
 ! call gestbl to build saturation vapor pressure table.
       tmn   = 173.16_r8
@@ -219,7 +170,7 @@
       physta%q(:,:,1) = physta%qv(:,:)
 
       write(*,'(/a)') '*** main call MAM_cold_start'
-      call MAM_cold_start (physta)!
+      call MAM_cold_start (physta,nstop=nstop, deltat=deltat)!
 
       print*, 'apres cold start' , physta%q
 
@@ -437,18 +388,11 @@ call check(nf90_put_att(ncid, varid(10), "units", "kg-gas/kg-air") )
       qtend_coag_h2so4       = 0._r8 ; qtend_coag_soag       = 0._r8
 
       lchnk = begchunk
-!      pbuf => pbuf_get_chunk( pbuf2d, lchnk)
 
 
       latndx = -1
       lonndx = -1
 
-!      call cnst_get_ind( 'H2SO4', l_h2so4g, .false. )
-!      call cnst_get_ind( 'SO2',   l_so2g,   .false. )
-!      call cnst_get_ind( 'NH3',   l_nh3g,   .false. )
-!      call cnst_get_ind( 'HNO3',  l_hno3g,  .false. )
-!      call cnst_get_ind( 'HCL',   l_hclg,   .false. )
-!      call cnst_get_ind( 'SOAG',  l_soag,   .false. )
 
       nacc = modeptr_accum
       l_num_a1 = numptr_amode(nacc)

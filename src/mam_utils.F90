@@ -26,11 +26,14 @@ MODULE MAM_UTILS
   integer, parameter :: plon = 1
  
 
+  integer :: mdo_gaschem, mdo_cloudchem
+  integer :: mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
+
   integer :: pcols 
   integer :: pver 
   integer, parameter :: psubcols = 1
   integer  :: plev 
-  
+
   integer, parameter :: begchunk = 1
   integer, parameter :: endchunk = 2
 
