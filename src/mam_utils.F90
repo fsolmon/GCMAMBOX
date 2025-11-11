@@ -83,8 +83,12 @@ MODULE MAM_UTILS
 
   public :: get_spc_ndx
 
+  
+  
 CONTAINS
 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine endrun( msg )
     character(len=*), optional, intent(in) :: msg
     integer :: lunout

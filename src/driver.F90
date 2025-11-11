@@ -120,7 +120,7 @@
       use modal_aero_amicphys, only: &
            gaexch_h2so4_uptake_optaa, newnuc_h2so4_conc_optaa, mosaic
 
-      use modal_aero_initialize_data, only: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start 
+      use  modal_aero_initialize_data, only: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start 
       implicit none 
       integer,  intent(out  ) :: nstop
       real(r8), intent(out  ) :: deltat
@@ -466,7 +466,7 @@ do nstep = 1, nstop
 
 ! load pbuf
       call load_pbuf( pbuf, lchnk, pcols, &
-         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens)
+         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro)
       ! load ptend
       ptend%lq    =.false.
       ptend%q     = 0.
@@ -476,7 +476,7 @@ do nstep = 1, nstop
       
 ! unload pbuf
       call unload_pbuf( pbuf, lchnk, pcols, &
-         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens )
+         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro )
 
 !apply tendencies
       do l = 1, pcnst
@@ -494,16 +494,17 @@ do nstep = 1, nstop
 !
      write(*,'(/a,i8)') 'cambox_do_run doing wateruptake, istep=', istep
 
-     print*,'pcols',  lchnk, pcols 
      call load_pbuf( pbuf, lchnk, pcols, &
-        physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens )
+        physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro )
 
-     print*,'apres load pbuf'
 !
      call modal_aero_wateruptake_dr( physta, pbuf,deltat,nstep )
 
      call unload_pbuf( pbuf, lchnk, pcols, &
-         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens)
+         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro)
+
+     print*, 'physta%hygro' , physta%hygro 
+
 
 !
 ! switch from q & qqcw to vmr and vmrcw
@@ -708,8 +709,10 @@ call check( nf90_put_var(ncid, varid(17), &
 
 !-------------------------------------------------------------------------------
       subroutine load_pbuf( pbuf, lchnk, ncol, &
-         cld, qqcw, dgncur_a, dgncur_awet, qaerwat, wetdens )
+         cld, qqcw, dgncur_a, dgncur_awet, qaerwat, wetdens, hygro )
 
+      use mam_utils, only: pcols,pver
+      use constituents, only : pcnst
       use chem_mods, only: adv_mass, gas_pcnst, imozart
       use physconst, only: mwdry
 
@@ -730,6 +733,7 @@ call check( nf90_put_var(ncid, varid(17), &
       real(r8), intent(in   ) :: dgncur_awet(pcols,pver,ntot_amode)
       real(r8), intent(in   ) :: qaerwat(pcols,pver,ntot_amode)
       real(r8), intent(in   ) :: wetdens(pcols,pver,ntot_amode)
+      real(r8), intent(in   ) :: hygro(pcols,pver,ntot_amode)
 
       integer :: idx, l, ll, n
 
@@ -739,13 +743,13 @@ call check( nf90_put_var(ncid, varid(17), &
       real(r8), pointer :: ydgnumwet(:,:,:)
       real(r8), pointer :: yqaerwat(:,:,:)
       real(r8), pointer :: ywetdens(:,:,:)
-
+      real(r8), pointer :: yhygro(:,:,:)
 
       idx = pbuf_get_index( 'CLD' )
       call pbuf_get_field( pbuf, idx, ycld )
       ycld(:,:) = 0.0_r8
       ycld(1:ncol,:) = cld(1:ncol,:)
-      print*,'pbuf after CLD' 
+
       idx = pbuf_get_index( 'DGNUM' )
       call pbuf_get_field( pbuf, idx, ydgnum )
       ydgnum(:,:,:) = 0.0_r8
@@ -765,7 +769,12 @@ call check( nf90_put_var(ncid, varid(17), &
       call pbuf_get_field( pbuf, idx, ywetdens )
       ywetdens(:,:,:) = 0.0_r8
       ywetdens(1:ncol,:,:) = wetdens(1:ncol,:,:)
-print*,'pbuf1'
+
+      idx = pbuf_get_index( 'HYGROM' )
+      call pbuf_get_field( pbuf, idx, yhygro )
+      yhygro(:,:,:) = 0.0_r8
+      yhygro(1:ncol,:,:) = hygro(1:ncol,:,:)
+
       do n = 1, ntot_amode
       do ll = 0, nspec_amode(n)
          l = numptrcw_amode(n)
@@ -783,8 +792,10 @@ print*,'pbuf1'
 
 !-------------------------------------------------------------------------------
       subroutine unload_pbuf( pbuf, lchnk, ncol, &
-         cld, qqcw, dgncur_a, dgncur_awet, qaerwat, wetdens )
+         cld, qqcw, dgncur_a, dgncur_awet, qaerwat, wetdens, hygro )
 
+      use mam_utils, only: pcols,pver
+      use constituents, only : pcnst
       use chem_mods, only: adv_mass, gas_pcnst, imozart
       use physconst, only: mwdry
 
@@ -806,6 +817,7 @@ print*,'pbuf1'
       real(r8), intent(inout) :: dgncur_awet(pcols,pver,ntot_amode)
       real(r8), intent(inout) :: qaerwat(pcols,pver,ntot_amode)
       real(r8), intent(inout) :: wetdens(pcols,pver,ntot_amode)
+      real(r8), intent(inout) :: hygro(pcols,pver,ntot_amode)
 
       integer :: i, idx, k, l, ll, n
       real(r8) :: tmpa
@@ -816,7 +828,7 @@ print*,'pbuf1'
       real(r8), pointer :: ydgnumwet(:,:,:)
       real(r8), pointer :: yqaerwat(:,:,:)
       real(r8), pointer :: ywetdens(:,:,:)
-
+      real(r8), pointer :: yhygro(:,:,:)
 
       idx = pbuf_get_index( 'CLD' )
       call pbuf_get_field( pbuf, idx, ycld )
@@ -843,6 +855,11 @@ print*,'pbuf1'
       idx = pbuf_get_index( 'WETDENS_AP' )
       call pbuf_get_field( pbuf, idx, ywetdens )
       wetdens(1:ncol,:,:) = ywetdens(1:ncol,:,:)
+
+      idx = pbuf_get_index( 'HYGROM' )
+      call pbuf_get_field( pbuf, idx, yhygro )
+      hygro(1:ncol,:,:) = yhygro(1:ncol,:,:)
+
 
       do n = 1, ntot_amode
       do ll = 0, nspec_amode(n)

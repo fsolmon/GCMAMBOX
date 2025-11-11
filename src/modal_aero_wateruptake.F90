@@ -55,7 +55,8 @@ integer :: dgnum_idx      = 0
 integer :: dgnumwet_idx   = 0
 integer :: wetdens_ap_idx = 0
 integer :: qaerwat_idx    = 0
-
+!FAB
+integer :: hygrom_idx    = 0
 logical :: pergro_mods         = .false.
 
 real(r8), allocatable :: maer(:,:,:)      ! aerosol wet mass MR (including water) (kg/kg-air)
@@ -91,7 +92,7 @@ subroutine modal_aero_wateruptake_reg()
 
    ! 1st order rate for direct conversion of strat. cloud water to precip (1/s)
    call pbuf_add_field('QAERWAT',    'physpkg', dtype_r8, (/pcols, pver, nmodes/), qaerwat_idx)  
-
+   call pbuf_add_field('HYGROM',    'physpkg', dtype_r8, (/pcols, pver, nmodes/), hygrom_idx)
 end subroutine modal_aero_wateruptake_reg
 
 !===============================================================================
@@ -189,7 +190,7 @@ end subroutine modal_aero_wateruptake_init
 
 
 subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgnumdry_m, dgnumwet_m, &
-                                     qaerwat_m, wetdens_m, clear_rh_in)
+                                     qaerwat_m, wetdens_m, hygrom_m, clear_rh_in)
 
 !  use shr_log_mod ,   only: errmsg => shr_log_errmsg
    !----------------------------------------------------------------------------
@@ -214,6 +215,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
    real(r8), optional, allocatable, target, intent(inout)   :: dgnumwet_m(:,:,:)
    real(r8), optional, allocatable, target, intent(inout)   :: qaerwat_m(:,:,:)
    real(r8), optional, allocatable, target, intent(inout)   :: wetdens_m(:,:,:)
+   real(r8), optional, allocatable, target, intent(inout)   :: hygrom_m(:,:,:)
    ! optional input relative humidty (overrides clearsky RH estimate below)
    real(r8), optional,          intent(in)    :: clear_rh_in(pcols,pver)
 
@@ -240,6 +242,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
    real(r8), pointer :: dgncur_awet(:,:,:)
    real(r8), pointer :: wetdens(:,:,:)
    real(r8), pointer :: qaerwat(:,:,:)
+   real(r8), pointer :: hygrom(:,:,:)
 
    real(r8) :: dryvolmr(pcols,pver)          ! volume MR for aerosol mode (m3/kg)
    real(r8) :: specdens
@@ -307,14 +310,14 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
 
       ! check that all optional args for diagnostic mode are present
       if (.not. present(dgnumdry_m) .or. .not. present(dgnumwet_m) .or. &
-          .not. present(qaerwat_m)) then
+          .not. present(qaerwat_m) .or. .not. present(hygrom_m) ) then
          call endrun('modal_aero_wateruptake_dr called '// &
               'with list_idx_in but required args not present ')!//errmsg(__FILE__,__LINE__))
       end if
 
       ! arrays for diagnostic calculations must be allocated
       if (.not. allocated(dgnumdry_m) .or. .not. allocated(dgnumwet_m) .or. &
-          .not. allocated(qaerwat_m)) then
+          .not. allocated(qaerwat_m) .or. .not. allocated(hygrom_m) ) then
          call endrun('modal_aero_wateruptake_dr called '// &
               'with list_idx_in but required args not allocated ')!//errmsg(__FILE__,__LINE__))
       end if
@@ -346,10 +349,12 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
       call pbuf_get_field(pbuf, dgnumwet_idx,   dgncur_awet )
       call pbuf_get_field(pbuf, wetdens_ap_idx, wetdens)
       call pbuf_get_field(pbuf, qaerwat_idx,    qaerwat)
+      call pbuf_get_field(pbuf, hygrom_idx,    hygrom)
    else
       dgncur_a    => dgnumdry_m
       dgncur_awet => dgnumwet_m
       qaerwat     => qaerwat_m
+      hygrom     => hygrom_m
       if(present(wetdens_m)) then
          if (.not. allocated(wetdens_m)) then
             call endrun('modal_aero_wateruptake_dr called '// &
@@ -409,6 +414,8 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
             else
                hygro(i,k,m) = spechygro_1
             end if
+!FAB save modal average hygroscopicity for use in GC 
+            hygrom(i,k,m) =  hygro(i,k,m) 
 
             ! dry aerosol properties
 
@@ -434,6 +441,8 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
       end do ! k = top_lev, pver
 
    end do    ! modes
+
+   
 
    !----------------------------------------------------------------------------
    ! specify clear air relative humidity
