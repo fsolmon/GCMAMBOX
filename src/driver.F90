@@ -249,8 +249,6 @@
       real(r8) :: h2so4_aft_gaschem(pcols,pver) ! grid-avg h2so4(g) mix ratio after  gas chem (mol/mol)
       real(r8) :: h2so4_clear_avg(  pcols,pver) ! average clear sub-area h2so4(g) mix ratio (mol/mol)
       real(r8) :: h2so4_clear_fin(  pcols,pver) ! final   clear sub-area h2so4(g) mix ratio (mol/mol)
-      real(r8) :: mmr(pcols,pver,gas_pcnst)     ! gas & aerosol mass   mixing ratios
-      real(r8) :: mmrcw(pcols,pver,gas_pcnst)   ! gas & aerosol mass   mixing ratios
       real(r8) :: tau_gaschem_simple(pcols,pver)
       real(r8) :: tmpa, tmpb, tmpc
       real(r8) :: tmpveca(999)
@@ -290,8 +288,9 @@ real(r8) :: tmp_co3_aer(nstop, ntot_amode)
 real(r8) :: tmp_nacl_aer(nstop, ntot_amode)
 real(r8) :: tmp_ca_aer(nstop, ntot_amode)                 
 
-real(r8), dimension(nstop)            :: tmp_h2so4, &
-                                               tmp_soag, tmp_nh3, tmp_hno3 , tmp_hcl
+
+real(r8), dimension(nstop)            :: tmp_h2so4, tmp_hno3, tmp_nh3, &
+                                         tmp_soag, tmp_hcl, tmp_so2                                       
 real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
                                                qtend_cond_aging_soa, &
                                                qtend_rename_so4, &
@@ -347,7 +346,22 @@ call check(nf90_def_var(ncid, "co3_aer", &
           NF90_DOUBLE, dimids, varid(9)) )
 call check(nf90_def_var(ncid, "ncl_aer", &
           NF90_DOUBLE, dimids, varid(10)) )
+call check(nf90_def_var(ncid, "ca_aer", &
+          NF90_DOUBLE, dimids, varid(11)) )
 
+! Gas phase variables - added hno3, nh3, soag, hcl, so2
+call check(nf90_def_var(ncid, "h2so4_gas", &
+          NF90_DOUBLE, dimids(1), varid(12)) )
+call check(nf90_def_var(ncid, "hno3_gas", &
+          NF90_DOUBLE, dimids(1), varid(13)) )
+call check(nf90_def_var(ncid, "nh3_gas", &
+          NF90_DOUBLE, dimids(1), varid(14)) )
+call check(nf90_def_var(ncid, "soag_gas", &
+          NF90_DOUBLE, dimids(1), varid(15)) )
+call check(nf90_def_var(ncid, "hcl_gas", &
+          NF90_DOUBLE, dimids(1), varid(16)) )
+call check(nf90_def_var(ncid, "so2_gas", &
+          NF90_DOUBLE, dimids(1), varid(17)) )
 
 call check(nf90_put_att(ncid, varid(1), "units", "#/kg-air") )
 call check(nf90_put_att(ncid, varid(2), "units", "kg-aer/kg-air") )
@@ -357,11 +371,19 @@ call check(nf90_put_att(ncid, varid(5), "units", "kg-gas/kg-air") )
 call check(nf90_put_att(ncid, varid(6), "units", "kg-aer/kg-air") )
 call check(nf90_put_att(ncid, varid(7), "units", "kg-aer/kg-air") )
 call check(nf90_put_att(ncid, varid(8), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(9), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(10), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(9), "units", "kg-aer/kg-air") )
+call check(nf90_put_att(ncid, varid(10), "units", "kg-aer/kg-air") )
+call check(nf90_put_att(ncid, varid(11), "units", "kg-aer/kg-air") )
 
+!gas phase
+call check(nf90_put_att(ncid, varid(12), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(13), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(14), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(15), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(16), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(17), "units", "kg-gas/kg-air") )
 
-      ! Add global attribute
+! Add global attribute
       call check( nf90_put_att(ncid, NF90_GLOBAL, &
                                "Created_by", "PNNL") )
       call date_and_time(date)
@@ -419,9 +441,6 @@ call check(nf90_put_att(ncid, varid(10), "units", "kg-gas/kg-air") )
       lmz_so4_a2 = l_so4_a2 - (imozart-1)
       lmz_nh4_a2 = l_nh4_a2 - (imozart-1)
 
-      write(*,'(/a,3i5)') 'l_h2so4g, l_so2g,   l_nh3g  ', l_h2so4g, l_so2g,   max(l_nh3g,-999)
-      write(*,'( a,3i5)') 'l_num_a1, l_so4_a1, l_nh4_a1', l_num_a1, l_so4_a1, max(l_nh4_a1,-999)
-      write(*,'( a,3i5)') 'l_num_a2, l_so4_a2, l_nh4_a2', l_num_a2, l_so4_a2, max(l_nh4_a2,-999)
 
 main_time_loop:&  
 do nstep = 1, nstop
@@ -486,22 +505,16 @@ do nstep = 1, nstop
      call unload_pbuf( pbuf, lchnk, pcols, &
          physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens)
 
-     print*, 'after wateruptake', physta%dgncur_awet          
-
 !
 ! switch from q & qqcw to vmr and vmrcw
 !
       loffset = imozart - 1
-      mmr = 0.0_r8
-      mmrcw = 0.0_r8
       vmr = 0.0_r8
       vmrcw = 0.0_r8
       do l = imozart, pcnst
          l2 = l - loffset
-         mmr(  :,:,l2) = physta%q(  :,:,l)
-         mmrcw(:,:,l2) = physta%qqcw(:,:,l)
-         vmr(  :,:,l2) = mmr(  :,:,l2)*mwdry/adv_mass(l2)
-         vmrcw(:,:,l2) = mmrcw(:,:,l2)*mwdry/adv_mass(l2)
+         vmr(  :,:,l2) = physta%q(  :,:,l)*mwdry/adv_mass(l2)
+         vmrcw(:,:,l2) = physta%qqcw(:,:,l)*mwdry/adv_mass(l2)
       end do
 
 !
@@ -531,8 +544,7 @@ do nstep = 1, nstop
 !
 ! cloudchem_simple
 !
-      lun = 6
-      write(lun,'(/a,i8)') &
+      write(*,'(/a,i8)') &
          'cambox_do_run doing cloudchem simple, istep=', istep
       vmr_svbb = vmr
       vmrcw_svbb = vmrcw
@@ -569,8 +581,10 @@ do nstep = 1, nstop
          vmr,                vmrcw,               &   ! after  cloud chem
          vmr_svaa,                                &   ! before gas chem
          vmr_svbb,           vmrcw_svbb,          &   ! before cloud chem
+#if ( defined( CAMBOX_ACTIVATE_THIS ) )
          nqtendbb,           nqqcwtendbb,         &
          dvmrdt_bb,          dvmrcwdt_bb,         &
+#endif
          physta%dgncur_a,     physta%dgncur_awet, &
          physta%wetdens,      physta%qaerwat      )
 
@@ -596,16 +610,25 @@ do nstep = 1, nstop
       loffset = imozart - 1
       do l = imozart, pcnst
          l2 = l - loffset
-         mmr(  :,:,l2) = vmr(  :,:,l2) * adv_mass(l2)/mwdry
-         mmrcw(:,:,l2) = vmrcw(:,:,l2) * adv_mass(l2)/mwdry
-         physta%q(    :,:,l)  = mmr(  :,:,l2)
-         physta%qqcw( :,:,l)  = mmrcw(:,:,l2)
+         physta%q(    :,:,l)  = vmr(  :,:,l2) * adv_mass(l2)/mwdry 
+         physta%qqcw( :,:,l)  = vmrcw(:,:,l2) * adv_mass(l2)/mwdry
       end do
 !
 ! store the data of each time step for netcdf output
 !
+
+      if (l_h2so4g > 0) tmp_h2so4 (nstep) = physta%q(1,1,l_h2so4g)                
+      if (l_hno3g > 0) tmp_hno3(nstep) = physta%q(1,1,l_hno3g)
+      if (l_nh3g > 0)  tmp_nh3(nstep)  = physta%q(1,1,l_nh3g)
+      if (l_soag > 0)  tmp_soag(nstep) = physta%q(1,1,l_soag)
+      if (l_hclg > 0)  tmp_hcl(nstep)  = physta%q(1,1,l_hclg)
+      if (l_so2g > 0)  tmp_so2(nstep)  = physta%q(1,1,l_so2g) 
+
+
       tmp_dgn_a(nstep,1:ntot_amode)        = physta%dgncur_a(1,1,1:ntot_amode)
       tmp_dgn_awet(nstep,1:ntot_amode)     = physta%dgncur_awet(1,1,1:ntot_amode)
+
+
       do i = 1, ntot_amode
        tmp_num_aer(nstep,i) = physta%q(1,1,numptr_amode(i))
        if(lptr_so4_a_amode(i)>0)  tmp_so4_aer(nstep,i) = physta%q(1,1,lptr_so4_a_amode(i))
@@ -619,6 +642,10 @@ do nstep = 1, nstop
        if(lptr_ca_a_amode(i)>0)   tmp_ca_aer(nstep,i) = physta%q(1,1,lptr_ca_a_amode(i))
        if(lptr_nacl_a_amode(i)>0) tmp_nacl_aer(nstep,i) = physta%q(1,1,lptr_nacl_a_amode(i))
       end do
+
+             
+      
+      
 end do main_time_loop
 
 #if (defined USE_NC4)
@@ -646,6 +673,28 @@ call check( nf90_put_var(ncid, varid(9), &
             tmp_co3_aer(1:nstop,1:ntot_amode)) )
 call check( nf90_put_var(ncid, varid(10), &
             tmp_nacl_aer(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(11), &
+            tmp_ca_aer(1:nstop,1:ntot_amode)) )
+
+!  Write gas phase data - added hno3, nh3, soag, hcl, so2
+call check( nf90_put_var(ncid, varid(12), &
+            tmp_h2so4(1:nstop)) )
+call check( nf90_put_var(ncid, varid(13), &
+            tmp_hno3(1:nstop)) )
+call check( nf90_put_var(ncid, varid(14), &
+            tmp_nh3(1:nstop)) )
+call check( nf90_put_var(ncid, varid(15), &
+            tmp_soag(1:nstop)) )
+call check( nf90_put_var(ncid, varid(16), &
+            tmp_hcl(1:nstop)) )
+call check( nf90_put_var(ncid, varid(17), &
+            tmp_so2(1:nstop)) )
+    
+    
+    
+    
+ call check( nf90_put_var(ncid, varid(12), &
+            tmp_h2so4(1:nstop)) )
 
       ! Close the file. This frees up any internal netCDF resources
       ! associated with the file, and flushes any buffers.

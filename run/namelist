@@ -15,7 +15,7 @@ press          = 1.e5,
 RH_CLEA        =1.1 
 /
 &chem_input
-numc = 1.e10,1.e9,1.e5,2.e8
+numc = 1.e10,1.e9,1.e7,2.e8
 !
 ! mfABCx: mass fraction of species ABC in mode x.
 ! 
@@ -29,11 +29,11 @@ mfpom = 0.1, 0. , 0.,0.5
 mfsoa = 0.1, 0.2, 0., 0. 
 mfbc  = 0.1, 0. , 0. ,0.5
 mfdst = 0.1, 0. , 0.5, 0.
-mfncl = 0.3, 0. , 0.4, 0.
+mfncl = 0.3, 0. , 0.3, 0.
 mfno3 = 0. , 0. , 0., 0. 
 mfnh4 = 0. , 0., 0., 0.
 mfco3 = 0. , 0., 0., 0.
-
+mfca  = 0. , 0., 0., 0.
 qso2          = 1.e-10,
 qh2so4        = 1.e-13,
 qsoag         = 5.e-10,

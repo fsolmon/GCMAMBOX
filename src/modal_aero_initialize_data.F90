@@ -1618,7 +1618,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
 
         use modal_aero_amicphys, only :&
                    dens_aer, iaer_bc, iaer_pom, iaer_so4, iaer_soa, iaer_ncl, &
-                   iaer_mom, iaer_dst, iaer_co3, iaer_nh4, iaer_no3 
+                   iaer_mom, iaer_dst, iaer_co3, iaer_nh4, iaer_no3, iaer_ca, iaer_cl 
 
         use modal_aero_data
         use physics_types, only : physics_state
@@ -1648,7 +1648,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
       integer  :: mam_dt, mam_nstep
       real(r8) :: temp, press, RH_CLEA
       real(r8),  dimension(:), allocatable  :: numc, mfso4, mfpom, mfsoa, mfbc, & 
-                                    mfdst, mfncl, mfno3, mfnh4, mfco3, mfna
+                                    mfdst, mfncl, mfno3, mfnh4, mfco3, mfca, mfcl
       real(r8)  ::          qso2, qh2so4, qsoag,qhno3,qnh3,qhcl
 
       namelist /time_input/ mam_dt, mam_nstep
@@ -1657,7 +1657,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
       namelist /met_input/ temp, press, RH_CLEA
       namelist /chem_input/ qso2, qh2so4, qsoag, qhno3, qnh3, qhcl, &
                           numc, mfso4, mfpom, mfsoa, mfbc, mfdst, & 
-                          mfncl, mfno3, mfnh4, mfco3
+                          mfncl, mfno3, mfnh4, mfco3, mfca, mfcl 
 
 
 
@@ -1681,8 +1681,8 @@ allocate(mfncl(ntot_amode))
 allocate(mfno3(ntot_amode))
 allocate(mfnh4(ntot_amode))
 allocate(mfco3(ntot_amode))
-
-
+allocate(mfca(ntot_amode))
+allocate(mfcl(ntot_amode))
 open (UNIT = 101, FILE = 'namelist', STATUS = 'OLD')
           read (101, time_input)
           read (101, cntl_input)
@@ -1712,21 +1712,11 @@ if (l_hno3g> 0) q(:,:,l_hno3g) =   qhno3
 if (l_nh3g > 0) q(:,:,l_nh3g) =   qnh3
 if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
 
-       print*,'so4',lptr_so4_a_amode(:)
-       print*,'nh4',lptr_nh4_a_amode(:)
-       print*,'no3',lptr_no3_a_amode(:)
-       print*,'soa',lptr_soa_a_amode(:)
-       print*,'pom',lptr_pom_a_amode(:)
-       print*,'bc',lptr_bc_a_amode(:)
-       print*,'dust',lptr_dust_a_amode(:)
-       print*,'co3',lptr_co3_a_amode(:)
-       print*,'ca',lptr_ca_a_amode(:)
-       print*,'nacl',lptr_nacl_a_amode(:)
 
 
 ! initialize the aerosol/number mixing ratio for cold start.
 ! adapted to mam4 box model for now , only on the first 10 levels  
-       do k = 1, pver 
+      do k = 1, pver 
          do i = 1, pcols
             do  n = 1, ntot_amode
 
@@ -1743,7 +1733,8 @@ if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
                    if (lptr_no3_a_amode(n) > 0) tmpfno3 = mfno3(n)
                    if (lptr_nh4_a_amode(n) > 0) tmpfnh4 = mfnh4(n)
                    if (lptr_co3_a_amode(n) > 0) tmpfco3 = mfco3(n)
-
+                   if (lptr_ca_a_amode(n) > 0) tmpfca = mfca(n)
+                   if (lptr_cl_a_amode(n) > 0) tmpfcl = mfcl(n)
                    tmpvol  = q(i,k,numptr_amode(n)) * &
                           (dgncur_a(i,k,n)**3) * &
                           (pi/6.0_r8) * exp(4.5_r8*sx*sx)
@@ -1753,10 +1744,14 @@ if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
                                (tmpfbc  / dens_aer(iaer_bc))  + &
                                (tmpfdst / dens_aer(iaer_dst)) + &
                                (tmpfncl / dens_aer(iaer_ncl)) + &
+#if(defined MOSAIC_SPECIES)
                                (tmpfno3 / dens_aer(iaer_no3)) + &
                                (tmpfnh4 / dens_aer(iaer_nh4)) + &
-                               (tmpfco3 / dens_aer(iaer_co3))   & 
-                             )**(-1._r8)
+                               (tmpfco3 / dens_aer(iaer_co3)) + & 
+                               (tmpfca  / dens_aer(iaer_ca))  + & 
+                               (tmpfcl  / dens_aer(iaer_cl))  + &
+#endif
+                               0._r8)**(-1._r8)
 
                     tmpmass = tmpvol*tmpdens   ! kg-dry-aerosol/kg-air
                     if (lptr_so4_a_amode(n) > 0) q(i,k,lptr_so4_a_amode(n)) = tmpmass*tmpfso4
@@ -1768,7 +1763,8 @@ if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
                     if (lptr_no3_a_amode(n) > 0) q(i,k,lptr_no3_a_amode(n)) = tmpmass*tmpfno3
                     if (lptr_nh4_a_amode(n) > 0) q(i,k,lptr_nh4_a_amode(n)) = tmpmass*tmpfnh4
                     if (lptr_co3_a_amode(n) > 0) q(i,k,lptr_co3_a_amode(n)) = tmpmass*tmpfco3
-
+                    if (lptr_ca_a_amode(n) > 0) q(i,k,lptr_ca_a_amode(n)) = tmpmass*tmpfca
+                    if (lptr_cl_a_amode(n) > 0) q(i,k,lptr_cl_a_amode(n)) = tmpmass*tmpfcl
             end do ! n
          end do ! i
       end do ! k   
@@ -1783,6 +1779,8 @@ deallocate(mfncl)
 deallocate(mfno3)
 deallocate(mfnh4)
 deallocate(mfco3)
+deallocate(mfca)
+deallocate(mfcl)
 
         END SUBROUTINE MAM_cold_start
 

@@ -8,7 +8,7 @@
 !
 ! !INTERFACE:
    module modal_aero_newnuc
-#if (defined MODAL_AERO)
+!FAB#if (defined MODAL_AERO)
 
 ! !USES:
    use precision_mod, only:  r8 => f8
@@ -1731,7 +1731,7 @@ end  subroutine ternary_nuc_merik2007
 
 
 !----------------------------------------------------------------------
-#endif
+!FAB#endif
    end module modal_aero_newnuc
 
 

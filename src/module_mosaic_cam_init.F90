@@ -147,7 +147,7 @@ contains
 
 #else
   subroutine mosaic_cam_init
-  use cam_abortutils,  only:  endrun
+  use mam_utils,  only:  endrun
   call endrun( '*** error -- mosaic_cam_init should not have been called' )
   end subroutine mosaic_cam_init
 
