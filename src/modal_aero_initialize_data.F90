@@ -1452,7 +1452,7 @@ do s = 1, l
    if (solsym(s)(1:4) == 'HNO3') adv_mass(s) = 63.0123400_r8
    if (solsym(s)(1:3) == 'NH3') adv_mass(s) =  17.0289402_r8
    if (solsym(s)(1:3) == 'HCL') adv_mass(s) = 36.4601000_r8
-   if (solsym(s)(1:4) == 'SOAG') adv_mass(s) = 98.078400_r8
+   if (solsym(s)(1:4) == 'SOAG') adv_mass(s) = 150_r8
    
    if (solsym(s)(1:3) == 'so4') adv_mass(s) = 96.0635986_r8 
    if (solsym(s)(1:3) == 'pom') adv_mass(s) = 12.011000_r8 
@@ -1615,11 +1615,11 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
                 l_h2so4g, l_soag, l_hno3g, l_so2g, l_hclg, l_nh3g, &
                 mdo_gaschem, mdo_cloudchem,&
                 mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
-
+        use chem_mods, only : adv_mass,imozart
         use modal_aero_amicphys, only :&
                    dens_aer, iaer_bc, iaer_pom, iaer_so4, iaer_soa, iaer_ncl, &
                    iaer_mom, iaer_dst, iaer_co3, iaer_nh4, iaer_no3, iaer_ca, iaer_cl 
-
+        use wv_saturation, only: qsat, gestbl
         use modal_aero_data
         use physics_types, only : physics_state
         type(physics_state),  intent(in) :: physta   
@@ -1629,6 +1629,9 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
 
 
 !local 
+       real(r8) :: ev_sat(pcols,pver)
+       real(r8) :: qv_sat(pcols,pver)
+
         real(r8) :: tmpfso4, tmpfnh4, tmpfsoa, tmpfpom, &
                     tmpfbc, tmpfncl, tmpfdst, tmpfmom
         real(r8) :: tmpfno3, tmpfcl, tmpfca, tmpfco3, tmpfna
@@ -1639,7 +1642,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
         real(r8), pointer :: q(:,:,:), aircon(:,:), dgncur_a(:,:,:)
 
 
-        integer :: i,k,n
+        integer :: i,k,n,loffset
 
 
         !
@@ -1690,29 +1693,28 @@ open (UNIT = 101, FILE = 'namelist', STATUS = 'OLD')
           read (101, chem_input)
 close (101)
 
-      !! time step 
-      deltat              = mam_dt * 1._r8
-      nstop               = mam_nstep
+!! time step 
+deltat              = mam_dt * 1._r8
+nstop               = mam_nstep
 
-      physta%pmid(:,:)           = press
-      physta%t(:,:)              = temp
-      physta%relhum(:,:)         = RH_CLEA
-      physta%pblh(:)             = 1.1e3_r8
-      physta%zm(:,:)             = 3.0e3_r8
-      physta%aircon(:,:)         = physta%pmid(:,:)/(r_universal*physta%t(:,:))
-      physta%cld         = 0.5_r8
+physta%pmid(:,:)           = press
+physta%t(:,:)              = temp
+physta%relhum(:,:)         = RH_CLEA
+physta%pblh(:)             = 1.1e3_r8
+physta%zm(:,:)             = 3.0e3_r8
+physta%aircon(:,:)         = physta%pmid(:,:)/(r_universal*physta%t(:,:))
+physta%cld         = 0.5_r8
 
-
-
+loffset = imozart -1
 ! initialize the gas mixing ratio
-if (l_so2g > 0) q(:,:,l_so2g)   = qso2
-if (l_soag > 0) q(:,:,l_soag)   = qsoag
-if (l_h2so4g > 0)  q(:,:,l_h2so4g) = qh2so4
-if (l_hno3g> 0) q(:,:,l_hno3g) =   qhno3
-if (l_nh3g > 0) q(:,:,l_nh3g) =   qnh3
-if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
+if (l_so2g > 0) q(:,:,l_so2g)   = qso2/adv_mass(l_so2g - loffset)*mwdry*1E-9
+if (l_soag > 0) q(:,:,l_soag)   = qsoag/adv_mass(l_soag - loffset)*mwdry*1E-9
+if (l_h2so4g > 0)  q(:,:,l_h2so4g) = qh2so4/adv_mass(l_h2so4g - loffset)*mwdry*1E-9
+if (l_hno3g> 0) q(:,:,l_hno3g) =   qhno3/adv_mass(l_hno3g - loffset)*mwdry*1E-9
+if (l_nh3g > 0) q(:,:,l_nh3g) =   qnh3/adv_mass(l_nh3g - loffset)*mwdry*1E-9
+if (l_hclg > 0) q(:,:,l_hclg) =   qhcl/adv_mass(l_hclg - loffset)*mwdry*1E-9
 
-
+print*, 'INIT',  qso2, adv_mass(l_so2g - loffset), q(:,:,l_so2g) 
 
 ! initialize the aerosol/number mixing ratio for cold start.
 ! adapted to mam4 box model for now , only on the first 10 levels  
@@ -1723,7 +1725,7 @@ if (l_hclg > 0) q(:,:,l_hclg) =   qhcl
                 sx = log( sigmag_amode(n) )
 
                    dgncur_a(i,k,n) = dgnum_amode(n)  
-                   q(i,k,numptr_amode(n)) = numc(n) / aircon(i,k) / mwdry ! .m-3 converted to .kg-1
+                   q(i,k,numptr_amode(n)) = numc(n) *1.E6/ aircon(i,k) / mwdry ! .cm-3 converted to .kg-1
                    if (lptr_so4_a_amode(n) > 0) tmpfso4 = mfso4(n)
                    if (lptr_pom_a_amode(n) > 0) tmpfpom = mfpom(n)
                    if (lptr_soa_a_amode(n) > 0) tmpfsoa = mfsoa(n)

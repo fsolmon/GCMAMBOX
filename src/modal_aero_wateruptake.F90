@@ -465,12 +465,12 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
       end do ! k
 
    else
-
+      
       ! estimate clear air relative humidity using cloud fraction
       h2ommr => state%q(:,:,1)
       t      => state%t
       pmid   => state%pmid
-
+      print*,'h2ommr', h2ommr
       itim_old    =  pbuf_old_tim_idx()
       call pbuf_get_field(pbuf, cld_idx, cldn, start=(/1,1,itim_old/), kount=(/pcols,pver,1/) )
 
@@ -681,7 +681,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
          Dp_wet_a(:) = 0.0_r8
          mass_dry_a(:) = 0.0_r8
          dens_dry_a(:) = 0.0_r8
-
+         print*,'FAB MOSAIC_aerosol_water_only', rh
          call MOSAIC_aerosol_water_only(rh(i,k),  t(i,k), &  ! Intent-ins
             P_atm,             RH_pc,      dtime,         &
             kappa_nonelectro,                             &
@@ -712,7 +712,8 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
 
                dryrad(i,k,m) = max( dryrad(i,k,m), dgnumlo_amode(m)*0.05_r8 )
                if (rh(i,k) <= rhcrystal(m)) then
-                  wetrad(i,k,m) = dryrad(i,k,m)  ! no water
+                 print*, 'FAB no water' 
+                 wetrad(i,k,m) = dryrad(i,k,m)  ! no water
                else
                   ! use the following which ignores kelvin effect
                   ! (1/rh) = 1 + hygro*dryvol/wtrvol

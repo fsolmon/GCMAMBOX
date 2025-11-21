@@ -1,6 +1,6 @@
 &time_input
-mam_dt         = 1800,
-mam_nstep      = 20,
+mam_dt         = 1200,
+mam_nstep      = 100,
 /
 &cntl_input
 mdo_gaschem    = 1,
@@ -10,34 +10,27 @@ mdo_newnuc     = 1,
 mdo_coag       = 1,
 /
 &met_input
-temp           = 285.,
-press          = 1.e5,
-RH_CLEA        =1.1 
+temp           = 275,
+press          = 100000,
+RH_CLEA        = 0.5
 /
 &chem_input
-numc = 1.e10,1.e9,1.e7,2.e8
-!
-! mfABCx: mass fraction of species ABC in mode x.
-! 
-! The mass fraction of mom is calculated by
-! 1 - sum(mfABCx). If sum(mfABCx) > 1, an error
-! is issued by the test driver. number of species
-! ABC in each mode x comes from the MAM4 with mom.
-! 
-mfso4 = 0.3, 0.8, 0.1, 0.
-mfpom = 0.1, 0. , 0.,0.5 
-mfsoa = 0.1, 0.2, 0., 0. 
-mfbc  = 0.1, 0. , 0. ,0.5
-mfdst = 0.1, 0. , 0.5, 0.
-mfncl = 0.3, 0. , 0.3, 0.
-mfno3 = 0. , 0. , 0., 0. 
-mfnh4 = 0. , 0., 0., 0.
-mfco3 = 0. , 0., 0., 0.
-mfca  = 0. , 0., 0., 0.
-qso2          = 1.e-10,
-qh2so4        = 1.e-13,
-qsoag         = 5.e-10,
-qhno3         = 5.e-10
-qnh3          = 5.e-10
-qhcl          = 0.
+numc = 0,0,0,100000
+mfso4 = 0.2, 0.8, 0, 0
+mfpom = 0.1, 0, 0, 0.5
+mfsoa = 0.1, 0.2, 0, 0
+mfbc  = 0.1, 0, 0, 0.5
+mfdst = 0.1, 0, 0.5, 0
+mfncl = 0.15, 0, 0.25, 0
+mfno3 = 0, 0, 0, 0
+mfnh4 = 0, 0, 0, 0
+mfco3 = 0, 0, 0, 0
+mfca  = 0, 0, 0, 0
+mfcl  = 0.15, 0, 0.25, 0
+qso2          = 70,
+qh2so4        = 0,
+qsoag         = 0,
+qhno3         = 30,
+qnh3          = 5,
+qhcl          = 0
 /
