@@ -1607,7 +1607,7 @@ print*, 'FAB je passe MODAL_AERO_4MODE'
 
         END SUBROUTINE MAM_ALLOCATE
 
-SUBROUTINE MAM_cold_start (physta,nstop,deltat)
+SUBROUTINE MAM_cold_start (physta,nstop,deltat,rhmin,rhmax,tmin,tmax)
 !
 !rewritten FAB
         use physconst, only: pi, mwdry,r_universal 
@@ -1625,7 +1625,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
         type(physics_state),  intent(in) :: physta   
 
         integer, intent(out), optional :: nstop
-        real(r8), intent(out), optional :: deltat
+        real(r8), intent(out), optional :: deltat, rhmin,rhmax,tmin,tmax
 
 
 !local 
@@ -1649,7 +1649,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
 ! namelist variable
 !
       integer  :: mam_dt, mam_nstep
-      real(r8) :: temp, press, RH_CLEA
+      real(r8) :: temp, press, RH_CLEA,mtmin,mtmax,mrhmin,mrhmax
       real(r8),  dimension(:), allocatable  :: numc, mfso4, mfpom, mfsoa, mfbc, & 
                                     mfdst, mfncl, mfno3, mfnh4, mfco3, mfca, mfcl
       real(r8)  ::          qso2, qh2so4, qsoag,qhno3,qnh3,qhcl
@@ -1657,7 +1657,7 @@ SUBROUTINE MAM_cold_start (physta,nstop,deltat)
       namelist /time_input/ mam_dt, mam_nstep
       namelist /cntl_input/ mdo_gaschem, mdo_gasaerexch, &
                             mdo_rename, mdo_newnuc, mdo_coag
-      namelist /met_input/ temp, press, RH_CLEA
+      namelist /met_input/  press,  mrhmin, mrhmax, mtmin,mtmax
       namelist /chem_input/ qso2, qh2so4, qsoag, qhno3, qnh3, qhcl, &
                           numc, mfso4, mfpom, mfsoa, mfbc, mfdst, & 
                           mfncl, mfno3, mfnh4, mfco3, mfca, mfcl 
@@ -1694,12 +1694,16 @@ open (UNIT = 101, FILE = 'namelist', STATUS = 'OLD')
 close (101)
 
 !! time step 
-deltat              = mam_dt * 1._r8
-nstop               = mam_nstep
+if(present(deltat)) deltat = mam_dt * 1._r8
+if(present(nstop))  nstop = mam_nstep
+if(present(rhmin))  rhmin = mrhmin
+if(present(rhmax))  rhmax = mrhmax
+if(present(tmin))  tmin  = mtmin
+if(present(tmax))  tmax  = mtmax
 
 physta%pmid(:,:)           = press
-physta%t(:,:)              = temp
-physta%relhum(:,:)         = RH_CLEA
+physta%t(:,:)              = mtmin 
+physta%relhum(:,:)         = mrhmax
 physta%pblh(:)             = 1.1e3_r8
 physta%zm(:,:)             = 3.0e3_r8
 physta%aircon(:,:)         = physta%pmid(:,:)/(r_universal*physta%t(:,:))

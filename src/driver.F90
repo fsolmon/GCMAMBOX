@@ -58,6 +58,8 @@
 
       integer :: species_class(pcnst) = -1
 
+      real(r8) :: tmin,tmax,rhmin,rhmax ! namelist variables
+
       contains
 
 
@@ -155,7 +157,7 @@
       i_cldy_sameas_clear = 0
 
       write(*,'(/a)') '*** main call MAM_cold_start'
-      call MAM_cold_start (physta,nstop=nstop, deltat=deltat)!
+      call MAM_cold_start (physta,nstop=nstop, deltat=deltat, tmin = tmin, tmax =tmax, rhmin =rhmin, rhmax =rhmax)!
 
 ! iniialise ( q(:,:,1 ) call gestbl to build saturation vapor pressure table.
       tmn   = 173.16_r8
@@ -190,7 +192,7 @@
       use modal_aero_wateruptake, only: modal_aero_wateruptake_dr
       use gaschem_simple, only: gaschem_simple_sub
       use cloudchem_simple, only: cloudchem_simple_sub
-
+      use wv_saturation, only : qsat
       implicit none 
 
       integer,  intent(in   ) :: nstop
@@ -226,7 +228,10 @@
       logical :: aero_mmr_flag
       logical :: h2o_mmr_flag
       logical :: dotend(pcnst)
+   
+      real(r8) ::temp, relh 
 
+      real(r8) :: ev_sat(pcols,pver), qv_sat(pcols,pver)
 
       real(r8) :: cld_ncol(pver)
       real(r8) :: del_h2so4_aeruptk(pcols,pver)
@@ -270,7 +275,7 @@
       character (len = *), parameter :: FILE_NAME = "mam_output.nc"
       integer :: ncid, nstep_dimid, mode_dimid
       integer :: error
-      integer :: dimids(2), varid(23)
+      integer :: dimids(2), varid(30)
       character (8) :: date
       real(r8), dimension(nstop,ntot_amode) :: tmp_dgn_a, &
                                tmp_dgn_awet, tmp_num_aer 
@@ -290,7 +295,7 @@ real(r8) :: tmp_hygro_aer(nstop, ntot_amode)
 
 
 real(r8), dimension(nstop)            :: tmp_h2so4, tmp_hno3, tmp_nh3, &
-                                         tmp_soag, tmp_hcl, tmp_so2                                       
+                                         tmp_soag, tmp_hcl, tmp_so2 ,tmp_relh, tmp_temp                                      
 real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
                                                qtend_cond_aging_soa, &
                                                qtend_rename_so4, &
@@ -375,6 +380,12 @@ call check(nf90_def_var(ncid, "Dgn_mode", &
 call check(nf90_def_var(ncid, "hygro_aer", &
           NF90_DOUBLE, dimids, varid(21)) )
 
+call check(nf90_def_var(ncid, "relhum", &
+          NF90_DOUBLE, dimids(1), varid(22)) )
+call check(nf90_def_var(ncid, "temp", &
+          NF90_DOUBLE, dimids(1), varid(23)) )
+
+
 call check(nf90_put_att(ncid, varid(1), "units", "#/kg-air") )
 call check(nf90_put_att(ncid, varid(2), "units", "kg-aer/kg-air") )
 call check(nf90_put_att(ncid, varid(3), "units", "kg-aer/kg-air") )
@@ -399,9 +410,12 @@ call check(nf90_put_att(ncid, varid(19), "units", "kg-gas/kg-air") )
 call check(nf90_put_att(ncid, varid(20), "units", "micro-m") )
 call check(nf90_put_att(ncid, varid(21), "units", "none") )
 
+call check(nf90_put_att(ncid, varid(22), "units", "none") )
+call check(nf90_put_att(ncid, varid(23), "units", "K") )
+
 ! Add global attribute
       call check( nf90_put_att(ncid, NF90_GLOBAL, &
-                               "Created_by", "PNNL") )
+                               "Created_by", "ETHz") )
       call date_and_time(date)
       call check( nf90_put_att(ncid, NF90_GLOBAL, &
                                "Created_date", date) )
@@ -416,6 +430,8 @@ call check(nf90_put_att(ncid, varid(21), "units", "none") )
       tmp_num_aer            = 0._r8 ; tmp_so4_aer           = 0._r8
       tmp_soa_aer            = 0._r8 ; tmp_h2so4             = 0._r8
       tmp_soag               = 0._r8
+      tmp_relh =0._r8
+      tmp_temp=0._r8
       qtend_cond_aging_so4   = 0._r8 ; qtend_cond_aging_soa  = 0._r8
       qtend_rename_so4       = 0._r8 ; qtend_rename_soa      = 0._r8
       qtend_newnuc_so4       = 0._r8 ; qtend_newnuc_soa      = 0._r8
@@ -465,9 +481,28 @@ do nstep = 1, nstop
       told = tnew
       tnew = told + deltat
 
-      write(lun_outfld,'(/a,i5,2f10.3)') 'istep, told, tnew (h) = ', &
-         istep, told/3600.0_r8, tnew/3600.0_r8
+      if (nstep == 1) then
+        temp = tmin 
+        relh = rhmin
+      end if         
+      if (nstep > 1 .and. tmax > tmin ) then 
+        temp = temp + (tmax -tmin)/(nstop -1)
+        physta%t(1,1) = temp
+      end if 
+      if (nstep > 1 .and. rhmax > rhmin ) then
+        relh = relh + (rhmax -rhmin)/(nstop -1)
+       end if  
 
+       physta%t(:,:) = temp
+       physta%relhum(:,:) = relh
+       call  qsat( physta%t(1:pcols,1:pver), physta%pmid(1:pcols,1:pver), &
+                  ev_sat(1:pcols,1:pver), qv_sat(1:pcols,1:pver) )
+       
+       physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
+       physta%q(:,:,1) = physta%qv(:,:)
+        
+
+      print*, 'T , H  !! ', physta%t, physta%q(:,:,1)
 !
 ! calcsize
 !
@@ -641,7 +676,7 @@ END IF
 
       tmp_dgn_a(nstep,1:ntot_amode)        = physta%dgncur_a(1,1,1:ntot_amode)
       tmp_dgn_awet(nstep,1:ntot_amode)     = physta%dgncur_awet(1,1,1:ntot_amode)
-
+      tmp_dgn_a(nstep,1:ntot_amode)  = tmp_dgn_awet(nstep,1:ntot_amode)  ! use wet in th output 
 
       do i = 1, ntot_amode
        tmp_num_aer(nstep,i) = physta%q(1,1,numptr_amode(i))
@@ -660,6 +695,9 @@ END IF
        tmp_hygro_aer(nstep,i) = physta%hygro(1,1,i)
        end do
 
+       tmp_relh(nstep) = physta%relhum(1,1)
+       tmp_temp(nstep) = physta%t(1,1)
+        
 end do main_time_loop
 
 #if (defined USE_NC4)
@@ -714,6 +752,12 @@ call check( nf90_put_var(ncid, varid(20), &
 call check( nf90_put_var(ncid, varid(21), &
             tmp_hygro_aer(1:nstop,1:ntot_amode)) )
 
+call check( nf90_put_var(ncid, varid(22), &
+            tmp_relh(1:nstop)) )
+
+call check( nf90_put_var(ncid, varid(23), &
+            tmp_temp(1:nstop)) )
+    
       ! Close the file. This frees up any internal netCDF resources
       ! associated with the file, and flushes any buffers.
       call check( nf90_close(ncid) )

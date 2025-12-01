@@ -10,9 +10,11 @@ mdo_newnuc     = 1,
 mdo_coag       = 1,
 /
 &met_input
-temp           = 275,
+mtmin           = 275,
+mtmax           = 275,
+mrhmin          = 0.5,
+mrhmax         = 0.5,
 press          = 100000,
-RH_CLEA        = 0.5
 /
 &chem_input
 numc = 0,0,0,100000
@@ -29,7 +31,7 @@ mfca  = 0, 0, 0, 0
 mfcl  = 0.15, 0, 0.25, 0
 qso2          = 70,
 qh2so4        = 0,
-qsoag         = 0,
+qsoag         = 5,
 qhno3         = 30,
 qnh3          = 5,
 qhcl          = 0
