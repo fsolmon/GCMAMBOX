@@ -13,26 +13,26 @@ mdo_coag       = 1,
 mtmin           = 275,
 mtmax           = 275,
 mrhmin          = 0.5,
-mrhmax         = 0.5,
+mrhmax         = 0.95,
 press          = 100000,
 /
 &chem_input
-numc = 0,0,0,100000
+numc = 0,0,2,0
 mfso4 = 0.2, 0.8, 0, 0
-mfpom = 0.1, 0, 0, 0.5
+mfpom = 0.1, 0, 0, 0
 mfsoa = 0.1, 0.2, 0, 0
 mfbc  = 0.1, 0, 0, 0.5
-mfdst = 0.1, 0, 0.5, 0
-mfncl = 0.15, 0, 0.25, 0
+mfdst = 0.1, 0, 0.5, 0.5
+mfncl = 0.15, 0, 0.2, 0
 mfno3 = 0, 0, 0, 0
 mfnh4 = 0, 0, 0, 0
-mfco3 = 0, 0, 0, 0
-mfca  = 0, 0, 0, 0
-mfcl  = 0.15, 0, 0.25, 0
-qso2          = 70,
+mfco3 = 0, 0, 0.3, 0.3
+mfca  = 0, 0, 0, 0.2
+mfcl  = 0.15, 0, 0, 0
+qso2          = 0,
 qh2so4        = 0,
-qsoag         = 5,
+qsoag         = 0,
 qhno3         = 30,
-qnh3          = 5,
+qnh3          = 0,
 qhcl          = 0
 /

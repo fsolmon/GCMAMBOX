@@ -485,11 +485,13 @@ do nstep = 1, nstop
         temp = tmin 
         relh = rhmin
       end if         
-      if (nstep > 1 .and. tmax > tmin ) then 
+!      if (nstep > 1 .and. tmax > tmin ) then 
+      if (nstep > 1 ) then  
         temp = temp + (tmax -tmin)/(nstop -1)
         physta%t(1,1) = temp
       end if 
-      if (nstep > 1 .and. rhmax > rhmin ) then
+!      if (nstep > 1 .and. rhmax > rhmin ) then
+      if (nstep > 1) then 
         relh = relh + (rhmax -rhmin)/(nstop -1)
        end if  
 
@@ -552,7 +554,6 @@ do nstep = 1, nstop
      call unload_pbuf( pbuf, lchnk, pcols, &
          physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro)
 
-print*, 'FAB qaerwat',physta%qaerwat(1,1,:), physta%hygro
 
 !
 ! switch from q & qqcw to vmr and vmrcw

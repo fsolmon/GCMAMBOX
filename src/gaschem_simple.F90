@@ -98,7 +98,7 @@ implicit none
       tmpa = q(i,k,l_so2g)*exp( -deltat/tau_gaschem_simple(i,k) )
       tmpb = q(i,k,l_so2g) - tmpa
       q(i,k,l_so2g) = tmpa
-      q(i,k,l_h2so4g) = tmpb
+      q(i,k,l_h2so4g) =  q(i,k,l_h2so4g) + tmpb
    end do
    end do
 
