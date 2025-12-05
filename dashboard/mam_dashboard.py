@@ -573,7 +573,7 @@ app.layout = html.Div([
         
     ], style={'display': 'flex', 'flexDirection': 'row', 'width': '100%', 'height': '95vh'}),
     
-], style={'fontFamily': 'Arial, sans-serif', 'margin': '0', 'padding': '0'})
+], style={'fontFamily': 'Arial, sans-serif', 'margin': '0', 'padding': '0', 'backgroundColor': '#e6f2ff'})
 
 # ============================================================================
 # Callbacks
