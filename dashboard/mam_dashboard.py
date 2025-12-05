@@ -382,7 +382,7 @@ app.layout = html.Div([
 
     html.Div([
 #           html.H1("GCMAMBox Model" , style={'display': 'inline-block', 'verticalAlign': 'middle', 'margin': '0'}),
-           html.Img(src='assets/logo.png', style={'height': '130px', 'width': '600px'}),], 
+           html.Img(src='assets/logo.png', style={'height': '130px', 'width': '419px'}),], 
            style={'textAlign': 'center', 'marginBottom': '10px', 'padding': '10px'}),
     html.Div([
         # Left panel - Controls (scrollable)
