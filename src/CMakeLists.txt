@@ -5,7 +5,7 @@ project(pegasus VERSION 2.6.1 LANGUAGES Fortran C)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 
 # Output directory
-set(OUT_DIR "${CMAKE_SOURCE_DIR}/../modbin_MOSAIC/")
+set(OUT_DIR "${CMAKE_SOURCE_DIR}/../modbin/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUT_DIR})
 set(CMAKE_Fortran_MODULE_DIRECTORY ${OUT_DIR})
 
@@ -95,7 +95,9 @@ set(CPP "cpp" CACHE STRING "C preprocessor")
 set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
 
 # Fortran compiler flags
-set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
+#set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
+
+set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none " CACHE STRING "Fortran compiler flags")
 
 # Build the full Fortran flags
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FCFLAGS} ${CPPFLAGS}")

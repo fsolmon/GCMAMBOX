@@ -382,7 +382,7 @@ app.layout = html.Div([
 
     html.Div([
 #           html.H1("GCMAMBox Model" , style={'display': 'inline-block', 'verticalAlign': 'middle', 'margin': '0'}),
-           html.Img(src='/assets/logo.png', style={'height': '130px', 'width': '600px'}),], 
+           html.Img(src='assets/logo.png', style={'height': '130px', 'width': '600px'}),], 
            style={'textAlign': 'center', 'marginBottom': '10px', 'padding': '10px'}),
     html.Div([
         # Left panel - Controls (scrollable)
@@ -739,4 +739,4 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
     return fig, "✅ " + message
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8050)
+    app.run(debug=True, host='0.0.0.0', port=8050)
