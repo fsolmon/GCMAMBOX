@@ -50,6 +50,8 @@ if(NOT NETCDF_FOUND)
         /usr/local
         $ENV{NETCDF_DIR}
         $ENV{NETCDF_ROOT}
+	$ENV{NETCDF_INCLUDE}
+	$ENV{NETCDF_LIB}
         $ENV{NETCDF_FORTRAN_HOME}
     )
     
