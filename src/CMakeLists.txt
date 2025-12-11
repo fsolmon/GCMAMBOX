@@ -42,7 +42,7 @@ endif()
 # Option 2: Manual search if pkg-config fails
 if(NOT NETCDF_FOUND)
     message(STATUS "Searching for NetCDF manually...")
-    
+
     # Set potential search paths
     set(NETCDF_SEARCH_PATHS
         /home/fsolmon/miniconda3
@@ -54,28 +54,28 @@ if(NOT NETCDF_FOUND)
 	$ENV{NETCDF_LIB}
         $ENV{NETCDF_FORTRAN_HOME}
     )
-    
+
     # Find NetCDF C library
     find_library(NETCDF_C_LIB
         NAMES netcdf
         PATHS ${NETCDF_SEARCH_PATHS}
         PATH_SUFFIXES lib lib64
     )
-    
+
     # Find NetCDF Fortran library
     find_library(NETCDF_F_LIB
         NAMES netcdff
         PATHS ${NETCDF_SEARCH_PATHS}
         PATH_SUFFIXES lib lib64
     )
-    
+
     # Find NetCDF include directory
     find_path(NETCDF_INCLUDE_DIR
         NAMES netcdf.mod netcdf.inc
         PATHS ${NETCDF_SEARCH_PATHS}
         PATH_SUFFIXES include Include
     )
-    
+
     if(NETCDF_C_LIB AND NETCDF_F_LIB AND NETCDF_INCLUDE_DIR)
         set(NETCDF_FOUND TRUE)
         set(NETCDF_LIBRARIES ${NETCDF_F_LIB} ${NETCDF_C_LIB})
@@ -95,9 +95,11 @@ set(CPP "cpp" CACHE STRING "C preprocessor")
 set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
 
 # Fortran compiler flags
-#set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
-
-set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none " CACHE STRING "Fortran compiler flags")
+if (CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0")
+    set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
+else
+    set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none " CACHE STRING "Fortran compiler flags")
+endif()
 
 # Build the full Fortran flags
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FCFLAGS} ${CPPFLAGS}")
@@ -111,7 +113,7 @@ set(EXE "gcmambox" CACHE STRING "Executable name")
 function(preprocess_fortran input_file output_file)
     get_filename_component(file_name ${input_file} NAME_WE)
     get_filename_component(file_ext ${input_file} EXT)
-    
+
     if(file_ext STREQUAL ".F" OR file_ext STREQUAL ".F90")
         # Determine output extension
         if(file_ext STREQUAL ".F")
@@ -119,16 +121,16 @@ function(preprocess_fortran input_file output_file)
         else()
             set(out_ext ".f90")
         endif()
-        
+
         set(preprocessed_file "${OUT_DIR}/${file_name}${out_ext}")
-        
+
         add_custom_command(
             OUTPUT ${preprocessed_file}
             COMMAND ${CPP} ${CPPFLAGS} ${input_file} ${preprocessed_file}
             DEPENDS ${input_file}
             COMMENT "Preprocessing ${input_file}"
         )
-        
+
         set(${output_file} ${preprocessed_file} PARENT_SCOPE)
     else()
         set(${output_file} ${input_file} PARENT_SCOPE)
@@ -138,7 +140,7 @@ endfunction()
 #-----------------------------------------------------------------------------
 # Source file lists
 # normally the OBJ1-OBJ5 are sources that are used in the MAM lib in GeosCore
-# OBJ 9 is the driver 
+# OBJ 9 is the driver
 #-----------------------------------------------------------------------------
 
 # OBJ1: Shared modules
@@ -148,7 +150,7 @@ set(OBJ1_SOURCES
     mam_utils.F90
 )
 
-# OBJ2: declaration and utilities from CAM env.  
+# OBJ2: declaration and utilities from CAM env.
 set(OBJ2_SOURCES
     constituents.F90
     radconstants.F90
@@ -190,7 +192,7 @@ set(OBJ5_SOURCES
     modal_aero_initialize_data.F90
 )
 
-# OBJ9: Driver and utilitie for box model  
+# OBJ9: Driver and utilitie for box model
 set(OBJ9_SOURCES
     gaschem_simple.F90
     cloudchem_simple.F90
@@ -215,7 +217,7 @@ foreach(src_file ${ALL_SOURCES})
     else()
         get_filename_component(base_name ${src_file} NAME_WE)
         get_filename_component(ext ${src_file} EXT)
-        
+
         # Try lowercase extension
         string(TOLOWER ${ext} ext_lower)
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${base_name}${ext_lower}")
