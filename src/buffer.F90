@@ -4,15 +4,15 @@
 !===================================================
 module buffer
 
-  !----------------------------------------------------------------------- 
-  ! 
-  ! Purpose: 
-  !   LOW level handler for f90 arrays. 
+  !-----------------------------------------------------------------------
+  !
+  ! Purpose:
+  !   LOW level handler for f90 arrays.
   !
   ! Author: J. Edwards
   !
-  ! This file is used with genf90.pl to generate buffer.F90  
-  ! 
+  ! This file is used with genf90.pl to generate buffer.F90
+  !
   !-----------------------------------------------------------------------
 
   use precision_mod, only: r8 => f8, r4 => f4
@@ -20,7 +20,7 @@ module buffer
   implicit none
   private
   ! The maximum number of dims in a fortran array
-#define MAXDIMS 7  
+#define MAXDIMS 7
 
 
   type buffer_field_default_type
@@ -28,17 +28,17 @@ module buffer
      real(r8), pointer :: data(:,:,:,:,:,:,:) => null()
   end type buffer_field_default_type
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   type buffer_field_int
      private
      integer(i4), pointer :: data(:,:,:,:,:,:,:) => null()
   end type buffer_field_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   type buffer_field_double
      private
      real(r8), pointer :: data(:,:,:,:,:,:,:) => null()
   end type buffer_field_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   type buffer_field_real
      private
      real(r4), pointer :: data(:,:,:,:,:,:,:) => null()
@@ -50,160 +50,160 @@ module buffer
 
 # 38 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   interface buffer_field_deallocate
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_field_deallocate_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_field_deallocate_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_field_deallocate_real
   end interface
 
 # 43 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   interface buffer_field_allocate
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_field_allocate_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_field_allocate_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_field_allocate_real
   end interface
 
 # 48 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   interface buffer_set_field
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_set_field_const_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_set_field_const_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  buffer_set_field_const_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_1d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_2d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_3d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_4d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_5d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_6d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_7d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_1d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_2d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_3d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_4d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_5d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_6d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_7d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_1d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_2d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_3d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_4d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_5d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_6d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_set_field_7d_real
   end interface
 
 # 56 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   interface buffer_get_field_ptr
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_1d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_2d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_3d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_4d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_5d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_6d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_7d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_1d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_2d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_3d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_4d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_5d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_6d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_7d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_1d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_2d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_3d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_4d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_5d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_6d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5,6,7
      module procedure buffer_get_field_ptr_7d_real
   end interface
@@ -211,7 +211,7 @@ module buffer
   public :: buffer_field_deallocate, buffer_field_allocate, buffer_set_field, buffer_get_field_ptr, buffer_field_default_type
   public :: buffer_field_is_alloc
 
-  
+
 # 66 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
 CONTAINS
 
@@ -283,7 +283,7 @@ CONTAINS
   logical function buffer_field_is_alloc(bfg)
     type(buffer_field_default_type),intent(in) :: bfg
 
-    buffer_field_is_alloc = associated(bfg%data) 
+    buffer_field_is_alloc = associated(bfg%data)
 
 # 93 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end function buffer_field_is_alloc
@@ -380,7 +380,7 @@ CONTAINS
 # 123 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_field_allocate_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 # 126 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_const_int(bfg, const, start,kount)
     type(buffer_field_default_type) :: bfg
@@ -391,7 +391,7 @@ CONTAINS
 
     integer :: i, ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
     if(present(start).and.present(kount)) then
        strt(:) = 1
@@ -399,7 +399,7 @@ CONTAINS
 
        ns = size(start)
        strt(1:ns) = start
-    
+
        fin = strt+cnt-1
 
        do i=1,ns
@@ -418,7 +418,7 @@ CONTAINS
 
 # 160 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_const_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 # 126 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_const_double(bfg, const, start,kount)
     type(buffer_field_default_type) :: bfg
@@ -429,7 +429,7 @@ CONTAINS
 
     integer :: i, ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
     if(present(start).and.present(kount)) then
        strt(:) = 1
@@ -437,7 +437,7 @@ CONTAINS
 
        ns = size(start)
        strt(1:ns) = start
-    
+
        fin = strt+cnt-1
 
        do i=1,ns
@@ -456,7 +456,7 @@ CONTAINS
 
 # 160 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_const_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 # 126 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_const_real(bfg, const, start,kount)
     type(buffer_field_default_type) :: bfg
@@ -467,7 +467,7 @@ CONTAINS
 
     integer :: i, ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
     if(present(start).and.present(kount)) then
        strt(:) = 1
@@ -475,7 +475,7 @@ CONTAINS
 
        ns = size(start)
        strt(1:ns) = start
-    
+
        fin = strt+cnt-1
 
        do i=1,ns
@@ -496,12 +496,12 @@ CONTAINS
   end subroutine buffer_set_field_const_real
 
   !=========================================================================================
-  ! 
-  ! Given a physics_buffer chunk and an index return a pointer to a field chunk 
-  ! 
+  !
+  ! Given a physics_buffer chunk and an index return a pointer to a field chunk
+  !
   !
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_1d_int(bfg, field, start,kount)
@@ -509,10 +509,10 @@ CONTAINS
     integer(i4), pointer :: field(:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -547,7 +547,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_2d_int(bfg, field, start,kount)
@@ -555,10 +555,10 @@ CONTAINS
     integer(i4), pointer :: field(:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -593,7 +593,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_3d_int(bfg, field, start,kount)
@@ -601,10 +601,10 @@ CONTAINS
     integer(i4), pointer :: field(:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -639,7 +639,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_4d_int(bfg, field, start,kount)
@@ -647,10 +647,10 @@ CONTAINS
     integer(i4), pointer :: field(:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -685,7 +685,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_5d_int(bfg, field, start,kount)
@@ -693,10 +693,10 @@ CONTAINS
     integer(i4), pointer :: field(:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -731,7 +731,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_6d_int(bfg, field, start,kount)
@@ -739,10 +739,10 @@ CONTAINS
     integer(i4), pointer :: field(:,:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -777,7 +777,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_6d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_7d_int(bfg, field, start,kount)
@@ -785,10 +785,10 @@ CONTAINS
     integer(i4), pointer :: field(:,:,:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_int), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -823,7 +823,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_7d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_1d_double(bfg, field, start,kount)
@@ -831,10 +831,10 @@ CONTAINS
     real(r8), pointer :: field(:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -869,7 +869,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_2d_double(bfg, field, start,kount)
@@ -877,10 +877,10 @@ CONTAINS
     real(r8), pointer :: field(:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -915,7 +915,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_3d_double(bfg, field, start,kount)
@@ -923,10 +923,10 @@ CONTAINS
     real(r8), pointer :: field(:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -961,7 +961,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_4d_double(bfg, field, start,kount)
@@ -969,10 +969,10 @@ CONTAINS
     real(r8), pointer :: field(:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1007,7 +1007,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_5d_double(bfg, field, start,kount)
@@ -1015,10 +1015,10 @@ CONTAINS
     real(r8), pointer :: field(:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1053,7 +1053,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_6d_double(bfg, field, start,kount)
@@ -1061,10 +1061,10 @@ CONTAINS
     real(r8), pointer :: field(:,:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1099,7 +1099,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_6d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_7d_double(bfg, field, start,kount)
@@ -1107,10 +1107,10 @@ CONTAINS
     real(r8), pointer :: field(:,:,:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_double), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1145,7 +1145,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_7d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_1d_real(bfg, field, start,kount)
@@ -1153,10 +1153,10 @@ CONTAINS
     real(r4), pointer :: field(:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1191,7 +1191,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_2d_real(bfg, field, start,kount)
@@ -1199,10 +1199,10 @@ CONTAINS
     real(r4), pointer :: field(:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1237,7 +1237,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_3d_real(bfg, field, start,kount)
@@ -1245,10 +1245,10 @@ CONTAINS
     real(r4), pointer :: field(:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1283,7 +1283,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_4d_real(bfg, field, start,kount)
@@ -1291,10 +1291,10 @@ CONTAINS
     real(r4), pointer :: field(:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1329,7 +1329,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_5d_real(bfg, field, start,kount)
@@ -1337,10 +1337,10 @@ CONTAINS
     real(r4), pointer :: field(:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1375,7 +1375,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_5d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_6d_real(bfg, field, start,kount)
@@ -1383,10 +1383,10 @@ CONTAINS
     real(r4), pointer :: field(:,:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1421,7 +1421,7 @@ CONTAINS
 
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_6d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 170 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_get_field_ptr_7d_real(bfg, field, start,kount)
@@ -1429,10 +1429,10 @@ CONTAINS
     real(r4), pointer :: field(:,:,:,:,:,:,:)
     integer, intent(in), optional :: start(:), kount(:)
     type(buffer_field_real), target :: ptr
-    
+
     integer :: ns, strt(7), fin(7), cnt(7)
 
-    ptr = transfer(bfg, ptr)        
+    ptr = transfer(bfg, ptr)
 
 
     strt(:) = 1
@@ -1468,7 +1468,7 @@ CONTAINS
 # 211 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_get_field_ptr_7d_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_1d_int(bfg,field,start,kount)
@@ -1532,7 +1532,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_2d_int(bfg,field,start,kount)
@@ -1596,7 +1596,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_3d_int(bfg,field,start,kount)
@@ -1660,7 +1660,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_4d_int(bfg,field,start,kount)
@@ -1724,7 +1724,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_5d_int(bfg,field,start,kount)
@@ -1788,7 +1788,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_6d_int(bfg,field,start,kount)
@@ -1852,7 +1852,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_6d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_7d_int(bfg,field,start,kount)
@@ -1916,7 +1916,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_7d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_1d_double(bfg,field,start,kount)
@@ -1980,7 +1980,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_2d_double(bfg,field,start,kount)
@@ -2044,7 +2044,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_3d_double(bfg,field,start,kount)
@@ -2108,7 +2108,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_4d_double(bfg,field,start,kount)
@@ -2172,7 +2172,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_5d_double(bfg,field,start,kount)
@@ -2236,7 +2236,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_6d_double(bfg,field,start,kount)
@@ -2300,7 +2300,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_6d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_7d_double(bfg,field,start,kount)
@@ -2364,7 +2364,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_7d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_1d_real(bfg,field,start,kount)
@@ -2428,7 +2428,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_2d_real(bfg,field,start,kount)
@@ -2492,7 +2492,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_3d_real(bfg,field,start,kount)
@@ -2556,7 +2556,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_4d_real(bfg,field,start,kount)
@@ -2620,7 +2620,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_5d_real(bfg,field,start,kount)
@@ -2684,7 +2684,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_5d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_6d_real(bfg,field,start,kount)
@@ -2748,7 +2748,7 @@ CONTAINS
     end if
 # 274 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   end subroutine buffer_set_field_6d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5,6,7
 # 215 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/utils/buffer.F90.in"
   subroutine buffer_set_field_7d_real(bfg,field,start,kount)

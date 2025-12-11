@@ -42,7 +42,7 @@
          module procedure rad_cnst_get_info_v4
        end interface
 
-# if ( defined MOSAIC_SPECIES_FABNO ) 
+# if ( defined MOSAIC_SPECIES_FABNO )
       integer, parameter :: nspecs=11
 
       integer :: mode_idx_rc(nspecs) = &
@@ -66,12 +66,12 @@
       real(r8) :: specdens_amode_rc(nspecs) = &
                   (/ 1770.0_r8, 1770.0_r8, 1770.0_r8, &
                      1000.0_r8, 1000.0_r8, 1700.0_r8, &
-                     1900.0_r8, 2600.0_r8, 1900.0_r8, & 
+                     1900.0_r8, 2600.0_r8, 1900.0_r8, &
                      2600.0_r8, 2600.0_r8             /)
       real(r8) :: spechygro_rc(nspecs) = &
                   (/ 0.507_r8, 0.507_r8, 0.507_r8,   &
                      0.010_r8, 0.140_r8, 1.0e-10_r8, &
-                     1.160_r8, 0.068_r8, 1.160_r8,   & 
+                     1.160_r8, 0.068_r8, 1.160_r8,   &
                      0.068_r8, 0.068_r8              /)
 
 #elif ( defined MODAL_AERO_4MODE_MOM_FABNO )
@@ -104,7 +104,7 @@
 
 #elif ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
       integer, parameter :: nspecs=12
-                  
+
       integer :: mode_idx_rc(nspecs) = &
                  (/ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 /)
       integer :: spec_idx_rc(nspecs) = &
@@ -309,8 +309,8 @@ m_loop: do m = 1, ntot_amode
       integer :: nmodes
       !integer, optional :: nmodes
 
-      nmodes   = n_modes  
-      !if ( present( nmodes   ) ) nmodes   = n_modes  
+      nmodes   = n_modes
+      !if ( present( nmodes   ) ) nmodes   = n_modes
 
       return
       end subroutine rad_cnst_get_info_v2
@@ -348,7 +348,7 @@ m_loop: do m = 1, ntot_amode
       integer :: itmpa
       integer :: m_idx
       integer :: s_idx
-      character(len=32) :: spec_type  
+      character(len=32) :: spec_type
 
       integer :: itmpl, l2, l3
       character(len=120) :: errmsg

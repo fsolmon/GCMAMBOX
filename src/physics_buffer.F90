@@ -11,18 +11,18 @@
 !#define DEBUG 1
 module physics_buffer
 
-  !----------------------------------------------------------------------- 
-  ! 
-  ! Purpose: 
-  !    Buffer managment for persistant variables 
+  !-----------------------------------------------------------------------
+  !
+  ! Purpose:
+  !    Buffer managment for persistant variables
   !
   ! Author: J. Edwards
   !
-  ! This file is used with genf90.pl to generate buffer.F90  
-  ! 
+  ! This file is used with genf90.pl to generate buffer.F90
+  !
   !-----------------------------------------------------------------------
 
-  use precision_mod,  only: r8 => f8, r4 => f4 
+  use precision_mod,  only: r8 => f8, r4 => f4
   use mam_utils,      only:i4, pcols, begchunk, endchunk, psubcols, iulog, ptimelevels, endrun
 !!use pio,            only: var_desc_t
   use buffer,         only: buffer_field_allocate, buffer_field_deallocate, buffer_get_field_ptr, buffer_set_field, &
@@ -33,7 +33,7 @@ module physics_buffer
 
   ! ngrid_types is a private parameter denoting how many types of a field
   ! (e.g., grid, subcol) a pbuf can hold
-  integer, parameter :: ngrid_types = 2 
+  integer, parameter :: ngrid_types = 2
 
   ! --col_type parameters -- see pbuf_add_field and pbuf_get_field
   ! -- These indices should start at 1 and increment by 1 so that they
@@ -61,9 +61,9 @@ module physics_buffer
   integer, parameter :: persistence_physpkg = 2
   logical            :: global_allocate_all = .true.
 
-  ! 
-  ! physics_buffer_hdr carries the description info for each buffer, only one header 
-  ! is allocated for each field and each chunk of the field points to it. 
+  !
+  ! physics_buffer_hdr carries the description info for each buffer, only one header
+  ! is allocated for each field and each chunk of the field points to it.
   ! It is carried as a linkedlist for initialization only.
   !
 
@@ -80,10 +80,10 @@ module physics_buffer
   end type physics_buffer_hdr
 
   !
-  ! The default type for a buffer field is buffer_field_double (r8) since that is the 
+  ! The default type for a buffer field is buffer_field_double (r8) since that is the
   ! type most often used in the model.   The F90 transfer function is used to move
   ! data of other types into and out of the pbuf2d
-  ! 
+  !
 
   type physics_buffer_desc
      private
@@ -94,221 +94,221 @@ module physics_buffer
 
 !# 88 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   interface pbuf_get_field
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_1d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_2d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_3d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_4d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_5d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_1d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_2d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_3d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_4d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_5d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_1d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_2d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_3d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_4d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf1d_field_by_index_5d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_1d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_2d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_3d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_4d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_5d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_1d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_2d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_3d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_4d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_5d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_1d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_2d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_3d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_4d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure get_pbuf2d_field_by_index_5d_real
   end interface
 
 !# 97 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   interface pbuf_get_field_restart
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure get_pbuf2d_field_restart_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure get_pbuf2d_field_restart_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure get_pbuf2d_field_restart_real
   end interface
 
 !# 102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   interface pbuf_set_field
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_1d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_2d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_3d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_4d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_5d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_1d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_2d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_3d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_4d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_5d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_1d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_2d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_3d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_4d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf2d_field_by_index_5d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_1d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_2d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_3d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_4d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_5d_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_1d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_2d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_3d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_4d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_5d_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_1d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_2d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_3d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_4d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      ! DIMS 1,2,3,4,5
      module procedure  set_pbuf1d_field_by_index_5d_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  set_pbuf1d_field_const_by_index_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  set_pbuf1d_field_const_by_index_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  set_pbuf1d_field_const_by_index_real
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  set_pbuf2d_field_const_by_index_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  set_pbuf2d_field_const_by_index_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure  set_pbuf2d_field_const_by_index_real
   end interface
 
 !# 115 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   interface pbuf_add_field
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure pbuf_add_field_int
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure pbuf_add_field_double
-     ! TYPE int,double,real 
+     ! TYPE int,double,real
      module procedure pbuf_add_field_real
   end interface
 
@@ -342,7 +342,7 @@ module physics_buffer
   integer :: currentpbufflds=0
   type(physics_buffer_hdr), pointer :: hdrbuffertop => null()
 
-  ! 
+  !
   ! Insures that we do not attempt to allocate physics_buffer more than once
   !
 
@@ -418,7 +418,7 @@ CONTAINS
   ! pbuf_col_type_index returns an index for use with pbuf calls
   !
   ! * col_type:         is set to col_type_grid (if use_subcol=.false.) or
-  !                     col_type_subcol (if (use_subcol=.true.). 
+  !                     col_type_subcol (if (use_subcol=.true.).
   !
 
 !# 221 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
@@ -436,7 +436,7 @@ CONTAINS
 !# 232 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_col_type_index
 
-  ! 
+  !
   !  Return a pointer to the current chunks physics_buffer.
   !
 
@@ -470,7 +470,7 @@ CONTAINS
 !# 262 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function pbuf_get_chunk
 
-  ! 
+  !
   !  Return .true. iff pbuf has an allocated grid field
   !
 
@@ -490,7 +490,7 @@ CONTAINS
 !# 280 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function pbuf_field_has_gridcols
 
-  ! 
+  !
   !  Return .true. iff pbuf has an allocated subcolumn field
   !
 
@@ -510,7 +510,7 @@ CONTAINS
 !# 298 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function pbuf_field_has_subcols
 
-  ! 
+  !
   !  Return .true. iff pbuf has an allocated col_type column field
   !
 
@@ -533,13 +533,13 @@ CONTAINS
   end function pbuf_field_has_col_type
 
   !
-  !  Initialize the buffer, should be called after all pbuf_add_field calls 
+  !  Initialize the buffer, should be called after all pbuf_add_field calls
   !  have been completed and should only be called once in a run
   !
 !# 324 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_initialize(pbuf2d)
     type(physics_buffer_desc), pointer :: pbuf2d(:,:)
-    
+
     integer :: i, c
     type(physics_buffer_hdr), pointer :: hdrbuffer
 
@@ -548,7 +548,7 @@ CONTAINS
     !
     if(buffer_initialized) return
     ! Allocate at least 1 to avoid unallocated error in ideal physics
-    allocate(pbuf2d(max(1,currentpbufflds),begchunk:endchunk)) 
+    allocate(pbuf2d(max(1,currentpbufflds),begchunk:endchunk))
     if(currentpbufflds<1) return
 
     do c = begchunk, endchunk
@@ -562,7 +562,7 @@ CONTAINS
         hdrbuffer => hdrbuffer%nexthdr
       end do
     end do
-    
+
     buffer_initialized=.true.
     call pbuf_allocate(pbuf2d, 'global')
 #ifdef DEBUG
@@ -639,7 +639,7 @@ CONTAINS
 !# 421 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_allocate
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 424 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_allocate_field_int(pbuf2d, index, dtype)
     integer(i4),                            intent(in)    :: dtype
@@ -667,10 +667,10 @@ CONTAINS
           end do
        end if
     end do
-    
+
 !# 451 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_allocate_field_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 424 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_allocate_field_double(pbuf2d, index, dtype)
     real(r8),                            intent(in)    :: dtype
@@ -698,10 +698,10 @@ CONTAINS
           end do
        end if
     end do
-    
+
 !# 451 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_allocate_field_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 424 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_allocate_field_real(pbuf2d, index, dtype)
     real(r4),                            intent(in)    :: dtype
@@ -729,7 +729,7 @@ CONTAINS
           end do
        end if
     end do
-    
+
 !# 451 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_allocate_field_real
 
@@ -840,7 +840,7 @@ CONTAINS
   !
   !  Register a field in the pbuf
   !  This should be called from physics register routines.
-  !  persistence must be 'global' or 'physpkg' 
+  !  persistence must be 'global' or 'physpkg'
   !  dtype can be any of r8, r4, i4 as defined in shr_kinds_mod.F90
   !  col_type is either col_type_grid or col_type_subcol.
   !  If no col_type, then grid field is defined (i.e., dimsizes set)
@@ -946,12 +946,12 @@ CONTAINS
 
   !
   !  Add a field to the pbuf, this should be called from physics register routines
-  !  name is required to be unique, 
-  !  persistence must be 'global' or 'physpkg' 
+  !  name is required to be unique,
+  !  persistence must be 'global' or 'physpkg'
   !  dtype can be any of r8, r4, i4 as defined in shr_kinds_mod.F90
   !  If present, col_type must be either col_type_grid or col_type_subcol
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 664 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_add_field_int(name, persistence, dtype, dimsizes, index, col_type)
 
@@ -980,7 +980,7 @@ CONTAINS
 
 !# 689 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_add_field_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 664 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_add_field_double(name, persistence, dtype, dimsizes, index, col_type)
 
@@ -1009,7 +1009,7 @@ CONTAINS
 
 !# 689 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf_add_field_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 664 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine pbuf_add_field_real(name, persistence, dtype, dimsizes, index, col_type)
 
@@ -1042,15 +1042,15 @@ CONTAINS
 !!HuiWan # 691 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
 !!HuiWan   subroutine pbuf_register_subcol(name, pname, index)
 !!HuiWan     use subcol_utils, only: is_subcol_on
-!!HuiWan 
+!!HuiWan
 !!HuiWan     ! Dummy Arguments
 !!HuiWan     character(len=*),           intent(in)  :: name
 !!HuiWan     character(len=*),           intent(in)  :: pname ! name of calling parameterization
 !!HuiWan     integer,                    intent(out) :: index
-!!HuiWan 
+!!HuiWan
 !!HuiWan     ! Local variables
 !!HuiWan     integer                                 :: dimsizes(1)
-!!HuiWan 
+!!HuiWan
 !!HuiWan     ! You really should not call this routine if subcolumns are not on
 !!HuiWan     if (.not. is_subcol_on()) then
 !!HuiWan       call endrun('pbuf_register_subcol: subcolumns are not active')
@@ -1059,7 +1059,7 @@ CONTAINS
 !!HuiWan     dimsizes(1) = pcols * psubcols
 !!HuiWan     call pbuf_register_field_int(trim(name), trim(pname), index,              &
 !!HuiWan          dimsizes=dimsizes, col_type=col_type_subcol)
-!!HuiWan 
+!!HuiWan
 !!HuiWan # 711 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
 !!HuiWan   end subroutine pbuf_register_subcol
 
@@ -1088,10 +1088,10 @@ CONTAINS
 !# 732 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine pbuf1d_print
   !
-  ! Given a pbuf field name return an integer index to the field.  
+  ! Given a pbuf field name return an integer index to the field.
   ! This index can be used to retrieve the field and is much faster
-  ! than using the name in most cases  
-  ! 
+  ! than using the name in most cases
+  !
 
 !# 739 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   function pbuf_get_index(name, errcode) result(index)
@@ -1113,7 +1113,7 @@ CONTAINS
     end do
 
     if (present(errcode)) then
-        errcode = index 
+        errcode = index
     else if(index<0) then
        call endrun('Attempt to find undefined name in pbuf '//trim(name))
     end if
@@ -1124,13 +1124,13 @@ CONTAINS
 
   !=========================================================================================
 
-  ! 
-  ! Given a pbuf2d chunk and an index return a pointer to a field chunk 
-  ! 
+  !
+  ! Given a pbuf2d chunk and an index return a pointer to a field chunk
+  !
   !
 
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_1d_int(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -1213,7 +1213,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -1285,7 +1285,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_2d_int(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -1368,7 +1368,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -1440,7 +1440,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_3d_int(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -1523,7 +1523,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -1595,7 +1595,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_4d_int(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -1678,7 +1678,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -1750,7 +1750,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_5d_int(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -1833,7 +1833,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -1905,7 +1905,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_1d_double(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -1988,7 +1988,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2060,7 +2060,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_2d_double(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -2143,7 +2143,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2215,7 +2215,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_3d_double(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -2298,7 +2298,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2370,7 +2370,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_4d_double(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -2453,7 +2453,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2525,7 +2525,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_5d_double(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -2608,7 +2608,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2680,7 +2680,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_1d_real(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -2763,7 +2763,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2835,7 +2835,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_2d_real(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -2918,7 +2918,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -2990,7 +2990,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_3d_real(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -3073,7 +3073,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -3145,7 +3145,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_4d_real(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -3228,7 +3228,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -3300,7 +3300,7 @@ CONTAINS
 
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 776 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf1d_field_by_index_5d_real(pbuf, index, field, start,kount, col_type, copy_if_needed, errcode)
@@ -3383,7 +3383,7 @@ CONTAINS
           ! Only do the copy if we did the alloc (i.e., set the is_copy flag)
           ! Only copy the portion we are going to hand back (i.e., start, kount)
           ! Chances are that kount(1) = pcols*psubcols because we are looking
-          ! for a subcolumn field (or we wouldn't be here). Now, 
+          ! for a subcolumn field (or we wouldn't be here). Now,
           ! subcol_field_copy requires kount(1) = pcols for the input and
           ! therefore, kount(1) = pcols*psubcols for the output. Check and
           ! make it work
@@ -3456,7 +3456,7 @@ CONTAINS
 !# 926 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf1d_field_by_index_5d_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_1d_int(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3481,7 +3481,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_2d_int(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3506,7 +3506,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_3d_int(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3531,7 +3531,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_4d_int(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3556,7 +3556,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_5d_int(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3581,7 +3581,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_1d_double(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3606,7 +3606,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_2d_double(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3631,7 +3631,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_3d_double(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3656,7 +3656,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_4d_double(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3681,7 +3681,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_5d_double(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3706,7 +3706,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_1d_real(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3731,7 +3731,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_2d_real(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3756,7 +3756,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_3d_real(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3781,7 +3781,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_4d_real(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3806,7 +3806,7 @@ CONTAINS
          start=start, kount=kount, col_type=col_type, errcode=errcode)
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 930 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_by_index_5d_real(pbuf2d, lchnk, index, field, start, kount, col_type, errcode)
@@ -3832,7 +3832,7 @@ CONTAINS
 !# 950 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_by_index_5d_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 953 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_restart_int(pbuf2d, lchnk, index, field, mdimsize, col_type)
 !!HuiWan    use subcol_utils,    only: subcol_unpack
@@ -3886,7 +3886,7 @@ CONTAINS
     end if
 !# 1003 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_restart_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 953 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_restart_double(pbuf2d, lchnk, index, field, mdimsize, col_type)
 !!HuiWan    use subcol_utils,    only: subcol_unpack
@@ -3940,7 +3940,7 @@ CONTAINS
     end if
 !# 1003 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_restart_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
 !# 953 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine get_pbuf2d_field_restart_real(pbuf2d, lchnk, index, field, mdimsize, col_type)
 !!HuiWan    use subcol_utils,    only: subcol_unpack
@@ -3995,7 +3995,7 @@ CONTAINS
 !# 1003 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine get_pbuf2d_field_restart_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1007 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_const_by_index_int(pbuf2d,index,const, col_type)
@@ -4008,7 +4008,7 @@ CONTAINS
     integer,intent(in)  ,optional      :: col_type
 
     integer :: c
-    
+
     do c=begchunk,endchunk
        if(present(col_type)) then
           call set_pbuf1d_field_const_by_index_int(pbuf_get_chunk(pbuf2d,c),index,const, col_type=col_type)
@@ -4019,7 +4019,7 @@ CONTAINS
 
 !# 1026 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_const_by_index_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1007 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_const_by_index_double(pbuf2d,index,const, col_type)
@@ -4032,7 +4032,7 @@ CONTAINS
     integer,intent(in)  ,optional      :: col_type
 
     integer :: c
-    
+
     do c=begchunk,endchunk
        if(present(col_type)) then
           call set_pbuf1d_field_const_by_index_double(pbuf_get_chunk(pbuf2d,c),index,const, col_type=col_type)
@@ -4043,7 +4043,7 @@ CONTAINS
 
 !# 1026 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_const_by_index_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1007 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_const_by_index_real(pbuf2d,index,const, col_type)
@@ -4056,7 +4056,7 @@ CONTAINS
     integer,intent(in)  ,optional      :: col_type
 
     integer :: c
-    
+
     do c=begchunk,endchunk
        if(present(col_type)) then
           call set_pbuf1d_field_const_by_index_real(pbuf_get_chunk(pbuf2d,c),index,const, col_type=col_type)
@@ -4068,7 +4068,7 @@ CONTAINS
 !# 1026 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_const_by_index_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1030 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_const_by_index_int(pbuf,index,const,start,kount, col_type)
@@ -4079,7 +4079,7 @@ CONTAINS
     integer(i4),intent(in) :: const
     integer, intent(in), optional :: start(:),kount(:)
     integer, intent(in), optional :: col_type
-   
+
     integer :: col_type_use
     logical :: subset
 
@@ -4099,16 +4099,16 @@ CONTAINS
          (.not. present(start) .and. present(kount)) ) then
        call endrun('pbuf_set_field: Both start and kount must be present for '//trim(pbuf(index)%hdr%name))
     end if
-    
+
     ! Set the appropriate grid or sub-column field.  Check that the fields have been allocated.
-    if(subset) then 
+    if(subset) then
 
        if (col_type_use == col_type_subcol) then
          ! Set sub-column field
          if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),const,start,kount)
-       
+
        else if (col_type_use == col_type_grid) then
          ! Set grid field
          if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_grid))) &
@@ -4119,7 +4119,7 @@ CONTAINS
               ' but col_type is neither col_type_grid nor col_type_subcol')
        end if
 
-     else 
+     else
 
        if (col_type_use == col_type_subcol) then
          ! Set sub-column field
@@ -4141,7 +4141,7 @@ CONTAINS
 
 !# 1098 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
    end subroutine set_pbuf1d_field_const_by_index_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1030 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_const_by_index_double(pbuf,index,const,start,kount, col_type)
@@ -4152,7 +4152,7 @@ CONTAINS
     real(r8),intent(in) :: const
     integer, intent(in), optional :: start(:),kount(:)
     integer, intent(in), optional :: col_type
-   
+
     integer :: col_type_use
     logical :: subset
 
@@ -4172,16 +4172,16 @@ CONTAINS
          (.not. present(start) .and. present(kount)) ) then
        call endrun('pbuf_set_field: Both start and kount must be present for '//trim(pbuf(index)%hdr%name))
     end if
-    
+
     ! Set the appropriate grid or sub-column field.  Check that the fields have been allocated.
-    if(subset) then 
+    if(subset) then
 
        if (col_type_use == col_type_subcol) then
          ! Set sub-column field
          if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),const,start,kount)
-       
+
        else if (col_type_use == col_type_grid) then
          ! Set grid field
          if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_grid))) &
@@ -4192,7 +4192,7 @@ CONTAINS
               ' but col_type is neither col_type_grid nor col_type_subcol')
        end if
 
-     else 
+     else
 
        if (col_type_use == col_type_subcol) then
          ! Set sub-column field
@@ -4214,7 +4214,7 @@ CONTAINS
 
 !# 1098 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
    end subroutine set_pbuf1d_field_const_by_index_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1030 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_const_by_index_real(pbuf,index,const,start,kount, col_type)
@@ -4225,7 +4225,7 @@ CONTAINS
     real(r4),intent(in) :: const
     integer, intent(in), optional :: start(:),kount(:)
     integer, intent(in), optional :: col_type
-   
+
     integer :: col_type_use
     logical :: subset
 
@@ -4245,16 +4245,16 @@ CONTAINS
          (.not. present(start) .and. present(kount)) ) then
        call endrun('pbuf_set_field: Both start and kount must be present for '//trim(pbuf(index)%hdr%name))
     end if
-    
+
     ! Set the appropriate grid or sub-column field.  Check that the fields have been allocated.
-    if(subset) then 
+    if(subset) then
 
        if (col_type_use == col_type_subcol) then
          ! Set sub-column field
          if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),const,start,kount)
-       
+
        else if (col_type_use == col_type_grid) then
          ! Set grid field
          if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_grid))) &
@@ -4265,7 +4265,7 @@ CONTAINS
               ' but col_type is neither col_type_grid nor col_type_subcol')
        end if
 
-     else 
+     else
 
        if (col_type_use == col_type_subcol) then
          ! Set sub-column field
@@ -4288,7 +4288,7 @@ CONTAINS
 !# 1098 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
    end subroutine set_pbuf1d_field_const_by_index_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_1d_int(pbuf2d,index,field, start, kount, col_type)
@@ -4341,7 +4341,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_2d_int(pbuf2d,index,field, start, kount, col_type)
@@ -4394,7 +4394,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_3d_int(pbuf2d,index,field, start, kount, col_type)
@@ -4447,7 +4447,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_4d_int(pbuf2d,index,field, start, kount, col_type)
@@ -4500,7 +4500,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_5d_int(pbuf2d,index,field, start, kount, col_type)
@@ -4553,7 +4553,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_1d_double(pbuf2d,index,field, start, kount, col_type)
@@ -4606,7 +4606,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_2d_double(pbuf2d,index,field, start, kount, col_type)
@@ -4659,7 +4659,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_3d_double(pbuf2d,index,field, start, kount, col_type)
@@ -4712,7 +4712,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_4d_double(pbuf2d,index,field, start, kount, col_type)
@@ -4765,7 +4765,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_5d_double(pbuf2d,index,field, start, kount, col_type)
@@ -4818,7 +4818,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_1d_real(pbuf2d,index,field, start, kount, col_type)
@@ -4871,7 +4871,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_2d_real(pbuf2d,index,field, start, kount, col_type)
@@ -4924,7 +4924,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_3d_real(pbuf2d,index,field, start, kount, col_type)
@@ -4977,7 +4977,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_4d_real(pbuf2d,index,field, start, kount, col_type)
@@ -5030,7 +5030,7 @@ CONTAINS
     end do
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1102 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf2d_field_by_index_5d_real(pbuf2d,index,field, start, kount, col_type)
@@ -5084,10 +5084,10 @@ CONTAINS
 !# 1150 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf2d_field_by_index_5d_real
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_1d_int(field, c) result(fld) 
+  function get_field_chunk_1d_int(field, c) result(fld)
     ! module private helper function
     integer(i4), pointer :: fld(:)
     integer, intent(in) :: c
@@ -5107,14 +5107,14 @@ CONTAINS
 #elif (1==5)
     integer(i4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_2d_int(field, c) result(fld) 
+  function get_field_chunk_2d_int(field, c) result(fld)
     ! module private helper function
     integer(i4), pointer :: fld(:,:)
     integer, intent(in) :: c
@@ -5134,14 +5134,14 @@ CONTAINS
 #elif (2==5)
     integer(i4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_3d_int(field, c) result(fld) 
+  function get_field_chunk_3d_int(field, c) result(fld)
     ! module private helper function
     integer(i4), pointer :: fld(:,:,:)
     integer, intent(in) :: c
@@ -5161,14 +5161,14 @@ CONTAINS
 #elif (3==5)
     integer(i4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_4d_int(field, c) result(fld) 
+  function get_field_chunk_4d_int(field, c) result(fld)
     ! module private helper function
     integer(i4), pointer :: fld(:,:,:,:)
     integer, intent(in) :: c
@@ -5188,14 +5188,14 @@ CONTAINS
 #elif (4==5)
     integer(i4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_5d_int(field, c) result(fld) 
+  function get_field_chunk_5d_int(field, c) result(fld)
     ! module private helper function
     integer(i4), pointer :: fld(:,:,:,:,:)
     integer, intent(in) :: c
@@ -5215,14 +5215,14 @@ CONTAINS
 #elif (5==5)
     integer(i4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_1d_double(field, c) result(fld) 
+  function get_field_chunk_1d_double(field, c) result(fld)
     ! module private helper function
     real(r8), pointer :: fld(:)
     integer, intent(in) :: c
@@ -5242,14 +5242,14 @@ CONTAINS
 #elif (1==5)
     real(r8),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_2d_double(field, c) result(fld) 
+  function get_field_chunk_2d_double(field, c) result(fld)
     ! module private helper function
     real(r8), pointer :: fld(:,:)
     integer, intent(in) :: c
@@ -5269,14 +5269,14 @@ CONTAINS
 #elif (2==5)
     real(r8),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_3d_double(field, c) result(fld) 
+  function get_field_chunk_3d_double(field, c) result(fld)
     ! module private helper function
     real(r8), pointer :: fld(:,:,:)
     integer, intent(in) :: c
@@ -5296,14 +5296,14 @@ CONTAINS
 #elif (3==5)
     real(r8),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_4d_double(field, c) result(fld) 
+  function get_field_chunk_4d_double(field, c) result(fld)
     ! module private helper function
     real(r8), pointer :: fld(:,:,:,:)
     integer, intent(in) :: c
@@ -5323,14 +5323,14 @@ CONTAINS
 #elif (4==5)
     real(r8),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_5d_double(field, c) result(fld) 
+  function get_field_chunk_5d_double(field, c) result(fld)
     ! module private helper function
     real(r8), pointer :: fld(:,:,:,:,:)
     integer, intent(in) :: c
@@ -5350,14 +5350,14 @@ CONTAINS
 #elif (5==5)
     real(r8),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_1d_real(field, c) result(fld) 
+  function get_field_chunk_1d_real(field, c) result(fld)
     ! module private helper function
     real(r4), pointer :: fld(:)
     integer, intent(in) :: c
@@ -5377,14 +5377,14 @@ CONTAINS
 #elif (1==5)
     real(r4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_2d_real(field, c) result(fld) 
+  function get_field_chunk_2d_real(field, c) result(fld)
     ! module private helper function
     real(r4), pointer :: fld(:,:)
     integer, intent(in) :: c
@@ -5404,14 +5404,14 @@ CONTAINS
 #elif (2==5)
     real(r4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_3d_real(field, c) result(fld) 
+  function get_field_chunk_3d_real(field, c) result(fld)
     ! module private helper function
     real(r4), pointer :: fld(:,:,:)
     integer, intent(in) :: c
@@ -5431,14 +5431,14 @@ CONTAINS
 #elif (3==5)
     real(r4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_4d_real(field, c) result(fld) 
+  function get_field_chunk_4d_real(field, c) result(fld)
     ! module private helper function
     real(r4), pointer :: fld(:,:,:,:)
     integer, intent(in) :: c
@@ -5458,14 +5458,14 @@ CONTAINS
 #elif (4==5)
     real(r4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1154 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
-  function get_field_chunk_5d_real(field, c) result(fld) 
+  function get_field_chunk_5d_real(field, c) result(fld)
     ! module private helper function
     real(r4), pointer :: fld(:,:,:,:,:)
     integer, intent(in) :: c
@@ -5485,14 +5485,14 @@ CONTAINS
 #elif (5==5)
     real(r4),pointer :: field(:,:,:,:,:,:)
     fld => field(:,:,:,:,:,c)
-#endif    
+#endif
 
 !# 1176 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end function get_field_chunk_5d_real
 
 
 
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_1d_int(pbuf,index,field, start, kount, col_type)
@@ -5529,7 +5529,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5540,7 +5540,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5561,7 +5561,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_1d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_2d_int(pbuf,index,field, start, kount, col_type)
@@ -5598,7 +5598,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5609,7 +5609,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5630,7 +5630,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_2d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_3d_int(pbuf,index,field, start, kount, col_type)
@@ -5667,7 +5667,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5678,7 +5678,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5699,7 +5699,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_3d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_4d_int(pbuf,index,field, start, kount, col_type)
@@ -5736,7 +5736,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5747,7 +5747,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5768,7 +5768,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_4d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_5d_int(pbuf,index,field, start, kount, col_type)
@@ -5805,7 +5805,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5816,7 +5816,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5837,7 +5837,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_5d_int
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_1d_double(pbuf,index,field, start, kount, col_type)
@@ -5874,7 +5874,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5885,7 +5885,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5906,7 +5906,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_1d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_2d_double(pbuf,index,field, start, kount, col_type)
@@ -5943,7 +5943,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -5954,7 +5954,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -5975,7 +5975,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_2d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_3d_double(pbuf,index,field, start, kount, col_type)
@@ -6012,7 +6012,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6023,7 +6023,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6044,7 +6044,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_3d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_4d_double(pbuf,index,field, start, kount, col_type)
@@ -6081,7 +6081,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6092,7 +6092,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6113,7 +6113,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_4d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_5d_double(pbuf,index,field, start, kount, col_type)
@@ -6150,7 +6150,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6161,7 +6161,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6182,7 +6182,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_5d_double
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_1d_real(pbuf,index,field, start, kount, col_type)
@@ -6219,7 +6219,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6230,7 +6230,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6251,7 +6251,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_1d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_2d_real(pbuf,index,field, start, kount, col_type)
@@ -6288,7 +6288,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6299,7 +6299,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6320,7 +6320,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_2d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_3d_real(pbuf,index,field, start, kount, col_type)
@@ -6357,7 +6357,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6368,7 +6368,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6389,7 +6389,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_3d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_4d_real(pbuf,index,field, start, kount, col_type)
@@ -6426,7 +6426,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6437,7 +6437,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then
@@ -6458,7 +6458,7 @@ CONTAINS
 
 !# 1246 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   end subroutine set_pbuf1d_field_by_index_4d_real
-  ! TYPE int,double,real 
+  ! TYPE int,double,real
   ! DIMS 1,2,3,4,5
 !# 1182 "/people/wanh895/codes/ACME_master_20170523_ad4fd8/components/cam/src/physics/cam/physics_buffer.F90.in"
   subroutine set_pbuf1d_field_by_index_5d_real(pbuf,index,field, start, kount, col_type)
@@ -6495,7 +6495,7 @@ CONTAINS
        if (col_type_use == col_type_subcol) then
           if (.not. buffer_field_is_alloc(pbuf(index)%bfg(col_type_subcol))) &
               call endrun('pbuf_set_field: sub-column field not allocated for '//trim(pbuf(index)%hdr%name))
-          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)      
+          call buffer_set_field(pbuf(index)%bfg(col_type_subcol),field,start,kount)
 
        ! Set grid field
        else if (col_type_use == col_type_grid) then
@@ -6506,7 +6506,7 @@ CONTAINS
          call endrun('pbuf_set_field: Trying to set '//trim(pbuf(index)%hdr%name)//&
                     ' but col_type is neigher col_type_grid nor col_type_subcol ')
        end if
-    else 
+    else
 
        ! Set sub-column field
        if (col_type_use == col_type_subcol) then

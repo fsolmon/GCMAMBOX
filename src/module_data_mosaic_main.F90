@@ -27,7 +27,7 @@
                 ncld     = 22		! num of dynamic cloud species/bin
 
       integer, parameter :: ngas_max = ngas_com + ngas_urb + ngas_bio + ngas_mar
-      
+
       integer, parameter :: ncld_max = ncld_tot*ncldbin
       !BSINGH - 05/28/2013(RCE updates)
       integer, save :: naer_max = -999888777  ! set at run time to naer_tot*naerbin
@@ -42,7 +42,7 @@
 
       integer, save ::   &
                 ipmcmos = 0        ! if > 0, do emissions, dilution, air density,
-                                   ! and relative humidity as in partmc_mosaic 
+                                   ! and relative humidity as in partmc_mosaic
 
 !-------------------------------------------------------------------------
 

@@ -106,13 +106,13 @@ implicit none
                                                    ! *** MUST BE  #/kmol-air for number
                                                    ! *** MUST BE mol/mol-air for mass
                                                    ! *** NOTE ncol dimension
-   real(r8), intent(inout) :: qqcw(ncol,pver,pcnstxx) 
+   real(r8), intent(inout) :: qqcw(ncol,pver,pcnstxx)
                                                    ! like q but for cloud-borner tracers
-   real(r8), intent(in)    :: dqdt_other(ncol,pver,pcnstxx) 
+   real(r8), intent(in)    :: dqdt_other(ncol,pver,pcnstxx)
                                                    ! TMR tendency from other continuous
                                                    ! growth processes (aqchem, soa??)
                                                    ! *** NOTE ncol dimension
-   real(r8), intent(in)    :: dqqcwdt_other(ncol,pver,pcnstxx) 
+   real(r8), intent(in)    :: dqqcwdt_other(ncol,pver,pcnstxx)
                                                    ! like dqdt_other but for cloud-borner tracers
    real(r8), intent(in)    :: t(pcols,pver)        ! temperature at model levels (K)
    real(r8), intent(in)    :: pmid(pcols,pver)     ! pressure at model levels (Pa)
@@ -121,7 +121,7 @@ implicit none
    real(r8), intent(in)    :: dgncur_awet(pcols,pver,ntot_amode)
                                  ! dry & wet geo. mean dia. (m) of number distrib.
 
-! !DESCRIPTION: 
+! !DESCRIPTION:
 ! computes TMR (tracer mixing ratio) tendencies for gas condensation
 !    onto aerosol particles
 !
@@ -132,7 +132,7 @@ implicit none
 !       aerosol MSA is not distinguished from aerosol SO4
 !    gas NH3 (if present) goes to aerosol NH4
 !       if gas NH3 is not present, then ????
-!  
+!
 !
 ! !REVISION HISTORY:
 !   RCE 07.04.13:  Adapted from MIRAGE2 code
@@ -179,8 +179,8 @@ implicit none
    real (r8) :: sum_dqdt_nh4, sum_dqdt_nh4_b
    real (r8) :: sum_uprt_msa, sum_uprt_nh4, sum_uprt_so4, sum_uprt_soa
    real (r8) :: tmp1, tmp2
-   real (r8) :: uptkrate(ntot_amode,pcols,pver)  
-   real (r8) :: uptkratebb(ntot_amode), uptkrate_soa(ntot_amode)  
+   real (r8) :: uptkrate(ntot_amode,pcols,pver)
+   real (r8) :: uptkratebb(ntot_amode), uptkrate_soa(ntot_amode)
                 ! gas-to-aerosol mass transfer rates (1/s)
    real (r8) :: vol_core, vol_shell
    real (r8) :: xferfrac_pcage, xferfrac_max
@@ -202,7 +202,7 @@ implicit none
    real(r8) :: dqdt(ncol,pver,pcnstxx)  ! TMR "delta q" array - NOTE dims
    real(r8) :: dqqcwdt(ncol,pver,pcnstxx) ! like dqdt but for cloud-borner tracers
    real(r8) :: qsrflx(pcols,pcnstxx,nsrflx)
-                              ! process-specific column tracer tendencies 
+                              ! process-specific column tracer tendencies
                               ! (1=renaming, 2=gas condensation)
    real(r8) :: qqcwsrflx(pcols,pcnstxx,nsrflx)
 
@@ -429,7 +429,7 @@ implicit none
         avg_uprt_so4 = (1.0_r8 - exp(-deltatxx*sum_uprt_so4))/deltatxx
         avg_uprt_nh4 = (1.0_r8 - exp(-deltatxx*sum_uprt_nh4))/deltatxx
         avg_uprt_soa = (1.0_r8 - exp(-deltatxx*sum_uprt_soa))/deltatxx
- 
+
 !   sum_dqdt_so4 = so4_a tendency from h2so4 gas uptake (mol/mol/s)
 !   sum_dqdt_msa = msa_a tendency from msa   gas uptake (mol/mol/s)
 !   sum_dqdt_nh4 = nh4_a tendency from nh3   gas uptake (mol/mol/s)
@@ -458,7 +458,7 @@ implicit none
         dqdt_nh4(:) = 0._r8
         do n = 1, ntot_amode
             dqdt_so4(n) = fgain_so4(n)*(sum_dqdt_so4 + sum_dqdt_msa)
- 
+
             if ( do_nh4g ) then
                 dqdt_nh4(n) = fgain_nh4(n)*sum_dqdt_nh4
                 qnew_nh4 = qold_nh4(n) + dqdt_nh4(n)*deltat
@@ -504,14 +504,14 @@ implicit none
         else
            dqdt_soa(:) = 0.0_r8
         end if
- 
+
         do n = 1, ntot_amode
             if (ido_so4a(n) == 1) then
                 l = lptr_so4_a_amode(n)-loffset
                 dqdt(i,k,l) = dqdt_so4(n)
                 qsrflx(i,l,jsrf) = qsrflx(i,l,jsrf) + dqdt_so4(n)*pdel_fac
             end if
- 
+
             if ( do_nh4g ) then
                 if (ido_nh4a(n) == 1) then
                     l = lptr_nh4_a_amode(n)-loffset
@@ -519,7 +519,7 @@ implicit none
                     qsrflx(i,l,jsrf) = qsrflx(i,l,jsrf) + dqdt_nh4(n)*pdel_fac
                 end if
             end if
- 
+
             if ( do_soag ) then
                 if (ido_soaa(n) == 1) then
                     l = lptr_soa_a_amode(n)-loffset
@@ -528,7 +528,7 @@ implicit none
                 end if
             end if
         end do
- 
+
 !   compute TMR tendencies for h2so4, nh3, and msa gas
 !   due to simple gas uptake
         l = l_so4g
@@ -546,13 +546,13 @@ implicit none
            dqdt(i,k,l) = -sum_dqdt_nh4_b
            qsrflx(i,l,jsrf) = qsrflx(i,l,jsrf) + dqdt(i,k,l)*pdel_fac
         end if
- 
+
         if ( do_soag ) then
            l = l_soag
            dqdt(i,k,l) = -sum_dqdt_soa
            qsrflx(i,l,jsrf) = qsrflx(i,l,jsrf) + dqdt(i,k,l)*pdel_fac
         end if
- 
+
 !   compute TMR tendencies associated with primary carbon aging
         if (modefrm_pcage > 0) then
            n = modeptr_pcarbon
@@ -564,16 +564,16 @@ implicit none
               vol_core = vol_core + &
                     q(i,k,lmassptr_amode(l,n)-loffset)*fac_m2v_pcarbon(l)
            end do
-!   ratio1 = vol_shell/vol_core = 
+!   ratio1 = vol_shell/vol_core =
 !      actual hygroscopic-shell-volume/carbon-core-volume after gas uptake
 !   ratio2 = 6.0_r8*dr_so4_monolayers_pcage/(dgncur_a*fac_volsfc_pcarbon)
-!      = (shell-volume corresponding to n_so4_monolayers_pcage)/core-volume 
+!      = (shell-volume corresponding to n_so4_monolayers_pcage)/core-volume
 !      The 6.0/(dgncur_a*fac_volsfc_pcarbon) = (mode-surface-area/mode-volume)
 !   Note that vol_shell includes both so4+nh4 AND soa as "equivalent so4",
 !      The soa_equivso4_factor accounts for the lower hygroscopicity of soa.
 !
 !   Define xferfrac_pcage = min( 1.0, ratio1/ratio2)
-!   But ratio1/ratio2 == tmp1/tmp2, and coding below avoids possible overflow 
+!   But ratio1/ratio2 == tmp1/tmp2, and coding below avoids possible overflow
 !
            tmp1 = vol_shell*dgncur_a(i,k,n)*fac_volsfc_pcarbon
            tmp2 = max( 6.0_r8*dr_so4_monolayers_pcage*vol_core, 0.0_r8 )
@@ -620,7 +620,7 @@ implicit none
 
 ! diagnostics start -------------------------------------------------------
 !!$   if (ldiag2 > 0) then
-!!$   if (i == icol_diag) then 
+!!$   if (i == icol_diag) then
 !!$   if (mod(k-1,5) == 0) then
 !!$      write(*,'(a,43i5)') 'gasaerexch aaa nstep,lat,lon,k', nstep, latndx(i), lonndx(i), k
 !!$      write(*,'(a,1p,10e12.4)') 'uptkratebb   ', uptkratebb(:)
@@ -715,7 +715,7 @@ implicit none
 
 ! diagnostics start -------------------------------------------------------
 !!$   if (ldiag3 > 0) then
-!!$   if (icol_diag > 0) then 
+!!$   if (icol_diag > 0) then
 !!$      i = icol_diag
 !!$      write(*,'(a,3i5)') 'gasaerexch ppp nstep,lat,lon', nstep, latndx(i), lonndx(i)
 !!$      write(*,'(2i5,3(2x,a))') 0, 0, 'ppp', 'pdel for all k'
@@ -783,7 +783,7 @@ implicit none
 		else if (jsrf == jsrflx_rename) then
 		    if ( .not. dotendrn(l) ) cycle
 		    fieldname = trim(cnst_name(lb)) // '_sfgaex2'
-		else 
+		else
 		    cycle
 		end if
 		do i = 1, ncol
@@ -797,7 +797,7 @@ implicit none
 		else if (jsrf == jsrflx_rename) then
 		    if ( .not. dotendqqcwrn(l) ) cycle
 		    fieldname = trim(cnst_name_cw(lb)) // '_sfgaex2'
-		else 
+		else
 		    cycle
 		end if
 		do i = 1, ncol
@@ -876,11 +876,11 @@ implicit none
    real(r8), intent(in) :: pmid(pcols,pver)     ! Air pressure in Pa
    real(r8), intent(in) :: dgncur_awet(pcols,pver,ntot_amode)
 
-   real(r8), intent(out) :: uptkrate(ntot_amode,pcols,pver)  
+   real(r8), intent(out) :: uptkrate(ntot_amode,pcols,pver)
                             ! gas-to-aerosol mass transfer rates (1/s)
 
 
-! local 
+! local
    integer, parameter :: nghq = 2
    integer :: i, iq, k, l1, l2, la, n
 
@@ -935,7 +935,7 @@ implicit none
 !!   "bounded" number conc. (#/m3)
 !        num_a = dryvol_a(i,k)*v2ncur_a(i,k,n)*aircon
 
-!   number conc. (#/m3) -- note q(i,k,numptr) is (#/kmol-air) 
+!   number conc. (#/m3) -- note q(i,k,numptr) is (#/kmol-air)
 !   so need aircon in (kmol-air/m3)
          aircon = rhoair/mwdry              ! (kmol-air/m3)
          num_a = q(i,k,numptr_amode(n)-loffset)*aircon
@@ -951,7 +951,7 @@ implicit none
          lnsg   = log( sigmag_amode(n) )
          lndpgn = log( dgncur_awet(i,k,n) )   ! (m)
          const  = tworootpi * num_a * exp(beta*lndpgn + 0.5_r8*(beta*lnsg)**2)
-         
+
 !   sum over gauss-hermite quadrature points
          sumghq = 0.0_r8
          do iq = 1, nghq
@@ -969,7 +969,7 @@ implicit none
 
             sumghq = sumghq + wghq(iq)*dp*fuchs_sutugin/(dp**beta)
          end do
-         uptkrate(n,i,k) = const * gasdiffus * sumghq    
+         uptkrate(n,i,k) = const * gasdiffus * sumghq
 
       end do   ! "do i = 1, ncol"
       end do   ! "do k = 1, pver"
@@ -994,7 +994,7 @@ implicit none
 !
 ! Purpose:
 !
-! calculates condensation/evaporation of "soa gas" 
+! calculates condensation/evaporation of "soa gas"
 ! to/from multiple aerosol modes in 1 grid cell
 !
 ! key assumptions
@@ -1004,7 +1004,7 @@ implicit none
 !     particle surface is given by raoults law in the form
 !     g_star = g0_soa*[a_soa/(a_soa + a_opoa)]
 ! (3) (oxidized poa)/(total poa) is equal to frac_opoa (constant)
-! 
+!
 !
 ! Author: R. Easter and R. Zaveri
 !
@@ -1073,7 +1073,7 @@ implicit none
 ! the soa parameterization assumes that real gsoa and asoa have mw=150
 ! currently in cam3,
 !    mw=12 is used (this has to do with the mozart preprocessor)
-!    soag emission files (molec/cm2/s units) are set to give the desired 
+!    soag emission files (molec/cm2/s units) are set to give the desired
 !       mass emissions (kg/m2/s) and mass mixing ratios (kg/kg)
 !       when mw=12 is applied
 !    as a result, the molar mixing ratios for both gsoa and asoa
@@ -1093,7 +1093,7 @@ implicit none
 !        write(luna,'(3a)') &
 !           'niter, tcur,   dtcur,    phi(:),                       ', &
 !           'g_star(:),                    ', &
-!           'a_soa(:),                     g_soa'      
+!           'a_soa(:),                     g_soa'
 !        write(luna,'(3a)') &
 !           '                         sat(:),                       ', &
 !           'sat(:)*a_soa(:)               ', &
@@ -1232,14 +1232,14 @@ implicit none
    logical                        :: history_aerosol      ! Output the MAM aerosol tendencies
 
    !-----------------------------------------------------------------------
- 
+
         call phys_getopts( history_aerosol_out        = history_aerosol   )
- 
+
 	lunout = 6
 !
 !   define "from mode" and "to mode" for primary carbon aging
 !
-!   skip (turn off) aging if either is absent, 
+!   skip (turn off) aging if either is absent,
 !      or if accum mode so4 is absent
 !
 	modefrm_pcage = -999888777
@@ -1254,7 +1254,7 @@ implicit none
 !
 !   define species involved in each primary carbon aging pairing
 !	(include aerosol water)
-!   
+!
 !
 	mfrm = modefrm_pcage
 	mtoo = modetoo_pcage
@@ -1319,7 +1319,7 @@ aa_iqfrm: do iqfrm = -1, nspec_amode(mfrm)
 
 	write(lunout,*)
 
-	end if ! ( masterproc ) 
+	end if ! ( masterproc )
 
 9310	format( / 'subr. modal_aero_gasaerexch_init - primary carbon aging pointers' )
 9320	format( 'pair', i3, 5x, 'mode', i3, ' ---> mode', i3 )
@@ -1392,7 +1392,7 @@ aa_iqfrm: do iqfrm = -1, nspec_amode(mfrm)
          long_name = trim(tmpnamea) // ' gas-aerosol-exchange primary column tendency'
          unit = 'kg/m2/s'
          call addfld( fieldname, horiz_only, 'A', unit, long_name )
-         if ( history_aerosol ) then 
+         if ( history_aerosol ) then
             call add_default( fieldname, 1, ' ' )
          endif
          if ( masterproc ) write(*,'(3(a,3x))') 'gasaerexch addfld', fieldname, unit
@@ -1441,7 +1441,7 @@ aa_iqfrm: do iqfrm = -1, nspec_amode(mfrm)
          if ((tmpnamea(1:3) == 'num') .or. &
              (tmpnamea(1:3) == 'NUM')) unit = '#/m2/s'
          call addfld( fieldname, horiz_only, 'A', unit, long_name )
-         if ( history_aerosol ) then 
+         if ( history_aerosol ) then
             call add_default( fieldname, 1, ' ' )
          endif
          if ( masterproc ) write(*,'(3(a,3x))') 'gasaerexch addfld', fieldname, unit

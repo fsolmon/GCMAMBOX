@@ -31,7 +31,7 @@ real(r8),parameter :: wavenum_high(nbndsw) = & ! in cm^-1
 
 ! Solar irradiance at 1 A.U. in W/m^2 assumed by radiation code
 ! Rescaled so that sum is precisely 1368.22 and fractional amounts sum to 1.0
-real(r8), parameter :: solar_ref_band_irradiance(nbndsw) = & 
+real(r8), parameter :: solar_ref_band_irradiance(nbndsw) = &
    (/ &
     12.11_r8,  20.3600000000001_r8, 23.73_r8, &
     22.43_r8,  55.63_r8, 102.93_r8, 24.29_r8, &
@@ -45,7 +45,7 @@ real(r8), parameter :: solar_ref_band_irradiance(nbndsw) = &
 ! rrtmg (coarse) reference solar flux in rrtmg is initialized as the following
 ! reference data inside rrtmg seems to indicate 1366.44 instead
 !  This data references 1366.442114152342
-!real(r8), parameter :: solar_ref_band_irradiance(nbndsw) = & 
+!real(r8), parameter :: solar_ref_band_irradiance(nbndsw) = &
 !   (/ &
 !   12.10956827000000_r8, 20.36508467999999_r8, 23.72973826333333_r8, &
 !   22.42769644333333_r8, 55.62661262000000_r8, 102.9314315544444_r8, 24.29361887666667_r8, &
@@ -72,9 +72,9 @@ integer, parameter, public :: rrtmg_sw_cloudsim_band = 9  ! rrtmg band for .67 m
 ! high variation near rh = 1.  Alternative methods
 ! were found to be too slow.
 ! Optimal approach would be for cam to specify size of aerosol
-! based on each aerosol's characteristics.  Radiation 
+! based on each aerosol's characteristics.  Radiation
 ! should know nothing about hygroscopic growth!
-integer, parameter, public :: nrh = 1000  
+integer, parameter, public :: nrh = 1000
 
 ! LONGWAVE DATA
 
@@ -144,7 +144,7 @@ subroutine get_ref_solar_band_irrad( band_irrad )
 
    ! solar irradiance in each band (W/m^2)
    real(r8), intent(out) :: band_irrad(nswbands)
- 
+
    band_irrad = solar_ref_band_irradiance
 
 end subroutine get_ref_solar_band_irrad
@@ -204,7 +204,7 @@ subroutine get_lw_spectral_midpoints(band_midpoints, units)
       )
    end do
 end subroutine get_lw_spectral_midpoints
-      
+
 !------------------------------------------------------------------------------
 subroutine get_sw_spectral_boundaries(low_boundaries, high_boundaries, units)
    ! provide spectral boundaries of each shortwave band
@@ -251,7 +251,7 @@ subroutine get_sw_spectral_midpoints(band_midpoints, units)
       )
    end do
 end subroutine get_sw_spectral_midpoints
-      
+
 
 !------------------------------------------------------------------------------
 integer function rad_gas_index(gasname)

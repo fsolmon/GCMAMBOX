@@ -29,7 +29,7 @@
 ! !PUBLIC DATA MEMBERS:
   integer, public :: newnuc_h2so4_conc_flag = 1
 
-! min h2so4 vapor for nuc calcs = 4.0e-16 mol/mol-air ~= 1.0e4 molecules/cm3, 
+! min h2so4 vapor for nuc calcs = 4.0e-16 mol/mol-air ~= 1.0e4 molecules/cm3,
   real(r8), public, parameter :: qh2so4_cutoff = 4.0e-16_r8
 
 ! adjustment factors
@@ -107,18 +107,18 @@
    real(r8), intent(in) :: qv(pcols,pver)   ! specific humidity (kg/kg)
    real(r8), intent(in) :: cld(ncol,pver)   ! stratiform cloud fraction
                                             ! *** NOTE ncol dimension
-   real(r8), intent(inout) :: q(ncol,pver,pcnstxx) 
+   real(r8), intent(inout) :: q(ncol,pver,pcnstxx)
                                             ! tracer mixing ratio (TMR) array
                                             ! *** MUST BE mol/mol-air or #/mol-air
                                             ! *** NOTE ncol & pcnstxx dimensions
-   real(r8), intent(in) :: del_h2so4_gasprod(ncol,pver) 
+   real(r8), intent(in) :: del_h2so4_gasprod(ncol,pver)
                                             ! h2so4 gas-phase production
                                             ! change over deltat (mol/mol)
-   real(r8), intent(in) :: del_h2so4_aeruptk(ncol,pver) 
+   real(r8), intent(in) :: del_h2so4_aeruptk(ncol,pver)
                                             ! h2so4 gas-phase loss to
                                             ! aerosol over deltat (mol/mol)
 
-! !DESCRIPTION: 
+! !DESCRIPTION:
 !   computes changes due to aerosol nucleation (new particle formation)
 !       treats both nucleation and subsequent growth of new particles
 !	    to aitken mode size
@@ -148,7 +148,7 @@
         ! 12=merikanto ternary + second-order boundary layer
 
 	real(r8) :: aircon
-	real(r8) :: cldx 
+	real(r8) :: cldx
 	real(r8) :: dens_nh4so4a
 	real(r8) :: dmdt_ait, dmdt_aitsv1, dmdt_aitsv2, dmdt_aitsv3
 	real(r8) :: dndt_ait, dndt_aitsv1, dndt_aitsv2, dndt_aitsv3
@@ -157,7 +157,7 @@
 	real(r8) :: dplom_mode(1), dphim_mode(1)
 	real(r8) :: ev_sat(pcols,pver)
 	real(r8) :: mass1p
-	real(r8) :: mass1p_aithi, mass1p_aitlo 
+	real(r8) :: mass1p_aithi, mass1p_aitlo
 	real(r8) :: mw_so4a_host
 	real(r8) :: pdel_fac
 	real(r8) :: qh2so4_cur, qh2so4_avg, qh2so4_del
@@ -262,7 +262,7 @@
 main_k:	do k = top_lev, pver
 main_i:	do i = 1, ncol
 
-!   skip if (almost) completely cloudy, 
+!   skip if (almost) completely cloudy,
 !   because all h2so4 vapor should be cloud-borne
 	if (cld(i,k) >= cld_cutoff) cycle main_i
 
@@ -420,7 +420,7 @@ main_i:	do i = 1, ncol
         tmpb = tmpa + qnh4a_del*specmw_nh4_amode
         tmp_frso4 = max( tmpa, 1.0e-35_r8 )/max( tmpb, 1.0e-35_r8 )
 !   mass nuc rate (kg/kmol-air/s or g/mol...) hhfrom mass nuc amts
-        dmdt_ait = max( 0.0_r8, (tmpb/deltat) ) 
+        dmdt_ait = max( 0.0_r8, (tmpb/deltat) )
 
 	dndt_aitsv1 = dndt_ait
 	dmdt_aitsv1 = dmdt_ait
@@ -538,10 +538,10 @@ main_i:	do i = 1, ncol
 !!$        write(lun,97020) 'qnh4a_del, qnh3_del          ',   &
 !!$ 				 qnh4a_del, qnh3_del
 !!$        write(lun,97020) 'dqdt(h2so4), (nh3)           ',   &
-!!$ 		 dqdt(i,k,l_h2so4), dqdt(i,k,l_nh3) 
+!!$ 		 dqdt(i,k,l_h2so4), dqdt(i,k,l_nh3)
 !!$        write(lun,97020) 'dqdt(so4a), (nh4a), (numa)   ',   &
 !!$ 		 dqdt(i,k,lso4ait), dqdt(i,k,lnh4ait), dqdt(i,k,lnumait)
-!!$ 
+!!$
 !!$ 	dpnuc = 0.0_r8
 !!$ 	if (dndt_aitsv1 > 1.0e-5_r8) dpnuc = (6.0_r8*dmdt_aitsv1/   &
 !!$ 			(pi*specdens_so4_amode*dndt_aitsv1))**0.3333333_r8
@@ -551,7 +551,7 @@ main_i:	do i = 1, ncol
 !!$        write(lun,97020) 'mass1p, mass1p_aitlo, _aithi ',   &
 !!$ 			 mass1p, mass1p_aitlo, mass1p_aithi
 !!$        end if
-!!$ 
+!!$
 !!$ 97010  format( / 'NEWNUC nstep,lat,lon,k,tk,cair', i8, 3i4, f8.2, 1pe12.4 )
 !!$ 97020  format( a, 1p, 6e12.4 )
 !!$ 97030  format( a, 1p, 2e12.4, 0p, 5f10.6 )
@@ -613,11 +613,11 @@ main_i:	do i = 1, ncol
 !    merikanto et al. (2007) h2so4-nh3-h2o ternary parameterization
 !    vehkamaki et al. (2002) h2so4-h2o binary parameterization
 !
-! the new particles are "grown" to the lower-bound size of the host code's 
+! the new particles are "grown" to the lower-bound size of the host code's
 !    smallest size bin.  (this "growth" is somewhat ad hoc, and would not be
 !    necessary if the host code's size bins extend down to ~1 nm.)
 !
-!    if the h2so4 and nh3 mass mixing ratios (mixrats) of the grown new 
+!    if the h2so4 and nh3 mass mixing ratios (mixrats) of the grown new
 !    particles exceed the current gas mixrats, the new particle production
 !    is reduced so that the new particle mass mixrats match the gas mixrats.
 !
@@ -687,7 +687,7 @@ main_i:	do i = 1, ncol
         real(r8), intent(out), optional :: &
                                  dnclusterdt      ! cluster nucleation rate (#/m3/s)
 
-! subr arguments (out) passed via common block  
+! subr arguments (out) passed via common block
 !    these are used to duplicate the outputs of yang zhang's original test driver
 !    they are not really needed in wrf-chem
         real(r8) :: ratenuclt        ! j = ternary nucleation rate from napari param. (cm-3 s-1)
@@ -710,7 +710,7 @@ main_i:	do i = 1, ncol
 
         real(r8), parameter :: accom_coef_h2so4 = 0.65_r8   ! accomodation coef for h2so4 conden
 
-! dry densities (kg/m3) molecular weights of aerosol 
+! dry densities (kg/m3) molecular weights of aerosol
 ! ammsulf, ammbisulf, and sulfacid (from mosaic  dens_electrolyte values)
 !       real(r8), parameter :: dens_ammsulf   = 1.769e3
 !       real(r8), parameter :: dens_ammbisulf = 1.78e3
@@ -899,7 +899,7 @@ main_i:	do i = 1, ncol
 ! the grown particles are assumed to be liquid
 !    (since critical clusters contain water)
 !    so any (nh4/so4) molar ratio between 0 and 2 is allowed
-! assume that the grown particles will have 
+! assume that the grown particles will have
 !    (nh4/so4 molar ratio) = min( 2, (nh3/h2so4 gas molar ratio) )
 !
         if (igrow .le. 0) then
@@ -930,11 +930,11 @@ main_i:	do i = 1, ncol
            ((tmp_m1/dens_ammsulf) + (tmp_m2/dens_ammbisulf)   &
                                   + (tmp_m3/dens_sulfacid))
         dens_nh4so4a = dens_part
-        mass_part  = voldry_part*dens_part 
+        mass_part  = voldry_part*dens_part
 ! (mol aerosol nh4)/(mol aerosol so4)
-        molenh4a_per_moleso4a = 2.0_r8*tmp_n1 + tmp_n2  
+        molenh4a_per_moleso4a = 2.0_r8*tmp_n1 + tmp_n2
 ! (kg dry aerosol)/(mol aerosol so4)
-        kgaero_per_moleso4a = 1.0e-3_r8*(tmp_m1 + tmp_m2 + tmp_m3)  
+        kgaero_per_moleso4a = 1.0e-3_r8*(tmp_m1 + tmp_m2 + tmp_m3)
 ! correction when host code sulfate is really ammonium bisulfate/sulfate
         kgaero_per_moleso4a = kgaero_per_moleso4a * (mw_so4a_host/mw_so4a)
 
@@ -964,21 +964,21 @@ main_i:	do i = 1, ncol
 ! dnuc_kk = wet diam (nm) of cluster
             dnuc_kk = 2.0_r8*radius_cluster
             dnuc_kk = max( dnuc_kk, 1.0_r8 )
-! neglect (dmean/150)**0.048 factor, 
+! neglect (dmean/150)**0.048 factor,
 ! which should be very close to 1.0 because of small exponent
             gamma_kk = 0.23_r8 * (dnuc_kk)**0.2_r8   &
                      * (dfin_kk/3.0_r8)**0.075_r8   &
                      * (dens_part*1.0e-3_r8)**(-0.33_r8)   &
                      * (temp_in/293.0_r8)**(-0.75_r8)
 
-! "cs_prime parameter" (1/m2) 
+! "cs_prime parameter" (1/m2)
 ! instead kk2002 eqn 3, use
 !     cs_prime ~= tmpa / (4*pi*tmpb * h2so4_accom_coef)
 ! where
 !     tmpa = -d(ln(h2so4))/dt by conden to particles   (1/h units)
 !     tmpb = h2so4 vapor diffusivity (m2/h units)
 ! this approx is generally within a few percent of the cs_prime
-!     calculated directly from eqn 2, 
+!     calculated directly from eqn 2,
 !     which is acceptable, given overall uncertainties
 ! tmpa = -d(ln(h2so4))/dt by conden to particles   (1/h units)
             tmpa = h2so4_uptkrate * 3600.0_r8
@@ -1030,12 +1030,12 @@ main_i:	do i = 1, ncol
         if (freduce*ratenuclt_kk .le. 1.0e-12_r8) return
 
 
-! note:  suppose that at this point, freduce < 1.0 (no gas-available 
+! note:  suppose that at this point, freduce < 1.0 (no gas-available
 !    constraints) and molenh4a_per_moleso4a < 2.0
 ! if the gas-available constraints is do to h2so4 availability,
 !    then it would be possible to condense "additional" nh3 and have
-!    (nh3/h2so4 gas molar ratio) < (nh4/so4 aerosol molar ratio) <= 2 
-! one could do some additional calculations of 
+!    (nh3/h2so4 gas molar ratio) < (nh4/so4 aerosol molar ratio) <= 2
+! one could do some additional calculations of
 !    dens_part & molenh4a_per_moleso4a to realize this
 ! however, the particle "growing" is a crude approximate way to get
 !    the new particles to the host code's minimum particle size,
@@ -1179,7 +1179,7 @@ main_i:	do i = 1, ncol
             cnum_tot, cnum_h2so4, cnum_nh3, radius_cluster )
 !
 ! calculates boundary nucleation nucleation rate
-! using the first or second-order parameterization in  
+! using the first or second-order parameterization in
 !     wang, m., and j.e. penner, 2008,
 !        aerosol indirect forcing in a global model with particle nucleation,
 !        atmos. chem. phys. discuss., 8, 13943-13998
@@ -1188,7 +1188,7 @@ main_i:	do i = 1, ncol
 
 ! subr arguments (in)
         real(r8), intent(in) :: so4vol            ! concentration of h2so4 (molecules cm-3)
-        integer, intent(in)  :: newnuc_method_flagaa  
+        integer, intent(in)  :: newnuc_method_flagaa
                                 ! [11,12] value selects [first,second]-order parameterization
 
 ! subr arguments (inout)
@@ -1233,7 +1233,7 @@ main_i:	do i = 1, ncol
         radius_cluster = 0.5_r8
 
 ! assume fresh nuclei are pure h2so4
-!    since aitken size >> initial size, the initial composition 
+!    since aitken size >> initial size, the initial composition
 !    has very little impact on the results
         tmp_diam = radius_cluster * 2.0e-7_r8   ! diameter in cm
         tmp_volu = (tmp_diam**3) * (pi/6.0_r8)  ! volume in cm^3
@@ -1255,7 +1255,7 @@ main_i:	do i = 1, ncol
             cnum_h2so4, cnum_tot, radius_cluster )
 !
 ! calculates binary nucleation rate and critical cluster size
-! using the parameterization in  
+! using the parameterization in
 !     vehkamäki, h., m. kulmala, i. napari, k.e.j. lehtinen,
 !        c. timmreck, m. noppel and a. laaksonen, 2002,
 !        an improved parameterization for sulfuric acid-water nucleation
@@ -1265,7 +1265,7 @@ main_i:	do i = 1, ncol
         implicit none
 
 ! subr arguments (in)
-        real(r8), intent(in) :: temp              ! temperature (k)  
+        real(r8), intent(in) :: temp              ! temperature (k)
         real(r8), intent(in) :: rh                ! relative humidity (0-1)
         real(r8), intent(in) :: so4vol            ! concentration of h2so4 (molecules cm-3)
 
@@ -1439,7 +1439,7 @@ main_i:	do i = 1, ncol
 !   calc radius (nm) of critical cluster
         radius_cluster = exp( -1.6524245_r8 + 0.42316402_r8*crit_x   &
                               + 0.3346648_r8*log(cnum_tot) )
-      
+
 
       return
       end subroutine binary_nuc_vehk2002
@@ -1490,8 +1490,8 @@ implicit none
    logical                        :: dotend(pcnst)
    logical                        :: history_aerosol      ! Output the MAM aerosol tendencies
 
-   !-----------------------------------------------------------------------     
-   
+   !-----------------------------------------------------------------------
+
 
 !   set these indices
 !   skip if no h2so4 species
@@ -1562,7 +1562,7 @@ implicit none
 	    fieldname = trim(tmpname) // '_sfnnuc1'
 	    long_name = trim(tmpname) // ' modal_aero new particle nucleation column tendency'
 	    call addfld( fieldname, horiz_only, 'A', unit, long_name )
-            if ( history_aerosol ) then 
+            if ( history_aerosol ) then
                call add_default( fieldname, 1, ' ' )
             endif
 	    if ( masterproc ) write(iulog,'(3(a,2x))') &
@@ -1582,7 +1582,7 @@ subroutine ternary_nuc_merik2007( t, rh, c2, c3, j_log, ntot, nacid, namm, r )
 ! *************************** ternary_fit.f90 ********************************
 ! joonas merikanto, 2006
 !
-! fortran 90 subroutine that calculates the parameterized composition 
+! fortran 90 subroutine that calculates the parameterized composition
 ! and nucleation rate of critical clusters in h2o-h2so4-nh3 vapor
 !
 ! warning: the fit should not be used outside its limits of validity
@@ -1613,13 +1613,13 @@ t_onset=143.6002929064716_r8 + 1.0178856665693992_r8*rh + &
    (109.92469248546053_r8*log(c3))/log(c2) + &
    0.7734119613144357_r8*log(c2)*log(c3) - 0.15576469879527022_r8*log(c3)**2
 
-if(t_onset.gt.t) then 
+if(t_onset.gt.t) then
 
-   j_log=-12.861848898625231_r8 + 4.905527742256349_r8*c3 - 358.2337705052991_r8*rh -& 
+   j_log=-12.861848898625231_r8 + 4.905527742256349_r8*c3 - 358.2337705052991_r8*rh -&
    0.05463019231872484_r8*c3*t + 4.8630382337426985_r8*rh*t + &
    0.00020258394697064567_r8*c3*t**2 - 0.02175548069741675_r8*rh*t**2 - &
    2.502406532869512e-7_r8*c3*t**3 + 0.00003212869941055865_r8*rh*t**3 - &
-   4.39129415725234e6_r8/log(c2)**2 + (56383.93843154586_r8*t)/log(c2)**2 -& 
+   4.39129415725234e6_r8/log(c2)**2 + (56383.93843154586_r8*t)/log(c2)**2 -&
    (239.835990963361_r8*t**2)/log(c2)**2 + &
    (0.33765136625580167_r8*t**3)/log(c2)**2 - &
    (629.7882041830943_r8*rh)/(c3**3*log(c2)) + &
@@ -1688,7 +1688,7 @@ if(t_onset.gt.t) then
    0.005704394549007816_r8*log(c3)**3 + 3.4098703903474368_r8*log(j) - &
    0.014916956508210809_r8*t*log(j) + 0.08459090011666293_r8*log(c3)*log(j) - &
    0.00014800625143907616_r8*t*log(c3)*log(j) + 0.00503804694656905_r8*log(j)**2
- 
+
    r=3.2888553966535506e-10_r8 - 3.374171768439839e-12_r8*t + &
    1.8347359507774313e-14_r8*t**2 + 2.5419844298881856e-12_r8*log(c2) - &
    9.498107643050827e-14_r8*t*log(c2) + 7.446266520834559e-13_r8*log(c2)**2 + &
@@ -1698,17 +1698,17 @@ if(t_onset.gt.t) then
    4.141077193427042e-15_r8*log(j) - 2.6813110884009767e-14_r8*t*log(j) + &
    1.2879071621313094e-12_r8*log(c3)*log(j) - &
    3.80352446061867e-15_r8*t*log(c3)*log(j) - 1.8790172502456827e-14_r8*log(j)**2
- 
-   nacid=-4.7154180661803595_r8 + 0.13436423483953885_r8*t - & 
-   0.00047184686478816176_r8*t**2 - & 
+
+   nacid=-4.7154180661803595_r8 + 0.13436423483953885_r8*t - &
+   0.00047184686478816176_r8*t**2 - &
    2.564010713640308_r8*log(c2) + 0.011353312899114723_r8*t*log(c2) + &
    0.0010801941974317014_r8*log(c2)**2 + 0.5171368624197119_r8*log(c3) - &
-   0.0027882479896204665_r8*t*log(c3) + 0.8066971907026886_r8*log(c3)**2 - & 
+   0.0027882479896204665_r8*t*log(c3) + 0.8066971907026886_r8*log(c3)**2 - &
    0.0031849094214409335_r8*t*log(c3)**2 - 0.09951184152927882_r8*log(c3)**3 + &
    0.00040072788891745513_r8*t*log(c3)**3 + 1.3276469271073974_r8*log(j) - &
    0.006167654171986281_r8*t*log(j) - 0.11061390967822708_r8*log(c3)*log(j) + &
    0.0004367575329273496_r8*t*log(c3)*log(j) + 0.000916366357266258_r8*log(j)**2
- 
+
    namm=71.20073903979772_r8 - 0.8409600103431923_r8*t + &
    0.0024803006590334922_r8*t**2 + &
    2.7798606841602607_r8*log(c2) - 0.01475023348171676_r8*t*log(c2) + &

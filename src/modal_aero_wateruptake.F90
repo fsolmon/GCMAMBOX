@@ -85,13 +85,13 @@ subroutine modal_aero_wateruptake_reg()
   use rad_constituents, only: rad_cnst_get_info
 
    integer :: nmodes
-   
+
    call rad_cnst_get_info(0, nmodes=nmodes)
    call pbuf_add_field('DGNUMWET',   'global',  dtype_r8, (/pcols, pver, nmodes/), dgnumwet_idx)
    call pbuf_add_field('WETDENS_AP', 'physpkg', dtype_r8, (/pcols, pver, nmodes/), wetdens_ap_idx)
 
    ! 1st order rate for direct conversion of strat. cloud water to precip (1/s)
-   call pbuf_add_field('QAERWAT',    'physpkg', dtype_r8, (/pcols, pver, nmodes/), qaerwat_idx)  
+   call pbuf_add_field('QAERWAT',    'physpkg', dtype_r8, (/pcols, pver, nmodes/), qaerwat_idx)
    call pbuf_add_field('HYGROM',    'physpkg', dtype_r8, (/pcols, pver, nmodes/), hygrom_idx)
 end subroutine modal_aero_wateruptake_reg
 
@@ -100,7 +100,7 @@ end subroutine modal_aero_wateruptake_reg
 
 subroutine modal_aero_wateruptake_init(pbuf2d)
 !   use time_manager,   only: is_first_step
-    use mam_utils, only: is_first_step 
+    use mam_utils, only: is_first_step
     use physics_buffer, only: pbuf_set_field
 !   use shr_log_mod ,   only: errmsg => shr_log_errmsg
 
@@ -113,8 +113,8 @@ subroutine modal_aero_wateruptake_init(pbuf2d)
    character(len=3) :: trnum       ! used to hold mode number (as characters)
    !----------------------------------------------------------------------------
 
-   cld_idx        = pbuf_get_index('CLD')    
-   dgnum_idx      = pbuf_get_index('DGNUM')    
+   cld_idx        = pbuf_get_index('CLD')
+   dgnum_idx      = pbuf_get_index('DGNUM')
 
    ! assume for now that will compute wateruptake for climate list modes only
 
@@ -161,8 +161,8 @@ subroutine modal_aero_wateruptake_init(pbuf2d)
          'wet dgnum, interstitial, mode '//trnum(2:3))
       call addfld('wat_a'//trnum(3:3), (/ 'lev' /), 'A', 'm', &
          'aerosol water, interstitial, mode '//trnum(2:3))
-      
-      if (history_aerosol) then  
+
+      if (history_aerosol) then
          if (history_verbose) then
             call add_default('dgnd_a'//trnum(2:3), 1, ' ')
             call add_default('dgnw_a'//trnum(2:3), 1, ' ')
@@ -178,7 +178,7 @@ subroutine modal_aero_wateruptake_init(pbuf2d)
          'sum of aerosol water of interstitial modes wat_a1+wat_a2+wat_a3+wat_a4' )
       call add_default( 'aero_water',  1, ' ')
    endif
-   
+
    if (is_first_step()) then
       ! initialize fields in physics buffer
       call pbuf_set_field(pbuf2d, dgnumwet_idx, 0.0_r8)
@@ -414,8 +414,8 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
             else
                hygro(i,k,m) = spechygro_1
             end if
-!FAB save modal average hygroscopicity for use in GC 
-            hygrom(i,k,m) =  hygro(i,k,m) 
+!FAB save modal average hygroscopicity for use in GC
+            hygrom(i,k,m) =  hygro(i,k,m)
 
             ! dry aerosol properties
 
@@ -442,7 +442,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
 
    end do    ! modes
 
-   
+
 
    !----------------------------------------------------------------------------
    ! specify clear air relative humidity
@@ -465,7 +465,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
       end do ! k
 
    else
-      
+
       ! estimate clear air relative humidity using cloud fraction
       h2ommr => state%q(:,:,1)
       t      => state%t
@@ -513,7 +513,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
       '*** subr mosaic_gasaerexch_1subarea_intr - allocate error for mosaic_vars_aa%iter_mesa' )
 
    ! set kappa values for non-electrolyte species
-   ! reason for doing this here is that if cam eventually has multiple varieties of dust and/or pom, 
+   ! reason for doing this here is that if cam eventually has multiple varieties of dust and/or pom,
    ! then the dust hygroscopicity may vary spatially and temporally,
    ! and the kappa values cannot be constants
    kappa_nonelectro(:)       = 0.0_r8
@@ -530,16 +530,16 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
          RH_pc = 100._r8*rh(i,k)
          P_atm = pmid(i,k) * oneatminv      ! Pressure (atm)
          airdens = pmid(i,k)/(rair*t(i,k))
-         factaermass = airdens * 1.0e12_r8  ! converts (kg-aer/kg-air) to (ng-aer/m3) 
+         factaermass = airdens * 1.0e12_r8  ! converts (kg-aer/kg-air) to (ng-aer/m3)
          factaernumb = airdens * 1.0e-6_r8  ! converts (#/kg-air) to (#/cm3)
-         factaerwatr = airdens              ! converts (kg-h2o/kg-air) to (kg-h2o/m3) 
-         factgasmass = airdens * 1.0e12_r8  ! converts (kg-gas/kg-air) to (ng-gas/m3) 
+         factaerwatr = airdens              ! converts (kg-h2o/kg-air) to (kg-h2o/m3)
+         factgasmass = airdens * 1.0e12_r8  ! converts (kg-gas/kg-air) to (ng-gas/m3)
 
          ! Populate aersols
          aer(:,:,:) = 0.0_r8 ! initialized to zero at every grid point for safety
          num_a(:)   = 0.0_r8 ! initialized to zero
          water_a(:) = 0.0_r8 ! initialized to zero
-         
+
          do m = 1, ntot_amode
             ! Notes:
             ! 1. NCL(sea salt) of CAM is mapped in NA and CL of MOSAIC
@@ -599,7 +599,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
             lq = lptr_dust_a_amode(m)
             if (1 <= lq .and. lq <= pcnst) &
                aer(ioin_a,  jtotal, m) = q(i,k,lq)*factaermass
-             
+
             ! Populate aerosol number and water species
             ! Units conversion:  num_a [#/cm3] = q [#/kg-air] * factaernumb
             ! lq = numptr_amode(m)
@@ -613,7 +613,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
             ! (1/v2ncur_a) = volume of 1 particle whose size (dgn) is bounded
             ! naer = dryvolmr/v2ncur_a = number mixing ratio of size-bounded particles
             !
-            ! when q(i,k,numptr_amode(n)) is much too small for some reason, 
+            ! when q(i,k,numptr_amode(n)) is much too small for some reason,
             ! so that the unbounded particle size is much too big,
             ! and num_a(m) is set from q(i,k,numptr_amode(n)), then
             !   > the dp_dry_a and dp_wet_a from MOSAIC will be much too big
@@ -693,7 +693,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
 
          do m = 1, ntot_amode
             if (jaerosolstate(m) == no_aerosol) then
-               ! mosaic did not calculate water because aerosol mass mixing ratio is very small 
+               ! mosaic did not calculate water because aerosol mass mixing ratio is very small
                wetrad(i,k,m) = dryrad(i,k,m)
             else
                dryrad(i,k,m) = 0.5e-2_r8*Dp_dry_a(m)   ! convert from cm to m
@@ -712,7 +712,7 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
 
                dryrad(i,k,m) = max( dryrad(i,k,m), dgnumlo_amode(m)*0.05_r8 )
                if (rh(i,k) <= rhcrystal(m)) then
-                 print*, 'FAB no water' 
+                 print*, 'FAB no water'
                  wetrad(i,k,m) = dryrad(i,k,m)  ! no water
                else
                   ! use the following which ignores kelvin effect
@@ -724,8 +724,8 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
                   tmpa = ( 1.0_r8 + tmp_hy/((1.0_r8/tmp_rh) - 1.0_r8) )**third
                   wetrad(i,k,m) = dryrad(i,k,m)*max( tmpa, 1.0_r8 )
                endif
-            endif 
-            
+            endif
+
             dryvol(i,k,m) = pi43*dryrad(i,k,m)**3
             wetvol(i,k,m) = pi43*wetrad(i,k,m)**3
             wtrvol(i,k,m) = max( wetvol(i,k,m) - dryvol(i,k,m), 0.0_r8 )
@@ -742,14 +742,14 @@ subroutine modal_aero_wateruptake_dr(state, pbuf, dtime, nstep, list_idx_in, dgn
             ! if ( (m.eq.6) .and. (k.eq.pver) .and. (RH_pc>95.) .and. (dryvol(i,k,m).gt.1.e-30)) then
             !    if (wtrvol(i,k,m)/dryvol(i,k,m).lt.1.)then
             !       write(iulog,*) 'wtrvol/dryvol = ', wtrvol(i,k,m)/dryvol(i,k,m)
-            !    endif 
+            !    endif
             !    if (wtrvol(i,k,m)/dryvol(i,k,m).gt.1.e10)then
             !       write(iulog,*) 'RH_pc,wtrvol/dryvol = ', RH_pc, wtrvol(i,k,m)/dryvol(i,k,m)
             !       write(iulog,*) 'lchnk,i,k,m = ',lchnk,i,k,m
             !       call endrun('excessive aerosol water')
             !    endif
             ! endif
-            
+
             naer(i,k,m) = num_a(m)/factaernumb  ! do this in case MOSAIC adjusted num_a
                                                 ! this will not affect state%q(:,:,numptr_amode(:))
          end do ! m
@@ -980,13 +980,13 @@ end subroutine modal_aero_wateruptake_sub
            do n=1,4
               xr=real(cx4(n,i))
               xi=aimag(cx4(n,i))
-              if(abs(xi).gt.abs(xr)*eps) cycle  
-              if(xr.gt.r(i)) cycle  
-              if(xr.lt.rdry(i)*(1._r8-eps)) cycle  
-              if(xr.ne.xr) cycle  
+              if(abs(xi).gt.abs(xr)*eps) cycle
+              if(xr.gt.r(i)) cycle
+              if(xr.lt.rdry(i)*(1._r8-eps)) cycle
+              if(xr.ne.xr) cycle
               r(i)=xr
               nsol=n
-           end do  
+           end do
            if(nsol.eq.0)then
               write(iulog,*)   &
                'ccm kohlerc - no real(r8) solution found (quartic)'
@@ -1014,13 +1014,13 @@ end subroutine modal_aero_wateruptake_sub
               do n=1,3
                  xr=real(cx3(n,i))
                  xi=aimag(cx3(n,i))
-                 if(abs(xi).gt.abs(xr)*eps) cycle  
-                 if(xr.gt.r(i)) cycle  
-                 if(xr.lt.rdry(i)*(1._r8-eps)) cycle  
-                 if(xr.ne.xr) cycle  
+                 if(abs(xi).gt.abs(xr)*eps) cycle
+                 if(xr.gt.r(i)) cycle
+                 if(xr.lt.rdry(i)*(1._r8-eps)) cycle
+                 if(xr.ne.xr) cycle
                  r(i)=xr
                  nsol=n
-              end do  
+              end do
               if(nsol.eq.0)then
                  write(iulog,*)   &
                   'ccm kohlerc - no real(r8) solution found (cubic)'

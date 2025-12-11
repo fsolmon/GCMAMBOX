@@ -61,7 +61,7 @@ module wv_saturation
   real(r8) tmax       ! max temperature (K) for table
   real(r8) ttrice     ! transition range from es over H2O to es over ice
   real(r8) pcf(6)     ! polynomial coeffs -> es transition water to ice
-  real(r8) epsqs      ! Ratio of h2o to dry air molecular weights 
+  real(r8) epsqs      ! Ratio of h2o to dry air molecular weights
   real(r8) rgasv      ! Gas constant for water vapor
   real(r8) hlatf      ! Latent heat of vaporization
   real(r8) hlatv      ! Latent heat of fusion
@@ -91,19 +91,19 @@ contains
 
 subroutine gestbl(tmn     ,tmx     ,trice   ,ip      ,epsil   , &
                   latvap  ,latice  ,rh2o    ,cpair   ,tmeltx   )
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
+!-----------------------------------------------------------------------
+!
+! Purpose:
 ! Builds saturation vapor pressure table for later lookup procedure.
-! 
-! Method: 
+!
+! Method:
 ! Uses Goff & Gratch (1946) relationships to generate the table
 ! according to a set of free parameters defined below.  Auxiliary
 ! routines are also included for making rapid estimates (well with 1%)
 ! of both es and d(es)/dt for the particular table configuration.
-! 
+!
 ! Author: J. Hack
-! 
+!
 !-----------------------------------------------------------------------
    use mam_utils, only: masterproc
 !------------------------------Arguments--------------------------------
@@ -215,21 +215,21 @@ end subroutine gestbl
 
 subroutine aqsat(t       ,p       ,es      ,qs        ,ii      , &
                  ilen    ,kk      ,kstart  ,kend      )
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
+!-----------------------------------------------------------------------
+!
+! Purpose:
 ! Utility procedure to look up and return saturation vapor pressure from
 ! precomputed table, calculate and return saturation specific humidity
 ! (g/g),for input arrays of temperature and pressure (dimensioned ii,kk)
 ! This routine is useful for evaluating only a selected region in the
 ! vertical.
-! 
-! Method: 
-! <Describe the algorithm(s) used in the routine.> 
-! <Also include any applicable external references.> 
-! 
+!
+! Method:
+! <Describe the algorithm(s) used in the routine.>
+! <Also include any applicable external references.>
+!
 ! Author: J. Hack
-! 
+!
 !------------------------------Arguments--------------------------------
 !
 ! Input arguments
@@ -349,20 +349,20 @@ end subroutine aqsat_water
 
 subroutine aqsatd(t       ,p       ,es      ,qs      ,gam     , &
                   ii      ,ilen    ,kk      ,kstart  ,kend    )
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
+!-----------------------------------------------------------------------
+!
+! Purpose:
 ! Utility procedure to look up and return saturation vapor pressure from
 ! precomputed table, calculate and return saturation specific humidity
-! (g/g).   
-! 
-! Method: 
+! (g/g).
+!
+! Method:
 ! Differs from aqsat by also calculating and returning
 ! gamma (l/cp)*(d(qsat)/dT)
 ! Input arrays temperature and pressure (dimensioned ii,kk).
-! 
+!
 ! Author: J. Hack
-! 
+!
 !------------------------------Arguments--------------------------------
 !
 ! Input arguments
@@ -491,18 +491,18 @@ end subroutine aqsatd
 
 subroutine vqsatd(t       ,p       ,es      ,qs      ,gam      , &
                   len     )
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
+!-----------------------------------------------------------------------
+!
+! Purpose:
 ! Utility procedure to look up and return saturation vapor pressure from
 ! precomputed table, calculate and return saturation specific humidity
 ! (g/g), and calculate and return gamma (l/cp)*(d(qsat)/dT).  The same
 ! function as qsatd, but operates on vectors of temperature and pressure
-! 
-! Method: 
-! 
+!
+! Method:
+!
 ! Author: J. Hack
-! 
+!
 !------------------------------Arguments--------------------------------
 !
 ! Input arguments
@@ -735,8 +735,8 @@ end subroutine vqsatd_water
 !--xl
 
 integer function fqsatd(t    ,p    ,es    ,qs   ,gam   , len     )
-  !----------------------------------------------------------------------- 
-  ! Purpose: 
+  !-----------------------------------------------------------------------
+  ! Purpose:
   ! This is merely a function interface vqsatd.
   !------------------------------Arguments--------------------------------
   ! Input arguments
@@ -1060,21 +1060,21 @@ end subroutine vqsatd2_water_single
 
 subroutine vqsatd2(t       ,p       ,es      ,qs      ,dqsdt      , &
                    len     )
-!----------------------------------------------------------------------- 
+!-----------------------------------------------------------------------
 ! Sungsu : This is directly copied from 'vqsatd' but 'dqsdt' is output
 !          instead of gam for use in Sungsu's equilibrium stratiform
 !          macrophysics scheme.
-! 
-! Purpose: 
+!
+! Purpose:
 ! Utility procedure to look up and return saturation vapor pressure from
 ! precomputed table, calculate and return saturation specific humidity
 ! (g/g), and calculate and return gamma (l/cp)*(d(qsat)/dT).  The same
 ! function as qsatd, but operates on vectors of temperature and pressure
-! 
-! Method: 
-! 
+!
+! Method:
+!
 ! Author: J. Hack
-! 
+!
 !------------------------------Arguments--------------------------------
 !
 ! Input arguments
@@ -1090,7 +1090,7 @@ subroutine vqsatd2(t       ,p       ,es      ,qs      ,dqsdt      , &
  ! real(r8), intent(out) :: gam(len)  ! (l/cp)*(d(qs)/dt)
  ! Sungsu
    real(r8), intent(out) :: dqsdt(len)  ! (d(qs)/dt)
- ! End by Sungsu 
+ ! End by Sungsu
 
 !
 !--------------------------Local Variables------------------------------
@@ -1208,21 +1208,21 @@ end subroutine vqsatd2
 ! Below routine is by Sungsu
 
 subroutine vqsatd2_single(t       ,p       ,es      ,qs      ,dqsdt)
-!----------------------------------------------------------------------- 
+!-----------------------------------------------------------------------
 ! Sungsu : This is directly copied from 'vqsatd' but 'dqsdt' is output
 !          instead of gam for use in Sungsu's equilibrium stratiform
 !          macrophysics scheme.
-! 
-! Purpose: 
+!
+! Purpose:
 ! Utility procedure to look up and return saturation vapor pressure from
 ! precomputed table, calculate and return saturation specific humidity
 ! (g/g), and calculate and return gamma (l/cp)*(d(qsat)/dT).  The same
 ! function as qsatd, but operates on vectors of temperature and pressure
-! 
-! Method: 
-! 
+!
+! Method:
+!
 ! Author: J. Hack
-! 
+!
 !------------------------------Arguments--------------------------------
 !
 ! Input arguments
@@ -1237,7 +1237,7 @@ subroutine vqsatd2_single(t       ,p       ,es      ,qs      ,dqsdt)
  ! real(r8), intent(out) :: gam    ! (l/cp)*(d(qs)/dt)
  ! Sungsu
    real(r8), intent(out) :: dqsdt  ! (d(qs)/dt)
- ! End by Sungsu 
+ ! End by Sungsu
 
 !
 !--------------------------Local Variables------------------------------
@@ -1360,7 +1360,7 @@ subroutine vqsatd2_single(t       ,p       ,es      ,qs      ,dqsdt)
 end subroutine vqsatd2_single
 
 
-!----------------------------------------------------------------------- 
+!-----------------------------------------------------------------------
 subroutine  qsat(t       ,p       ,es      ,qs        )
 
 ! added by rce for cambox to provide a qsat routine as in cam5.2.10
@@ -1381,14 +1381,14 @@ end subroutine qsat
 
 ! FAB put gffgch in the module
 subroutine gffgch(t       ,es      ,itype   )
-!----------------------------------------------------------------------- 
-! 
-! Purpose: 
+!-----------------------------------------------------------------------
+!
+! Purpose:
 ! Computes saturation vapor pressure over water and/or over ice using
-! Goff & Gratch (1946) relationships. 
-! <Say what the routine does> 
-! 
-! Method: 
+! Goff & Gratch (1946) relationships.
+! <Say what the routine does>
+!
+! Method:
 ! T (temperature), and itype are input parameters, while es (saturation
 ! vapor pressure) is an output parameter.  The input parameter itype
 ! serves two purposes: a value of zero indicates that saturation vapor
@@ -1402,9 +1402,9 @@ subroutine gffgch(t       ,es      ,itype   )
 ! degrees c, the saturation vapor pressures are assumed to be a weighted
 ! average of the vapor pressure over supercooled water and ice (all
 ! water at 0 c; all ice at -itype c).  Maximum transition range => 40 c
-! 
+!
 ! Author: J. Hack
-! 
+!
 !-----------------------------------------------------------------------
    use precision_mod,  only: r8 => f8
    use physconst,    only: tmelt
@@ -1507,4 +1507,4 @@ subroutine gffgch(t       ,es      ,itype   )
 !
 end subroutine gffgch
 
-end module wv_saturation 
+end module wv_saturation

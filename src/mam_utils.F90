@@ -8,15 +8,15 @@ MODULE MAM_UTILS
   public
   save
   integer,parameter :: i4 = selected_int_kind ( 6) ! 4 byte integer MOVE that in precision later
-  integer :: iulog = 51 ! comme le pastis 
-  integer, parameter :: fieldname_len = 64 
+  integer :: iulog = 51 ! comme le pastis
+  integer, parameter :: fieldname_len = 64
   integer, parameter :: phys_decomp = 1   ! *** this is a kludge to avoid the pio file
 
   integer, public :: ncol_for_outfld
 
   character(len=10), public :: horiz_only = "horiz_only"
 
-  integer :: ptimelevels = 2 
+  integer :: ptimelevels = 2
 
   character(len=16) :: solsym(gas_pcnst) = '????????????????'
 
@@ -24,15 +24,15 @@ MODULE MAM_UTILS
 
   integer, parameter :: plat = 1
   integer, parameter :: plon = 1
- 
+
 
   integer :: mdo_gaschem, mdo_cloudchem
   integer :: mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
 
-  integer :: pcols 
-  integer :: pver 
+  integer :: pcols
+  integer :: pver
   integer, parameter :: psubcols = 1
-  integer  :: plev 
+  integer  :: plev
 
   integer, parameter :: begchunk = 1
   integer, parameter :: endchunk = 2
@@ -40,10 +40,10 @@ MODULE MAM_UTILS
 
   integer, parameter :: trop_cloud_top_lev = 1
   integer, parameter :: clim_modal_aero_top_lev = 1
-  
-  logical, public    :: masterproc 
+
+  logical, public    :: masterproc
   integer, parameter :: iam = 0
-  
+
   logical, public :: is_first_step_save = .true.
 
   integer, public :: l_h2so4g, l_soag, l_hno3g, l_so2g, l_hclg, l_nh3g
@@ -83,8 +83,8 @@ MODULE MAM_UTILS
 
   public :: get_spc_ndx
 
-  
-  
+
+
 CONTAINS
 
 
@@ -125,15 +125,15 @@ CONTAINS
        begdim3, enddim3, mdimnames, fill_value )
 
     !
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Add a field to the master field list
-    ! 
-    ! Method: Put input arguments of field name, units, number of levels, averaging flag, and 
+    !
+    ! Method: Put input arguments of field name, units, number of levels, averaging flag, and
     !         long name into a type entry in the global master field list (masterlist).
-    ! 
+    !
     ! Author: CCM Core Group
-    ! 
+    !
     !-----------------------------------------------------------------------
 
     !
@@ -150,8 +150,8 @@ CONTAINS
 
     logical, intent(in), optional :: flag_xyfill ! non-applicable xy points flagged with fillvalue
 
-    character(len=*), intent(in), optional :: sampling_seq ! sampling sequence - if not every timestep, 
-    ! how often field is sampled:  
+    character(len=*), intent(in), optional :: sampling_seq ! sampling sequence - if not every timestep,
+    ! how often field is sampled:
     ! every other; only during LW/SW radiation calcs, etc.
     integer, intent(in), optional :: begdim1, enddim1
     integer, intent(in), optional :: begdim2, enddim2
@@ -176,15 +176,15 @@ CONTAINS
        begdim3, enddim3, mdimnames, fill_value )
 
     !
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Add a field to the master field list
-    ! 
-    ! Method: Put input arguments of field name, units, number of levels, averaging flag, and 
+    !
+    ! Method: Put input arguments of field name, units, number of levels, averaging flag, and
     !         long name into a type entry in the global master field list (masterlist).
-    ! 
+    !
     ! Author: CCM Core Group
-    ! 
+    !
     !-----------------------------------------------------------------------
 
     !      use ppgrid, only:  pver
@@ -201,8 +201,8 @@ CONTAINS
 
     logical, intent(in), optional :: flag_xyfill ! non-applicable xy points flagged with fillvalue
 
-    character(len=*), intent(in), optional :: sampling_seq ! sampling sequence - if not every timestep, 
-    ! how often field is sampled:  
+    character(len=*), intent(in), optional :: sampling_seq ! sampling sequence - if not every timestep,
+    ! how often field is sampled:
     ! every other; only during LW/SW radiation calcs, etc.
     integer, intent(in), optional :: begdim1, enddim1
     integer, intent(in), optional :: begdim2, enddim2
@@ -226,12 +226,12 @@ CONTAINS
 
   subroutine add_default (name, tindex, flag)
     !
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Add a field to the default "on" list for a given history file
-    ! 
-    ! Method: 
-    ! 
+    !
+    ! Method:
+    !
     !-----------------------------------------------------------------------
     !
     ! Arguments
@@ -252,17 +252,17 @@ CONTAINS
 
   subroutine outfld (fname, field, idim, c)
     !
-    !----------------------------------------------------------------------- 
-    ! 
+    !-----------------------------------------------------------------------
+    !
     ! Purpose: Accumulate (or take min, max, etc. as appropriate) input field
     !          into its history buffer for appropriate tapes
-    ! 
+    !
     ! Method: Check 'masterlist' whether the requested field 'fname' is active
     !         on one or more history tapes, and if so do the accumulation.
     !         If not found, return silently.
-    ! 
+    !
     ! Author: CCM Core Group
-    ! 
+    !
     !-----------------------------------------------------------------------
     !
     !      use ppgrid, only: pcols, pver
@@ -281,7 +281,7 @@ CONTAINS
 
     txtaa = fname
     write(90,'(/a,1p,20e11.3)') txtaa, field(1:ncol_for_outfld,1)
-!FAB    print*, 'ahha' , ncol_for_outfld, pver,idim  
+!FAB    print*, 'ahha' , ncol_for_outfld, pver,idim
 !    if ( txtaa == 'SOAG_sfgaex3d   ' .or. &
 !         txtaa == 'num_a2_nuc1     ' .or. &
 !         txtaa == 'num_a2_nuc2     ' ) then

@@ -79,7 +79,7 @@ contains
 
     ! local variables
     integer, parameter :: aer_pha_sta_diagaa = -1 !BALLI- changed from 100 to -1
-    integer, parameter :: iter_kelvin_method =  3 
+    integer, parameter :: iter_kelvin_method =  3
     ! iter_kelvin_method = 1 - use rahuls original iteration method
     ! iter_kelvin_method = 2 - use bisection
     ! iter_kelvin_method = 3 - start with rahuls original iteration method, but if it fails, switch to bisection
@@ -177,7 +177,7 @@ contains
     rel_err_oldp = 1.0e30_r8
     water_a_oldp = 0.0_r8
     water_a_oldn = 0.0_r8
-    aH2O_a_new = aH2O    
+    aH2O_a_new = aH2O
 
 
 10  iter_kelvin = iter_kelvin + 1
@@ -206,7 +206,7 @@ contains
     ! new wet mass and wet volume
     mass_wet_a(ibin) = mass_dry_a(ibin) + water_a(ibin)*1.e-3               ! g/cc(air)
     vol_wet_a(ibin)  = vol_dry_a(ibin) + water_a(ibin)*1.e-3                ! cc(aer)/cc(air) or m^3/m^3(air)
- 
+
     call calculate_kelvin(ibin,num_a,vol_wet_a,aH2O_a,DpmV,kelvin,sigma_soln,T_K,  &
          sigma_water)
     !      kelvin(ibin) = 1.0
@@ -253,9 +253,9 @@ contains
 
        if (itmpa > 0) then
           if (iter_kelvin_method <= 1) then
-             ! quit if number of iterations is too large OR 
+             ! quit if number of iterations is too large OR
              ! rel_err is outside the range of the previous two rel_err values,
-             !    and one previous rel_err is positive, and one previous rel_err is negative 
+             !    and one previous rel_err is positive, and one previous rel_err is negative
              aH2O_a(ibin) = aH2O_a_new   ! do this to get same output as prev version
              if (aer_pha_sta_diagaa >= 1) &
              write(lunerr,'(a,5i5,2f12.8,1p,3e11.3)') 'mosaic aer_pha_sta iter_kelv_err', &
@@ -296,7 +296,7 @@ contains
     end if
 
     if (iter_kelvin_state == 2) then
-       ! this is first "setup" step of bisection, and the algorithm is expecting that 
+       ! this is first "setup" step of bisection, and the algorithm is expecting that
        !    the current aH2O_a has hel_err be > 0, and can be used as one of the 2 bisection points
        if (rel_err < 0.0_r8) then
           ! error should be positive, so this is a fatal error
@@ -319,7 +319,7 @@ contains
     end if
 
     if (iter_kelvin_state == 3) then
-       ! this is the second "setup" step of bisection, and the algorithm is looking for an aH2O_a 
+       ! this is the second "setup" step of bisection, and the algorithm is looking for an aH2O_a
        ! that has rel_err < 0, so that the "root" will be bracketed and bisection can begin
        if (rel_err < 0.0_r8) then
           ! current aH2O_a will work as one of the two initial bisection points
@@ -469,7 +469,7 @@ contains
   !
   ! author: Rahul A. Zaveri
   ! update: sep 2015
-  ! 
+  !
   ! 9/3/2015 RAZ: Bugfix - fixed phase state calculations for aerosols that dont contain any salts,
   !               but can still contain water due to presence of BC, OC, SOA, and OIN, which are now
   !               allowed to absorb some water.
@@ -1041,7 +1041,7 @@ contains
     aer(iaer,jliquid,ibin) = 0.0
     end do
     aer(iso4_a,jliquid,ibin) = max(0.0_r8, aer(iso4_a,jtotal,ibin) -   &
-                               electrolyte(jcaso4,jsolid,ibin))      ! added max() RAZ 4/16/2014 
+                               electrolyte(jcaso4,jsolid,ibin))      ! added max() RAZ 4/16/2014
     aer(ino3_a,jliquid,ibin) = aer(ino3_a,jtotal,ibin)
     aer(icl_a, jliquid,ibin) = aer(icl_a,jtotal,ibin)
     aer(inh4_a,jliquid,ibin) = aer(inh4_a,jtotal,ibin)
@@ -1064,9 +1064,9 @@ contains
 
     return
   end subroutine do_full_deliquescence
-  
-  
-  
+
+
+
   !***********************************************************************
   ! MESA: Multicomponent Equilibrium Solver for Aerosol-phase
   ! computes equilibrum solid and liquid phases by integrating
@@ -1136,7 +1136,7 @@ contains
     real(r8), dimension(nbin_a_max) :: mass_dry_salt
     real(r8), dimension(nsalt) :: phi_salt,flux_sl,phi_bar,alpha_salt
     real(r8), dimension(nsalt) :: sat_ratio,hsalt
-  
+
     ! function
     !real(r8) :: aerosol_water
 
@@ -1209,12 +1209,12 @@ contains
     enddo
 
     mosaic_vars_aa%jMESA_call = mosaic_vars_aa%jMESA_call + 1
-    
+
     !----begin pseudo time continuation loop-------------------------------
 
     do 500 itdum = 1, mosaic_vars_aa%Nmax_MESA
-       
-       
+
+
        ! compute new salt fluxes
        call MESA_flux_salt(ibin,jaerosolstate,jphase, aer,jhyst_leg,electrolyte, &
             epercent,activity,mc,num_a,mass_dry_a,mass_soluble_a,water_a,aH2O,ma,&
@@ -1222,11 +1222,11 @@ contains
             Keq_sl,MW_c,MW_a,Keq_ll,eleliquid,flux_sl,phi_salt,sat_ratio,        &
             molality0,jsalt_present,kappa_nonelectro)
 
-       
+
        ! check convergence
        call MESA_convergence_criterion(ibin,iconverge_mass,iconverge_flux,idissolved, &
             aer,electrolyte,mass_dry_salt,mw_electrolyte,flux_sl,phi_salt,rtol_mesa)
-       
+
        if(iconverge_mass .eq. mYES)then
           mosaic_vars_aa%iter_MESA(ibin) = mosaic_vars_aa%iter_MESA(ibin) + itdum
           mosaic_vars_aa%niter_MESA = mosaic_vars_aa%niter_MESA + float(itdum)
@@ -1244,7 +1244,7 @@ contains
           jaerosolstate(ibin) = mixed
           vol_wet_a(ibin)  = vol_dry_a(ibin) + water_a(ibin)*1.e-3          ! cc(aer)/cc(air) or m^3/m^3(air)
           growth_factor(ibin) = mass_wet_a(ibin)/mass_dry_a(ibin)           ! mass growth factor
-          
+
           if(idissolved .eq. myes)then
              jaerosolstate(ibin) = all_liquid
              !          jhyst_leg(ibin) = jhyst_up  ! ! do this later (to avoid tripping kelvin iterations)
@@ -1252,7 +1252,7 @@ contains
              jaerosolstate(ibin) = mixed
              jhyst_leg(ibin) = jhyst_lo
           endif
-             
+
           ! calculate epercent(jsolid) composition in mixed-phase aerosol EFFI
           !!        sum_dum = 0.0
           !!        jp = jsolid
@@ -1265,15 +1265,15 @@ contains
           !!        do je = 1, nelectrolyte
           !!          epercent(je,jp,ibin) = 100.*electrolyte(je,jp,ibin)/sum_dum
           !!        enddo
-          
+
           return
        endif
-       
+
        ! calculate hsalt(js)        ! time step
        hsalt_min = 1.e25
-      
+
        do js = 1, nsalt
-          
+
           phi_prod = phi_salt(js) * phi_salt_old(js)
 
           if(itdum .gt. 1 .and. phi_prod .gt. 0.0)then
@@ -1292,14 +1292,14 @@ contains
           else                                      ! very bad - phi is oscillating. be very conservative
              alpha_salt(js) = min(abs(phi_salt(js))/3.0d0, 0.5d0)
           endif
-          
+
           !        alpha_salt(js) = max(alpha_salt(js), 0.01)
-          
+
           phi_salt_old(js) = phi_salt(js)           ! update old array
-          
+
 
           if(flux_sl(js) .gt. 0.)then
-             
+
              tau_p(js) = eleliquid(js)/flux_sl(js)  ! precipitation time scale
              if(tau_p(js) .eq. 0.0)then
                 hsalt(js) = 1.e25
@@ -1308,9 +1308,9 @@ contains
              else
                 hsalt(js) = alpha_salt(js)*tau_p(js)
              endif
-             
+
           elseif(flux_sl(js) .lt. 0.)then
-             
+
              tau_p(js) = -eleliquid(js)/flux_sl(js) ! precipitation time scale
              tau_d(js) = -electrolyte(js,jsolid,ibin)/flux_sl(js) ! dissolution time scale
              if(tau_p(js) .eq. 0.0)then
@@ -1318,41 +1318,41 @@ contains
              else
                 hsalt(js) = alpha_salt(js)*min(tau_p(js),tau_d(js))
              endif
-             
+
           else
-             
+
              hsalt(js) = 1.e25
-             
+
           endif
-          
+
           hsalt_min = min(hsalt(js), hsalt_min)
-          
+
        enddo
 
        !---------------------------------
-       
+
        ! integrate electrolyte(solid)
        do js = 1, nsalt
           electrolyte(js,jsolid,ibin) = (   &
                (electrolyte(js,jsolid,ibin))  +   &
                (hsalt(js)) * (flux_sl(js)) )
        enddo
-       
-       
+
+
        ! compute aer(solid) from electrolyte(solid)
        call electrolytes_to_ions(jsolid,ibin,aer,electrolyte)
-       
-       
+
+
        ! compute new electrolyte(liquid) from mass balance
        do iaer = 1, naer
           aer(iaer,jliquid,ibin) = ( (aer(iaer,jtotal,ibin)) -   &
                (aer(iaer,jsolid,ibin)) )
        enddo
-       
-       !---------------------------------
-       
 
-       
+       !---------------------------------
+
+
+
 500 continue     ! end time continuation loop
     !--------------------------------------------------------------------
     mosaic_vars_aa%jMESA_fail = mosaic_vars_aa%jMESA_fail + 1
@@ -1363,7 +1363,7 @@ contains
     mass_wet_a(ibin) = mass_dry_a(ibin) + water_a(ibin)*1.e-3    ! g/cc(air)
     vol_wet_a(ibin)  = vol_dry_a(ibin) + water_a(ibin)*1.e-3     ! cc(aer)/cc(air) or m^3/m^3(air)
     growth_factor(ibin) = mass_wet_a(ibin)/mass_dry_a(ibin)      ! mass growth factor
-   
+
     return
   end subroutine MESA_PTC
 
@@ -3406,7 +3406,7 @@ contains
   ! update: jan 2005
   !-----------------------------------------------------------------------
   subroutine aerosolmtc( jaerosolstate, num_a, Dp_wet_a, sigmag_a, P_atm, T_K, aH2O, aer, kg )
-    
+
     use module_data_mosaic_aero,  only: nbin_a_max, nbin_a, naer, naercomp,             &!Parameters
          ngas_aerchtot, ngas_volatile, nelectrolyte, ngas_ioa,                              &
          mMODAL, no_aerosol, mUNSTRUCTURED, mSECTIONAL, mSIZE_FRAMEWORK,                    &!Input
@@ -3417,7 +3417,7 @@ contains
     use module_mosaic_support, only: mosaic_err_mess
 
     implicit none
-    
+
     !Subroutine Arguments
     integer, intent(inout), dimension(nbin_a_max) :: jaerosolstate
 
@@ -3546,15 +3546,15 @@ contains
 
 20              continue
 10     continue
-                
+
     elseif ((mSIZE_FRAMEWORK .eq. mSECTIONAL   ) .or. &
          (mSIZE_FRAMEWORK .eq. mUNSTRUCTURED)) then
-       
+
        ! for sectional approach
        do 11 ibin = 1, nbin_a
-          
+
           if(jaerosolstate(ibin) .eq. no_aerosol)goto 11
-          
+
           cdum  = 6.283185*Dp_wet_a(ibin)*num_a(ibin)
 
 ! RH-dependent accommodation coefficient for HNO3 on dust particles (Li et al. ACP, 12, 7591-7607, 2012).
@@ -3571,15 +3571,15 @@ contains
               accom(ihno3_g) = tmpa
 	      accom(ihcl_g)  = tmpa
             endif
-          
+
           do 21 iv = 1, ngas_aerchtot
              Kn = 2.*freepath(iv)/Dp_wet_a(ibin)
              Fkn = fuchs_sutugin(Kn,accom(iv))
              kg(iv,ibin) = max( cdum*Dg(iv)*Fkn, 0.0_r8 )              ! 1/s
 21           continue
-             
+
 11     continue
-            
+
     else
        call mosaic_err_mess( 'mosaic aerosolmtc - bad msize_framework value' ) ! write message then abort
     endif
@@ -4125,7 +4125,7 @@ contains
     return
   end subroutine form_cacl2
 
-  
+
   subroutine form_caco3(store,jp,ibin,aer,electrolyte)
     use module_data_mosaic_aero, only: naer,nelectrolyte,nbin_a_max,jsolid,     &
          jtotal,                                                                   &
@@ -4150,9 +4150,9 @@ contains
 
     return
   end subroutine form_caco3
-  
-  
-  
+
+
+
   subroutine form_nacl(store,jp,ibin,aer,gas,electrolyte,total_species,tot_cl_in)
     use module_data_mosaic_aero, only: naer,nelectrolyte,nbin_a_max,            &
          ngas_aerchtot,ngas_volatile,jtotal,jsolid,jliquid,                        &
@@ -4769,7 +4769,7 @@ contains
 
     return
   end subroutine absorb_tiny_hcl
-  
+
 
 
   !--------------------------------------------------------------
@@ -4905,7 +4905,7 @@ contains
          nrxn_aer_gl,nrxn_aer_ll,                                                  &
          ja_so4,ja_hso4,ihcl_g,icl_a,jhcl,ino3_a,ica_a,inh4_a,ina_a,jc_h,jc_ca,    &
          jc_nh4,jc_na,ja_cl,ja_no3,jhno3,jnh4cl
-    
+
     implicit none
 
     ! subr arguments
@@ -5007,7 +5007,7 @@ contains
          nrxn_aer_gl,nrxn_aer_ll,                                                  &
          ja_so4,ja_hso4,ihno3_g,ino3_a,jhno3,icl_a,ica_a,inh4_a,ina_a,jc_h,jc_ca,  &
          jc_nh4,jc_na,ja_cl,jhcl,ja_no3,jnh4no3
-    
+
     implicit none
 
     ! subr arguments
@@ -5110,7 +5110,7 @@ contains
          ja_so4,ja_hso4,ihcl_g,icl_a,ihno3_g,ino3_a,jhcl,jhno3,             &
          ica_a,inh4_a,ina_a,jc_h,jc_ca,jc_nh4,jc_na,ja_cl,ja_no3,jnh4no3,   &
          jnh4cl
-    
+
     implicit none
 
     ! subr arguments
@@ -5775,7 +5775,7 @@ contains
   end function bin_molality_60
   !----------------------------------------------------------
 
-  
+
   !----------------------------------------------------------
   ! ZSR method
   function aerosol_water( jp, ibin, jaerosolstate, jphase, jhyst_leg, electrolyte, aer,   &
@@ -5837,7 +5837,7 @@ contains
 
     aerosol_water = tmpa*1.e-9	! kg(water)/m^3(air)
 
-                 
+
     iclm_aer = 0 !BSINGH- THIS IS WRONG!!!
     jclm_aer = 0 !BSINGH- THIS IS WRONG!!!
     if(aerosol_water .le. 0.0)then !BALLI- Commented out to avoid slow runtime.

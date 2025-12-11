@@ -17,7 +17,7 @@
 ! author: Rahul A. Zaveri
 ! update: jan 2007
 !-----------------------------------------------------------------------
-  
+
   subroutine ASTEM(   mcall_print_aer,                                               &!intent-ins
        dtchem,        sigmag_a,  aH2O,   T_K,          RH_pc,     P_atm,             &
        kappa_nonelectro,                                                             &
@@ -33,7 +33,7 @@
        uptkrate_h2so4,                   mosaic_vars_aa,                             &
        area_dry_a,    area_wet_a,        mass_wet_a,vol_wet_a,                       &!intent-out
        dens_wet_a,    ri_shell_a,        ri_avg_a,     ri_core_a                     )
-  
+
   use module_data_mosaic_aero, only: nbin_a_max,                                   &
        ngas_aerchtot, ngas_volatile, nelectrolyte,                                 &
        Ncation, naer, mYES, no_aerosol, Nanion, nrxn_aer_gl, nrxn_aer_ll,          &
@@ -44,14 +44,14 @@
        jsulf_poor, jsulf_rich, ih2so4_g,                                &
        iso4_a, jtotal,                                                             & !for debug only remove it later BALLI
        mosaic_vars_aa_type
-  
+
   use module_mosaic_ext, only: aerosol_phase_state,calc_dry_n_wet_aerosol_props,   &
        aerosolmtc
-  
+
 ! use module_print_aer,  only: print_aer
 
-  
-  
+
+
   !Subroutine Arguments
   !Intent-ins
   integer, intent(in) :: mcall_print_aer
@@ -62,7 +62,7 @@
   real(r8), intent(in), dimension(nbin_a_max) :: sigmag_a
   real(r8), intent(in), dimension(ngas_aerchtot) :: gas_netprod_otrproc
   real(r8), intent(in), dimension(naer) :: kappa_nonelectro
-  
+
   !intent-inouts
   integer, intent(inout) :: iprint_input
 
@@ -72,7 +72,7 @@
   real(r8), intent(inout) :: tot_cl_in
   real(r8), intent(inout) :: Kp_nh4cl, Kp_nh4no3
   real(r8), intent(inout) :: sigma_water
-     
+
   real(r8), intent(inout), dimension(nbin_a_max)     :: num_a, Dp_dry_a, Dp_wet_a
   real(r8), intent(inout), dimension(nbin_a_max)     :: dp_core_a
   real(r8), intent(inout), dimension(nbin_a_max)     :: mass_dry_a, mass_soluble_a
@@ -89,7 +89,7 @@
 
   ! gas_netprod_otrproc = gas net production rate from other processes
   !    such as gas-phase chemistry and emissions (nmol/m3/s)
-  ! this allows the condensation (gasaerexch) routine to apply production and condensation loss 
+  ! this allows the condensation (gasaerexch) routine to apply production and condensation loss
   !    together, which is more accurate numerically
   ! NOTE - currently for mosaic, only the value for h2so4 can be non-zero
   real(r8), intent(inout), dimension(ngas_volatile)  :: sat_soa
@@ -116,16 +116,16 @@
   real(r8), intent(inout), dimension(nelectrolyte,3,nbin_a_max) :: electrolyte
   real(r8), intent(inout), dimension(nelectrolyte,3,nbin_a_max) :: epercent
 
-  
+
   !Intent-out
   real(r8), intent(out), dimension(nbin_a_max) :: area_dry_a
-  real(r8), intent(out), dimension(nbin_a_max) :: area_wet_a,mass_wet_a  
+  real(r8), intent(out), dimension(nbin_a_max) :: area_wet_a,mass_wet_a
   real(r8), intent(out), dimension(nbin_a_max) :: vol_wet_a
   real(r8), intent(out), dimension(nbin_a_max) :: dens_wet_a
 
   complex,  intent(out), dimension(nbin_a_max) :: ri_shell_a,ri_avg_a,ri_core_a
 
-  !Local variables      
+  !Local variables
   integer :: ibin, iv
 
   integer, dimension(nsalt) :: jsalt_present
@@ -136,7 +136,7 @@
 
   real(r8), dimension(nsalt) :: phi_salt_old
   real(r8), dimension(Ncation) :: nc_Mc,xeq_c
-  real(r8), dimension(Nanion)  :: xeq_a,na_Ma    
+  real(r8), dimension(Nanion)  :: xeq_a,na_Ma
   real(r8), dimension(nbin_a_max) :: sigma_soln
   real(r8), dimension(nbin_a_max) :: delta_nh3_max,delta_hno3_max
   real(r8), dimension(nbin_a_max) :: delta_hcl_max
@@ -156,12 +156,12 @@
   phi_salt_old(:)  = 0.0_r8
   integrate(:,:,:) = 0.0_r8 !BALLI- Ask Dick about this initialization
   heff(:,:)        = 0.0_r8 !BALLI- Ask Dick about this initialization
-  
+
   gas_avg(:) = gas(:)  ! RCE:  set avg. gas conc. = initial conc.
 
   ! update ASTEM call counter
   mosaic_vars_aa%jASTEM_call  = mosaic_vars_aa%jASTEM_call + 1
-  
+
   ! reset input print flag
   iprint_input = mYES
 
@@ -200,7 +200,7 @@
      !     mc,num_a,Dp_dry_a,Dp_wet_a,area_dry_a,area_wet_a,mass_wet_a,mass_dry_a,&
      !     water_a)	! UNCOMMENT THIS LINE
   endif			! UNCOMMENT THIS LINE
-  
+
 
   ! compute new gas-aerosol mass transfer coefficients
   call aerosolmtc( jaerosolstate, num_a, Dp_wet_a, sigmag_a, P_atm, T_K, aH2O, aer, kg ) ! RAZ: 6/14/2017
@@ -362,9 +362,9 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
        mosaic_vars_aa_type
 
   use module_mosaic_ext, only: do_full_deliquescence,form_electrolytes
-  
 
-  
+
+
   ! subr arguments
   integer, intent(inout) :: iprint_input
   integer, intent(in), dimension(nsalt) :: jsalt_index
@@ -374,7 +374,7 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
   integer, intent(in), dimension(jsulf_poor_NUM) :: jsulf_poor
   integer, intent(in), dimension(jsulf_rich_NUM) :: jsulf_rich
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(in)  :: dtchem
   real(r8), intent(in) :: aH2O,rtol_mesa
   real(r8), intent(inout) :: Kp_nh4cl,Kp_nh4no3,Keq_nh4cl
@@ -416,12 +416,12 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
   type (mosaic_vars_aa_type), intent(inout) :: mosaic_vars_aa
 
 
-  
+
   ! local variables
   character(len=500) :: tmp_str
   integer ibin, iv, jp, ieqblm_ASTEM, islow_intermassxfer		! RAZ 2/2/2015: bugfix
   integer, dimension(nbin_a_max) :: idry_case3a
-  
+
   real(r8),parameter :: sumkg_smallaa = 1.0e-37_r8
   real(r8) :: dtmax, t_new, t_old, t_out, XT,kelvin_nh4no3
   real(r8) :: sum1, sum2, sum3, sum4, sum4a, sum4b, h_flux_s
@@ -437,7 +437,7 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
   ! initialize time
   t_old = 0.0
   t_out = dtchem
-  
+
   ! reset ASTEM time steps and MESA iterations counters to zero
   mosaic_vars_aa%isteps_ASTEM = 0
   do ibin = 1, nbin_a
@@ -460,19 +460,19 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
   enddo
 ! RAZ 2/2/2015: end bugfix
 
-  
+
   !--------------------------------
   ! overall integration loop begins over dtchem seconds
-  
+
 10 mosaic_vars_aa%isteps_ASTEM = mosaic_vars_aa%isteps_ASTEM + 1
-  
+
   ! compute new fluxes
   phi_nh4no3_s = 0.0
   phi_nh4cl_s  = 0.0
   ieqblm_ASTEM = mYES			! reset to default
-  
+
   do 501 ibin = 1, nbin_a
-     
+
      idry_case3a(ibin) = mNO			! reset to default
      ! default fluxes and other stuff
      do iv = 1, ngas_ioa
@@ -530,7 +530,7 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
              tot_cl_in, molality0, kappa_nonelectro, mosaic_vars_aa )	! jphase(ibin) will be determined in this subr.
 
      endif
-     
+
 501 continue
 
   if(ieqblm_ASTEM .eq. mYES)goto 30	! all bins have reached eqblm, so quit.
@@ -553,7 +553,7 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
   endif
 
   if(islow_intermassxfer .eq. mYES)goto 30 ! extremely slow interparticle massxfer, so quit.
-! RAZ 2/2/2015: new algorithm end  
+! RAZ 2/2/2015: new algorithm end
 
 
   !-------------------------
@@ -566,33 +566,33 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
      dtmax = t_out - t_old
      t_new = t_out*1.01
   endif
-  
-  
+
+
   !------------------------------------------
   ! do internal time-step (dtmax) integration
 
   do 20 iv = 2, 4
-     
+
      sum1 = 0.0
      sum2 = 0.0
      sum3 = 0.0
      sum4 = 0.0
      sum4a= 0.0
      sum4b= 0.0
-     
+
      do 21 ibin = 1, nbin_a
         if(jaerosolstate(ibin) .eq. no_aerosol)goto 21
-        
+
         jp = jliquid
         sum1 = sum1 + aer(iv,jp,ibin)/   &
              (1. + dtmax*kg(iv,ibin)*Heff(iv,ibin)*integrate(iv,jp,ibin))
-        
+
         sum2 = sum2 + kg(iv,ibin)*integrate(iv,jp,ibin)/   &
              (1. + dtmax*kg(iv,ibin)*Heff(iv,ibin)*integrate(iv,jp,ibin))
-        
+
         jp = jsolid
         sum3 = sum3 + aer(iv,jp,ibin)
-        
+
         if(flux_s(iv,ibin) .gt. 0.)then
            h_flux_s = dtmax*flux_s(iv,ibin)
            sum4a = sum4a + h_flux_s
@@ -603,43 +603,43 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
            aer(iv,jp,ibin) = aer(iv,jp,ibin) + h_flux_s
            aer(iv,jp,ibin) = max(aer(iv,jp,ibin), 0.0d0)
         endif
-        
+
 21   continue
-        
+
      sum4 = sum4a + sum4b
-     
-     
+
+
      ! first update gas concentration
      gas(iv) = (total_species(iv) - (sum1 + sum3 + sum4) )/   &
           (1. + dtmax*sum2)
      gas(iv) = max(gas(iv), 0.0d0)
-     
+
      !        if(gas(iv) .lt. 0.)write(6,*) gas(iv)
-     
+
      ! now update aer concentration in the liquid phase
      do 22 ibin = 1, nbin_a
-        
+
         if(integrate(iv,jliquid,ibin) .eq. mYES)then
            aer(iv,jliquid,ibin) =   &
                 (aer(iv,jliquid,ibin) + dtmax*kg(iv,ibin)*gas(iv))/   &
                 (1. + dtmax*kg(iv,ibin)*Heff(iv,ibin))
         endif
-        
+
 22   continue
-        
-        
+
+
 20 continue
   !------------------------------------------
   ! sub-step integration done
-        
-        
+
+
   !------------------------------------------
   ! now update aer(jtotal) and update internal phase equilibrium
   ! also do integration of species by mass balance if necessary
   !
   do 40 ibin = 1, nbin_a
      if(jaerosolstate(ibin) .eq. no_aerosol)goto 40
-     
+
      if(jphase(ibin) .eq. jsolid)then
         call form_electrolytes(jsolid,ibin,XT,aer,gas,electrolyte,total_species,tot_cl_in)  ! degas excess nh3 (if present)
      elseif(jphase(ibin) .eq. jliquid)then
@@ -648,19 +648,19 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
         call form_electrolytes(jsolid,ibin,XT,aer,gas,electrolyte,total_species,tot_cl_in)  ! degas excess nh3 (if present)
         call form_electrolytes(jliquid,ibin,XT,aer,gas,electrolyte,total_species,tot_cl_in) ! degas excess nh3 (if present)
      endif
-     
+
      !========================
      ! now update jtotal
      do iv = 2, ngas_ioa
         aer(iv,jtotal,ibin)=aer(iv,jsolid,ibin)+aer(iv,jliquid,ibin)
      enddo
      !========================
-     
-     
+
+
      call form_electrolytes(jtotal,ibin,XT,aer,gas,electrolyte,total_species,tot_cl_in)	! for MDRH diagnosis
-     
-     
-     
+
+
+
      ! update internal phase equilibrium
      if(jhyst_leg(ibin) .eq. jhyst_lo)then
         call ASTEM_update_phase_eqblm(ibin, jaerosolstate,     &
@@ -678,15 +678,15 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
      else
         call do_full_deliquescence(ibin,aer,electrolyte)		! simply do liquid <-- total
      endif
-     
-     
+
+
 40 continue
   !------------------------------------------
-     
+
   ! update time
   t_old = t_new
-  
-  if(mosaic_vars_aa%isteps_ASTEM .ge. mosaic_vars_aa%nmax_ASTEM)then     
+
+  if(mosaic_vars_aa%isteps_ASTEM .ge. mosaic_vars_aa%nmax_ASTEM)then
      mosaic_vars_aa%jASTEM_fail = mosaic_vars_aa%jASTEM_fail + 1
      write(tmp_str,*)'ASTEM internal steps exceeded', mosaic_vars_aa%nmax_ASTEM
      call mosaic_warn_mess(trim(adjustl(tmp_str)))
@@ -702,22 +702,22 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
   elseif(t_new .lt. t_out)then
      goto 10
   endif
-  
-  
+
+
   ! check if end of dtchem reached
   if(t_new .lt. 0.9999*t_out) goto 10
-  
+
 30 mosaic_vars_aa%cumul_steps_ASTEM = mosaic_vars_aa%cumul_steps_ASTEM + mosaic_vars_aa%isteps_ASTEM
    mosaic_vars_aa%isteps_ASTEM_max = max( mosaic_vars_aa%isteps_ASTEM_max, mosaic_vars_aa%isteps_ASTEM )
   !================================================
   ! end of overall integration loop over dtchem seconds
-  
-  
+
+
   !
   ! call subs to calculate fluxes over mixed-phase particles to update H+ ions,
   ! which were wiped off during update_phase_eqblm
   do ibin = 1, nbin_a
-     
+
      if(jaerosolstate(ibin) .eq. mixed)then
         if( electrolyte(jnh4no3,jsolid,ibin).gt. 0.0 .or.   &
              electrolyte(jnh4cl, jsolid,ibin).gt. 0.0 )then
@@ -744,10 +744,10 @@ subroutine ASTEM_semi_volatiles( iprint_input,  dtchem, jaerosolstate,          
                 molality0, kappa_nonelectro, mosaic_vars_aa )
         endif
      endif
-     
+
   enddo
-  
-  
+
+
   return
 end subroutine ASTEM_semi_volatiles
 
@@ -771,11 +771,11 @@ subroutine ASTEM_calculate_dtmax( dtchem, dtmax, jaerosolstate, idry_case3a,    
        mosaic_vars_aa_type
 
 
-  
+
   ! subr arguments
-  integer, intent(in), dimension(nbin_a_max) :: jaerosolstate,idry_case3a 
+  integer, intent(in), dimension(nbin_a_max) :: jaerosolstate,idry_case3a
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(in)  :: dtchem
   real(r8), intent(out) :: dtmax
   real(r8), intent(inout), dimension(ngas_aerchtot) :: gas
@@ -795,17 +795,17 @@ subroutine ASTEM_calculate_dtmax( dtchem, dtmax, jaerosolstate, idry_case3a,    
   real(r8) :: alpha, h_gas, h_sub_max,h_gas_i(ngas_ioa), h_gas_l, h_gas_s
   real(r8) :: sum_kg_phi, sum_kg_phi_pos, sum_kg_phi_neg, sumflux_s	! RAZ 2/2/2015: revised algorithm
   real(r8), dimension(ngas_volatile) :: sum_bin_s,sum_vdf_s,sum_vol_s
-  real(r8), dimension(ngas_volatile) :: avg_df_gas_s  
-  
+  real(r8), dimension(ngas_volatile) :: avg_df_gas_s
+
   h_sub_max = dtchem/5.0	! sec RAZ 2/14/2014
-  
+
   ! GAS-SIDE
-  
+
   ! solid-phase
   ! calculate h_gas_i and h_gas_l
-  
+
   h_gas_s = 2.e16
-  
+
   do 5 iv = 2, ngas_ioa
      h_gas_i(iv) = 1.e16
      sumflux_s = 0.0
@@ -814,18 +814,18 @@ subroutine ASTEM_calculate_dtmax( dtchem, dtmax, jaerosolstate, idry_case3a,    
            sumflux_s = sumflux_s + flux_s(iv,ibin)
         endif
      enddo
-     
+
      if(sumflux_s .gt. 0.0)then
         h_gas_i(iv) = 0.1*gas(iv)/sumflux_s
         h_gas_s     = min(h_gas_s, h_gas_i(iv))
      endif
-     
+
 5 continue
-     
-     
+
+
   ! liquid-phase
   ! calculate h_gas_s and h_gas_l
-     
+
   h_gas_l = 2.e16
   do 6 iv = 2, ngas_ioa
      h_gas_i(iv) = 1.e16
@@ -848,7 +848,7 @@ subroutine ASTEM_calculate_dtmax( dtchem, dtmax, jaerosolstate, idry_case3a,    
 
         endif
      enddo
-     
+
      sum_kg_phi = max(sum_kg_phi_pos, sum_kg_phi_neg) ! RAZ 2/2/2015: revised algorithm
 
      if(sum_kg_phi .gt. 0.0)then
@@ -860,35 +860,35 @@ subroutine ASTEM_calculate_dtmax( dtchem, dtmax, jaerosolstate, idry_case3a,    
 
   h_gas = min(h_gas_s, h_gas_l)
   h_gas = min(h_gas, h_sub_max)
-  
-  
-  
-  
+
+
+
+
   ! AEROSOL-SIDE: solid-phase
-  
+
   ! first load volatile_solid array
   do ibin = 1, nbin_a
-     
+
      volatile_s(ino3_a,ibin) = electrolyte(jnh4no3,jsolid,ibin)
      volatile_s(inh4_a,ibin) = electrolyte(jnh4cl,jsolid,ibin) +   &
           electrolyte(jnh4no3,jsolid,ibin)
-     
+
      if(idry_case3a(ibin) .eq. mYES)then
         volatile_s(icl_a,ibin)  = aer(icl_a,jsolid,ibin)
      else
         volatile_s(icl_a,ibin)  = electrolyte(jnh4cl,jsolid,ibin)
      endif
-     
+
   enddo
-  
-  
+
+
   ! next calculate weighted avg_df_gas_s
   do iv = 2, ngas_ioa
-     
+
      sum_bin_s(iv) = 0.0
      sum_vdf_s(iv) = 0.0
      sum_vol_s(iv) = 0.0
-     
+
      do ibin = 1, nbin_a
         if(flux_s(iv,ibin) .lt. 0.)then	! aer -> gas
            sum_bin_s(iv) = sum_bin_s(iv) + 1.0
@@ -897,54 +897,54 @@ subroutine ASTEM_calculate_dtmax( dtchem, dtmax, jaerosolstate, idry_case3a,    
            sum_vol_s(iv) = sum_vol_s(iv) + volatile_s(iv,ibin)
         endif
      enddo
-     
+
      if(sum_vol_s(iv) .gt. 0.0)then
         avg_df_gas_s(iv) = sum_vdf_s(iv)/sum_vol_s(iv)
      else
         avg_df_gas_s(iv) = 1.0 ! never used, but set to 1.0 just to be safe
      endif
-     
+
   enddo
-  
-  
+
+
   ! calculate h_s_i_m
-  
-  
+
+
   do 20 ibin = 1, nbin_a
-     
+
      if(jaerosolstate(ibin) .eq. no_aerosol) goto 20
-     
+
      do 10 iv = 2, ngas_ioa
-        
+
         if(flux_s(iv,ibin) .lt. 0.)then				! aer -> gas
-           
+
            alpha = abs(avg_df_gas_s(iv))/   &
                 (volatile_s(iv,ibin)*sum_bin_s(iv))
            alpha = min(alpha, 1.0d0)
-           
+
            if(idry_case3a(ibin) .eq. mYES)alpha = 1.0
-           
+
            h_s_i_m(iv,ibin) =   &
                 -alpha*volatile_s(iv,ibin)/flux_s(iv,ibin)
-           
+
         endif
-        
+
 10   continue
-        
-        
+
+
 20 continue
-        
-        
+
+
   dtmax = min(dtchem, h_gas)
 
 !  dtmax = h_sub_max
 
-  
+
   if(dtmax .eq. 0.0)then
      write(tmp_str,*)' dtmax = ', dtmax
      call mosaic_warn_mess(trim(adjustl(tmp_str)))
   endif
-  
+
   return
 end subroutine ASTEM_calculate_dtmax
 
@@ -981,8 +981,8 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
   use module_mosaic_ext,  only: do_full_deliquescence, adjust_solid_aerosol,            &
        MESA_PTC, calculate_XT, aerosol_water, adjust_liquid_aerosol,                    &
        compute_activities
-  
-  
+
+
   ! subr arguments
   integer, intent(in):: ibin
   integer, intent(in), dimension(nsalt) :: jsalt_index
@@ -990,7 +990,7 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
   integer, intent(inout), dimension(nbin_a_max) :: jaerosolstate,jphase,jhyst_leg
   integer, intent(in), dimension(jsulf_poor_NUM) :: jsulf_poor
   integer, intent(in), dimension(jsulf_rich_NUM) :: jsulf_rich
-  
+
   real(r8), intent(in) :: aH2O,rtol_mesa
   real(r8), intent(in), dimension(naer) :: mw_aer_mac,dens_aer_mac
   real(r8), intent(in), dimension(Ncation) :: zc,MW_c
@@ -1004,7 +1004,7 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
   real(r8), intent(in), dimension(nelectrolyte) :: mw_electrolyte
   real(r8), intent(inout), dimension(nelectrolyte,nbin_a_max) :: molality0 !BSINGH(05/23/2014) - Added dimension nbin_a_max
   real(r8), intent(inout), dimension(nrxn_aer_ll) :: Keq_ll
-  real(r8), intent(inout), dimension(nrxn_aer_sl) :: Keq_sl 
+  real(r8), intent(inout), dimension(nrxn_aer_sl) :: Keq_sl
   real(r8), intent(inout), dimension(MDRH_T_NUM) :: MDRH_T
   real(r8), intent(inout), dimension(nelectrolyte,nbin_a_max) :: activity,gam
   real(r8), intent(inout), dimension(nelectrolyte,nelectrolyte) :: log_gamZ
@@ -1021,25 +1021,25 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
   ! local variables
   integer jsalt_dum, js, j_index, je
   real(r8) :: CRH, XT, sum_dum
-  
-  
+
+
   !! EFFI calculate percent composition
   sum_dum = 0.0
   do je = 1, nelectrolyte
      sum_dum = sum_dum + electrolyte(je,jtotal,ibin)
   enddo
-  
+
   if(sum_dum .eq. 0.)sum_dum = 1.0
-  
+
   do je = 1, nelectrolyte
      epercent(je,jtotal,ibin) = 100.*electrolyte(je,jtotal,ibin)/sum_dum
   enddo
   !! EFFI
-  
-  
+
+
   ! calculate overall sulfate ratio
   call calculate_XT(ibin,jtotal,XT,aer)		! calc updated XT
-  
+
 
 !! begin new algorithm - 6/3/2015 RAZ
     jsalt_dum = 0	! 9/3/2015 RAZ
@@ -1101,7 +1101,7 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
        return
     endif
 
-    ! step 2: check mhyst_method  
+    ! step 2: check mhyst_method
     if(mhyst_method == mhyst_force_up .or. jhyst_leg(ibin) == jhyst_up) then ! 9/3/2015 RAZ: either forced up OR (new) already fully deliquesced (may be metastable), so continue on upper leg
        call do_full_deliquescence(ibin,aer,electrolyte) ! this call is probably not necessary, but do it just to be safe
        jaerosolstate(ibin) = all_liquid
@@ -1126,15 +1126,15 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
     endif
 
 
-    ! step 3: diagnose phase state based on MDRH  
+    ! step 3: diagnose phase state based on MDRH
     if(aH2O*100. .lt. MDRH(ibin)) then
        jaerosolstate(ibin) = all_solid
        jphase(ibin) = jsolid
        call adjust_solid_aerosol(ibin,jphase,aer,jhyst_leg,electrolyte,epercent,water_a)
        return
     endif
-  
-  
+
+
     ! step 4: none of the above means it must be sub-saturated or mixed-phase
 10  if(jphase(ibin) .eq. jsolid)then
       call do_full_deliquescence(ibin,aer,electrolyte)
@@ -1153,7 +1153,7 @@ subroutine ASTEM_update_phase_eqblm(ibin, jaerosolstate,       &
           nc_Mc, xeq_c, mw_electrolyte, mw_aer_mac, dens_aer_mac, Keq_sl, MW_c, MW_a,    &
           Keq_ll, growth_factor, molality0, rtol_mesa, jsalt_present,                  &
           phi_salt_old, kappa_nonelectro, mosaic_vars_aa )
-    endif  
+    endif
     return
 
   end subroutine ASTEM_update_phase_eqblm
@@ -1187,14 +1187,14 @@ subroutine ASTEM_flux_wet(ibin, ieqblm_ASTEM, sfc_a, df_gas_s, df_gas_l,        
 
   use module_mosaic_ext,  only: compute_activities, ions_to_electrolytes,           &
        absorb_tiny_nh4no3, absorb_tiny_nh4cl, absorb_tiny_hno3, absorb_tiny_hcl
-  
-  
+
+
   ! subr arguments
   integer, intent(in) :: ibin
   integer, intent(inout) :: ieqblm_ASTEM
   integer, intent(inout), dimension(nbin_a_max) :: jaerosolstate,jphase,jhyst_leg
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(in) :: aH2O
   real(r8), intent(inout) :: Keq_nh4cl,Keq_nh4no3,kelvin_nh4no3,kelvin_nh4cl
   real(r8), intent(inout) :: Kp_nh4cl,Kp_nh4no3
@@ -1240,27 +1240,27 @@ subroutine ASTEM_flux_wet(ibin, ieqblm_ASTEM, sfc_a, df_gas_s, df_gas_l,        
   call compute_activities(ibin,jaerosolstate,jphase,aer,jhyst_leg, &
        electrolyte,activity,mc,num_a,mass_dry_a,mass_soluble_a,    &
        water_a,aH2O,ma,gam,log_gamZ,gam_ratio,Keq_ll,molality0,kappa_nonelectro)
-  
+
   if(water_a(ibin) .eq. 0.0)then
      write(tmp_str,*)'Water is zero in liquid phase'
      call mosaic_warn_mess(trim(adjustl(tmp_str)))
-     write(tmp_str,*)'Stopping in ASTEM_flux_wet'     
+     write(tmp_str,*)'Stopping in ASTEM_flux_wet'
      call mosaic_warn_mess(trim(adjustl(tmp_str)))
      mosaic_vars_aa%zero_water_flag = .true.
   endif
-  
+
   !-------------------------------------------------------------------
   ! CASE 1: caco3 > 0 absorb acids (and indirectly degas co2)
-  
+
   if(electrolyte(jcaco3,jsolid,ibin) .gt. 0.0)then
      call ASTEM_flux_wet_case1(ibin,ieqblm_ASTEM,sfc_a,df_gas_s,flux_s,          &
           phi_volatile_s,integrate,jphase,kg,gas,mc,Keq_ll)
      return
   endif
-  
+
   !-------------------------------------------------------------------
   ! CASE 2: Sulfate-Rich Domain
-  
+
 ! if(XT.lt.1.9999 .and. XT.ge.0.)then  ! RAZ 11/10/2014
   if(XT.lt.2.0 .and. XT.ge.0.)then  ! RAZ 11/10/2014
      call ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,            &
@@ -1268,81 +1268,81 @@ subroutine ASTEM_flux_wet(ibin, ieqblm_ASTEM, sfc_a, df_gas_s, df_gas_l,        
           Keq_gl)
      return
   endif
-  
+
   !-------------------------------------------------------------------
-  
+
   if( (gas(inh3_g)+aer(inh4_a,jliquid,ibin)) .lt. 1.e-25)goto 10  ! no ammonia in the system
-  
+
   !-------------------------------------------------------------------
   ! CASE 3: nh4no3 and/or nh4cl maybe active
   ! do some small adjustments (if needed) before deciding case 3
-  
+
   iadjust = mNO		! default
   iadjust_intermed = mNO	! default
-  
+
   ! nh4no3
   g_nh3_hno3 = gas(inh3_g)*gas(ihno3_g)
   a_nh4_no3  = aer(inh4_a,jliquid,ibin)*aer(ino3_a,jliquid,ibin)
-  
+
   if(g_nh3_hno3 .gt. 0. .and. a_nh4_no3 .eq. 0.)then
      call absorb_tiny_nh4no3(ibin,aer,gas,electrolyte,delta_nh3_max,             &
           delta_hno3_max,electrolyte_sum)
      iadjust = mYES
      iadjust_intermed = mYES
   endif
-  
+
   if(iadjust_intermed .eq. mYES)then
      call ions_to_electrolytes(jliquid,ibin,XT,aer,electrolyte,zc,za,xeq_a,na_Ma,&
           nc_Mc,xeq_c,mw_electrolyte,MW_c,MW_a)  	! update after adjustments
      iadjust_intermed = mNO	! reset
   endif
-  
+
   ! nh4cl
   g_nh3_hcl = gas(inh3_g)*gas(ihcl_g)
   a_nh4_cl  = aer(inh4_a,jliquid,ibin)*aer(icl_a,jliquid,ibin)
-  
+
   if(g_nh3_hcl .gt. 0. .and. a_nh4_cl .eq. 0.)then
      call absorb_tiny_nh4cl(ibin,aer,gas,electrolyte,delta_nh3_max,delta_hcl_max,&
           electrolyte_sum)
      iadjust = mYES
      iadjust_intermed = mYES
   endif
-  
+
   if(iadjust_intermed .eq. mYES)then
      call ions_to_electrolytes(jliquid,ibin,XT,aer,electrolyte,zc,za,xeq_a,na_Ma,&
           nc_Mc,xeq_c,mw_electrolyte,MW_c,MW_a)  	! update after adjustments
   endif
-  
+
   if(iadjust .eq. mYES)then
      call compute_activities(ibin,jaerosolstate,jphase,aer,jhyst_leg,electrolyte,&
           activity,mc,num_a,mass_dry_a,mass_soluble_a,water_a,aH2O,ma,gam,       &
           log_gamZ,gam_ratio,Keq_ll,molality0,kappa_nonelectro)			! update after adjustments
   endif
-  
-  
+
+
   ! all adjustments done...
-  
+
   !--------
   kelvin_nh4no3 = kel(inh3_g,ibin)*kel(ihno3_g,ibin)
   Keq_nh4no3 = kelvin_nh4no3*activity(jnh4no3,ibin)*Kp_nh4no3	! = [NH3]s * [HNO3]s
-  
+
   kelvin_nh4cl = kel(inh3_g,ibin)*kel(ihcl_g,ibin)
   Keq_nh4cl = kelvin_nh4cl*activity(jnh4cl,ibin)*Kp_nh4cl	! = [NH3]s * [HCl]s
-  
+
   call ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,phi_volatile_l,&
        integrate,kg,gas,kel,mc,Keq_nh4cl,Keq_nh4no3,water_a,ma,gam,gam_ratio,    &
        Keq_ll,Keq_gl,aer,total_species,tot_cl_in,activity,electrolyte)
-  
+
   return
-  
-  
+
+
   !-------------------------------------------------------------------
   ! CASE 4: ammonia = 0. hno3 and hcl exchange may happen here
   ! do small adjustments (if needed) before deciding case 4
-  
+
 10 iadjust = mNO		! default
   iadjust_intermed = mNO	! default
-  
+
   ! hno3
   if(gas(ihno3_g).gt.0. .and. aer(ino3_a,jliquid,ibin).eq.0. .and.   &
        aer(icl_a,jliquid,ibin) .gt. 0.0)then
@@ -1350,13 +1350,13 @@ subroutine ASTEM_flux_wet(ibin, ieqblm_ASTEM, sfc_a, df_gas_s, df_gas_l,        
      iadjust = mYES
      iadjust_intermed = mYES
   endif
-  
+
   if(iadjust_intermed .eq. mYES)then
      call ions_to_electrolytes(jliquid,ibin,XT,aer,electrolyte,zc,za,xeq_a,na_Ma,&
           nc_Mc,xeq_c,mw_electrolyte,MW_c,MW_a)  	! update after adjustments
      iadjust_intermed = mNO	! reset
   endif
-  
+
   ! hcl
   if(gas(ihcl_g).gt.0. .and. aer(icl_a,jliquid,ibin) .eq. 0. .and.   &
        aer(ino3_a,jliquid,ibin) .gt. 0.0)then
@@ -1364,24 +1364,24 @@ subroutine ASTEM_flux_wet(ibin, ieqblm_ASTEM, sfc_a, df_gas_s, df_gas_l,        
      iadjust = mYES
      iadjust_intermed = mYES
   endif
-  
+
   if(iadjust_intermed .eq. mYES)then
      call ions_to_electrolytes(jliquid,ibin,XT,aer,electrolyte,zc,za,xeq_a,na_Ma,&
           nc_Mc,xeq_c,mw_electrolyte,MW_c,MW_a)  	! update after adjustments
   endif
-  
+
   if(iadjust .eq. mYES)then
      call compute_activities(ibin,jaerosolstate,jphase,aer,jhyst_leg,electrolyte,&
           activity,mc,num_a,mass_dry_a,mass_soluble_a,water_a,aH2O,ma,gam,       &
           log_gamZ,gam_ratio,Keq_ll,molality0,kappa_nonelectro)			! update after adjustments
   endif
-  
+
   ! all adjustments done...
-  
+
   call ASTEM_flux_wet_case4(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,phi_volatile_l,&
        integrate,kg,gas,kel,mc,water_a,ma,gam,Keq_ll,Keq_gl)
 
-  
+
   return
 end subroutine ASTEM_flux_wet
 
@@ -1402,14 +1402,14 @@ subroutine ASTEM_flux_wet_case1(ibin,ieqblm_ASTEM,sfc_a,df_gas_s,flux_s,        
   use module_data_mosaic_aero, only: nbin_a_max, ngas_aerchtot, ngas_volatile,     &
        Ncation,mYES, jsolid,mNO,nrxn_aer_ll,                                       &
        jc_h,ihno3_g,ihcl_g
-  
-  
+
+
   ! subr arguments
   integer, intent(in):: ibin
   integer, intent(inout) :: ieqblm_ASTEM
   integer, intent(inout), dimension(nbin_a_max) :: jphase
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(inout), dimension(ngas_aerchtot) :: gas
   real(r8), intent(inout), dimension(ngas_volatile) :: sfc_a
   real(r8), intent(inout), dimension(nrxn_aer_ll) :: Keq_ll
@@ -1417,12 +1417,12 @@ subroutine ASTEM_flux_wet_case1(ibin,ieqblm_ASTEM,sfc_a,df_gas_s,flux_s,        
   real(r8), intent(inout), dimension(ngas_volatile,nbin_a_max) :: phi_volatile_s
   real(r8), intent(inout), dimension(ngas_aerchtot,nbin_a_max) :: kg
   real(r8), intent(inout), dimension(Ncation,nbin_a_max) :: mc
-  
+
   ! local variables
   integer iv
-  
+
   mc(jc_h,ibin) = sqrt(Keq_ll(3))
-  
+
   ! same as dry case1
   if(gas(ihno3_g) .gt. 1.e-6)then
      sfc_a(ihno3_g) = 0.0
@@ -1433,7 +1433,7 @@ subroutine ASTEM_flux_wet_case1(ibin,ieqblm_ASTEM,sfc_a,df_gas_s,flux_s,        
      jphase(ibin) = jsolid
      ieqblm_ASTEM = mNO
   endif
-  
+
   if(gas(ihcl_g) .gt. 1.e-6)then
      sfc_a(ihcl_g)  = 0.0
      df_gas_s(ihcl_g,ibin) = gas(ihcl_g)
@@ -1443,7 +1443,7 @@ subroutine ASTEM_flux_wet_case1(ibin,ieqblm_ASTEM,sfc_a,df_gas_s,flux_s,        
      jphase(ibin) = jsolid
      ieqblm_ASTEM = mNO
   endif
-  
+
   return
 end subroutine ASTEM_flux_wet_case1
 
@@ -1459,13 +1459,13 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
        Ncation,mYES, jliquid,mNO,Nanion,nelectrolyte,nrxn_aer_gl,nrxn_aer_ll,      &
        jc_h,jc_nh4,inh3_g,jhno3,ja_no3,ihno3_g,jhcl,ja_cl,ihcl_g
 
-  
-  
+
+
   ! subr arguments
   integer, intent(in) :: ibin
   integer, intent(inout) :: ieqblm_ASTEM
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(inout), dimension(nbin_a_max) :: water_a,gam_ratio
   real(r8), intent(inout), dimension(ngas_aerchtot) :: gas
   real(r8), intent(inout), dimension(ngas_volatile) :: sfc_a
@@ -1479,25 +1479,25 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
   real(r8), intent(inout), dimension(Nanion,nbin_a_max) :: ma
   ! local variables
   real(r8) :: dum_hno3, dum_hcl, dum_nh3
-  
-  
+
+
   sfc_a(inh3_g)  = kel(inh3_g,ibin)*   &
        gam_ratio(ibin)*mc(jc_nh4,ibin)*Keq_ll(3)/   &
        (mc(jc_h,ibin)*Keq_ll(2)*Keq_gl(2))
-  
+
   sfc_a(ihno3_g) = kel(ihno3_g,ibin)*   &
        mc(jc_h,ibin)*ma(ja_no3,ibin)*gam(jhno3,ibin)**2/   &
        Keq_gl(3)
-  
+
   sfc_a(ihcl_g)  = kel(ihcl_g,ibin)*   &
        mc(jc_h,ibin)*ma(ja_cl,ibin)*gam(jhcl,ibin)**2/   &
        Keq_gl(4)
-  
+
   dum_hno3 = max(sfc_a(ihno3_g), gas(ihno3_g))
   dum_hcl  = max(sfc_a(ihcl_g), gas(ihcl_g))
   dum_nh3  = max(sfc_a(inh3_g), gas(inh3_g))
-  
-  
+
+
   ! compute relative driving forces
   if(dum_hno3 .gt. 0.0)then
      df_gas_l(ihno3_g,ibin) = gas(ihno3_g) - sfc_a(ihno3_g)
@@ -1505,22 +1505,22 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
   else
      phi_volatile_l(ihno3_g,ibin)= 0.0
   endif
-  
+
   if(dum_hcl .gt. 0.0)then
      df_gas_l(ihcl_g,ibin)  = gas(ihcl_g)  - sfc_a(ihcl_g)
      phi_volatile_l(ihcl_g,ibin) = df_gas_l(ihcl_g,ibin)/dum_hcl
   else
      phi_volatile_l(ihcl_g,ibin) = 0.0
   endif
-  
+
   if(dum_nh3 .gt. 0.0)then
      df_gas_l(inh3_g,ibin)  = gas(inh3_g)  - sfc_a(inh3_g)
      phi_volatile_l(inh3_g,ibin) = df_gas_l(inh3_g,ibin)/dum_nh3
   else
      phi_volatile_l(inh3_g,ibin) = 0.0
   endif
-  
-  
+
+
   !      if(phi_volatile_l(ihno3_g,ibin) .le. rtol_eqb_astem .and.
   !     &   phi_volatile_l(ihcl_g,ibin)  .le. rtol_eqb_astem .and.
   !     &   phi_volatile_l(inh3_g,ibin)  .le. rtol_eqb_astem)then
@@ -1528,8 +1528,8 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
   !        return
   !
   !      endif
-  
-  
+
+
   ! compute Heff
   if(dum_hno3 .gt. 0.0)then
      Heff(ihno3_g,ibin)=   &
@@ -1538,7 +1538,7 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
      integrate(ihno3_g,jliquid,ibin)= mYES
      ieqblm_ASTEM = mNO
   endif
-  
+
   if(dum_hcl .gt. 0.0)then
      Heff(ihcl_g,ibin)=   &
           kel(ihcl_g,ibin)*gam(jhcl,ibin)**2*mc(jc_h,ibin)*1.e-9/   &
@@ -1546,7 +1546,7 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
      integrate(ihcl_g,jliquid,ibin) = mYES
      ieqblm_ASTEM = mNO
   endif
-  
+
   if(dum_nh3 .gt. 0.0)then
      Heff(inh3_g,ibin) =   &
           kel(inh3_g,ibin)*gam_ratio(ibin)*1.e-9*Keq_ll(3)/   &
@@ -1554,8 +1554,8 @@ subroutine ASTEM_flux_wet_case2(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
      integrate(inh3_g,jliquid,ibin) = mYES
      ieqblm_ASTEM = mNO
   endif
-  
-  
+
+
   return
 end subroutine ASTEM_flux_wet_case2
 
@@ -1573,13 +1573,13 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
        inh3_g,ihcl_g,ihno3_g,ja_no3,jhno3,jc_h,ja_cl,jhcl,jc_nh4
 
   use module_mosaic_ext, only: quadratic,equilibrate_acids
-  
-  
+
+
   ! subr arguments
   integer, intent(in) :: ibin
   integer, intent(inout) :: ieqblm_ASTEM
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(inout) :: Keq_nh4cl,Keq_nh4no3
   real(r8), intent(inout), dimension(nbin_a_max) :: water_a,gam_ratio
   real(r8), intent(inout), dimension(ngas_aerchtot) :: gas
@@ -1599,18 +1599,18 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
   real(r8) :: a, b, c, dum_hno3, dum_hcl, dum_nh3
   ! function
   !real(r8) :: quadratic
-  
+
   a =   kg(inh3_g,ibin)
   b = - kg(inh3_g,ibin)*gas(inh3_g)   &
        + kg(ihno3_g,ibin)*gas(ihno3_g)   &
        + kg(ihcl_g,ibin)*gas(ihcl_g)
   c = -(kg(ihno3_g,ibin)*Keq_nh4no3 + kg(ihcl_g,ibin)*Keq_nh4cl)
-  
+
   sfc_a(inh3_g)  = quadratic(a,b,c)
   sfc_a(ihno3_g) = Keq_nh4no3/max(sfc_a(inh3_g),1.d-20)
   sfc_a(ihcl_g)  = Keq_nh4cl/max(sfc_a(inh3_g),1.d-20)
-  
-  
+
+
   ! diagnose mH+
   if(sfc_a(ihno3_g).gt.0.0 .and. ma(ja_no3,ibin).gt.0.0)then
      mc(jc_h,ibin) = Keq_gl(3)*sfc_a(ihno3_g)/   &
@@ -1622,11 +1622,11 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
      call equilibrate_acids(ibin,aer,gas,electrolyte,activity,mc,water_a,       &
        total_species,tot_cl_in,ma,gam,Keq_ll,Keq_gl)	! hno3 and/or hcl may be > 0 in the gas phase
      mc(jc_h,ibin)  = max(mc(jc_h,ibin), sqrt(Keq_ll(3)))
-     
+
      sfc_a(inh3_g)  = kel(inh3_g,ibin)*   &
           gam_ratio(ibin)*mc(jc_nh4,ibin)*Keq_ll(3)/   &
           (mc(jc_h,ibin)*Keq_ll(2)*Keq_gl(2))
-     
+
      sfc_a(ihno3_g) = kel(ihno3_g,ibin)*   &
           mc(jc_h,ibin)*ma(ja_no3,ibin)*gam(jhno3,ibin)**2/   &
           Keq_gl(3)
@@ -1634,11 +1634,11 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
           mc(jc_h,ibin)*ma(ja_cl,ibin)*gam(jhcl,ibin)**2/   &
           Keq_gl(4)
   endif
-  
+
   dum_hno3 = max(sfc_a(ihno3_g), gas(ihno3_g))
   dum_hcl  = max(sfc_a(ihcl_g), gas(ihcl_g))
   dum_nh3  = max(sfc_a(inh3_g), gas(inh3_g))
-  
+
   ! compute relative driving forces
   if(dum_hno3 .gt. 0.0)then
      df_gas_l(ihno3_g,ibin) = gas(ihno3_g) - sfc_a(ihno3_g)
@@ -1646,23 +1646,23 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
   else
      phi_volatile_l(ihno3_g,ibin)= 0.0
   endif
-  
+
   if(dum_hcl .gt. 0.0)then
      df_gas_l(ihcl_g,ibin)  = gas(ihcl_g)  - sfc_a(ihcl_g)
      phi_volatile_l(ihcl_g,ibin) = df_gas_l(ihcl_g,ibin)/dum_hcl
   else
      phi_volatile_l(ihcl_g,ibin) = 0.0
   endif
-  
+
   if(dum_nh3 .gt. 0.0)then
      df_gas_l(inh3_g,ibin)  = gas(inh3_g)  - sfc_a(inh3_g)
      phi_volatile_l(inh3_g,ibin) = df_gas_l(inh3_g,ibin)/dum_nh3
   else
      phi_volatile_l(inh3_g,ibin) = 0.0
   endif
-  
-  
-  
+
+
+
   !      if(phi_volatile_l(ihno3_g,ibin) .le. rtol_eqb_astem .and.
   !     &   phi_volatile_l(ihcl_g,ibin)  .le. rtol_eqb_astem .and.
   !     &   phi_volatile_l(inh3_g,ibin)  .le. rtol_eqb_astem)then
@@ -1670,8 +1670,8 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
   !        return
   !
   !      endif
-  
-  
+
+
   ! compute Heff
   if(dum_hno3 .gt. 0.0)then
      Heff(ihno3_g,ibin)=   &
@@ -1680,7 +1680,7 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
      integrate(ihno3_g,jliquid,ibin)= mYES
      ieqblm_ASTEM = mNO
   endif
-  
+
   if(dum_hcl .gt. 0.0)then
      Heff(ihcl_g,ibin)=   &
           kel(ihcl_g,ibin)*gam(jhcl,ibin)**2*mc(jc_h,ibin)*1.e-9/   &
@@ -1688,18 +1688,18 @@ subroutine ASTEM_flux_wet_case3(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,          
      integrate(ihcl_g,jliquid,ibin) = mYES
      ieqblm_ASTEM = mNO
   endif
-  
+
   if(dum_nh3 .gt. 0.0)then
      Heff(inh3_g,ibin) =   &
           kel(inh3_g,ibin)*gam_ratio(ibin)*1.e-9*Keq_ll(3)/   &
           (water_a(ibin)*mc(jc_h,ibin)*Keq_ll(2)*Keq_gl(2))
      integrate(inh3_g,jliquid,ibin) = mYES
      ieqblm_ASTEM = mNO
-  endif    
-  
+  endif
+
   return
 end subroutine ASTEM_flux_wet_case3
-      
+
 
 
 !--------------------------------------------------------------------
@@ -1712,7 +1712,7 @@ subroutine ASTEM_flux_wet_case3a(ibin,ieqblm_ASTEM,sfc_a,df_gas_l,Heff,         
   use module_data_mosaic_aero, only: nbin_a_max, ngas_aerchtot, ngas_volatile,     &
        Ncation,mYES, jliquid,mNO,Nanion,nelectrolyte,nrxn_aer_gl,nrxn_aer_ll,      &
        inh3_g,ihno3_g,ja_no3,jhno3,jc_h
-  
+
   use module_mosaic_ext, only: quadratic
 
 
@@ -2043,7 +2043,7 @@ end subroutine ASTEM_flux_wet_case4
 subroutine ASTEM_flux_dry(ibin, phi_nh4no3_s,phi_nh4cl_s,ieqblm_ASTEM,           &
      idry_case3a,sfc_a,df_gas_s,flux_s,phi_volatile_s,integrate,aer,kg,gas,      &
      electrolyte,epercent,Keq_sg)
-  
+
   use module_data_mosaic_aero, only: nbin_a_max, ngas_aerchtot, ngas_volatile,     &
        naer,jsolid, nrxn_aer_sg,nelectrolyte,                                      &
        jcaco3,jcacl2,jnacl,ihno3_g,jnh4cl,ihcl_g,inh3_g,jnh4no3
@@ -2156,7 +2156,7 @@ end subroutine ASTEM_flux_dry
 
 subroutine ASTEM_flux_dry_case1(ibin,ieqblm_ASTEM,sfc_a,df_gas_s,flux_s,         &
      phi_volatile_s,integrate,kg,gas)
-  
+
   use module_data_mosaic_aero, only: nbin_a_max, ngas_aerchtot, ngas_volatile,   &
        mYES,jsolid,mNO, ihno3_g,ihcl_g
 
@@ -2298,7 +2298,7 @@ subroutine ASTEM_flux_dry_case3b(ibin, phi_nh4cl_s,ieqblm_ASTEM,sfc_a,df_gas_s, 
        nelectrolyte,jnh4cl,ihcl_g,inh3_g,icl_a
 
   use module_mosaic_ext, only: quadratic,degas_solid_nh4cl
-  
+
 
   ! subr arguments
   integer, intent(in) :: ibin
@@ -2419,7 +2419,7 @@ subroutine ASTEM_flux_dry_case4(ibin, phi_nh4no3_s,phi_nh4cl_s,ieqblm_ASTEM,    
        jnh4no3,jnh4cl,ihno3_g,inh3_g,ihcl_g
 
   use module_mosaic_ext, only: quadratic,degas_solid_nh4no3,degas_solid_nh4cl
-  
+
 
   ! subr arguments
   integer, intent(in) :: ibin
@@ -2600,7 +2600,7 @@ subroutine ASTEM_flux_dry_case4b(ibin,phi_nh4cl_s,ieqblm_ASTEM,sfc_a,df_gas_s,  
        inh3_g,ihcl_g
 
   use module_mosaic_ext, only: quadratic
-  
+
 
   ! subr arguments
   integer, intent(in) :: ibin
@@ -2763,7 +2763,7 @@ subroutine ASTEM_flux_mix(ibin, phi_nh4no3_s, phi_nh4cl_s, ieqblm_ASTEM, idry_ca
   ! subr arguments
   integer, intent(in) :: ibin
   integer, intent(inout) :: ieqblm_ASTEM
-  integer, intent(inout), dimension(nbin_a_max) :: idry_case3a,jaerosolstate      
+  integer, intent(inout), dimension(nbin_a_max) :: idry_case3a,jaerosolstate
   integer, intent(inout), dimension(nbin_a_max) :: jphase,jhyst_leg
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
 
@@ -2820,9 +2820,9 @@ subroutine ASTEM_flux_mix(ibin, phi_nh4no3_s, phi_nh4cl_s, ieqblm_ASTEM, idry_ca
 
   if(water_a(ibin) .eq. 0.0)then
      write(tmp_str,*)'Water is zero in liquid phase'
-     call mosaic_warn_mess(trim(adjustl(tmp_str)))    
+     call mosaic_warn_mess(trim(adjustl(tmp_str)))
      write(tmp_str,*)'Stopping in ASTEM_flux_wet'
-     call mosaic_warn_mess(trim(adjustl(tmp_str)))    
+     call mosaic_warn_mess(trim(adjustl(tmp_str)))
      mosaic_vars_aa%zero_water_flag = .true.
   endif
 
@@ -3398,7 +3398,7 @@ subroutine ASTEM_non_volatiles( dtchem,  jaerosolstate, jphase, &
      growth_factor, MDRH, MDRH_T, molality0, rtol_mesa, jsalt_present, jsalt_index,     &
      jsulf_poor, jsulf_rich, phi_salt_old,                                   &
      kappa_nonelectro, mosaic_vars_aa ) ! TOUCH
-  
+
   use module_data_mosaic_aero,  only: nbin_a_max, nbin_a,   &
        ngas_aerchtot, ngas_volatile, nelectrolyte,    &
        Ncation, naer, no_aerosol, jtotal, mNO, mYES, Nanion, nrxn_aer_ll, nrxn_aer_sl,    &
@@ -3419,7 +3419,7 @@ subroutine ASTEM_non_volatiles( dtchem,  jaerosolstate, jphase, &
   real(r8), intent(in), dimension(naer) :: mw_aer_mac,dens_aer_mac
   real(r8), intent(in), dimension(Ncation) :: zc,MW_c
   real(r8), intent(in), dimension(Nanion)  :: za,MW_a
-  real(r8), intent(in),    dimension(ngas_aerchtot) :: gas_netprod_otrproc 
+  real(r8), intent(in),    dimension(ngas_aerchtot) :: gas_netprod_otrproc
   real(r8), intent(in), dimension(ngas_aerchtot) :: partial_molar_vol
   real(r8), intent(in), dimension(nelectrolyte) :: mw_electrolyte
   real(r8), intent(in), dimension (6,nelectrolyte) :: a_zsr
@@ -3465,7 +3465,7 @@ subroutine ASTEM_non_volatiles( dtchem,  jaerosolstate, jphase, &
   !Local variables
   integer ibin,iupdate_phase_state
   real(r8),parameter :: sumkg_smallaa = 1.0e-37_r8
-  real(r8) :: decay_h2so4,decay_msa,delta_h2so4,delta_tmsa,delta_nh3,delta_hno3                
+  real(r8) :: decay_h2so4,decay_msa,delta_h2so4,delta_tmsa,delta_nh3,delta_hno3
   real(r8) :: delta_hcl,XT,sumkg_h2so4,sumkg_msa,sumkg_nh3,sumkg_hno3,sumkg_hcl
   real(r8) :: tmp_kxt, tmp_kxt2, tmp_pok, tmp_pxt, tmp_q1, tmp_q3, tmp_q4
   real(r8), dimension(nbin_a) :: delta_so4,delta_msa,delta_nh4
@@ -3667,16 +3667,16 @@ end subroutine ASTEM_non_volatiles
 !-----------------------------------------------------------------------
 subroutine ASTEM_secondary_organics(dtchem, jaerosolstate,sfc_a,Heff,            &
      phi_volatile_l,integrate,aer,kg,gas,sat_soa,total_species)
-  
+
   use module_data_mosaic_aero, only: nbin_a_max, nbin_a, naer, no_aerosol,   &
        ngas_aerchtot, ngas_volatile, jtotal,mYES,                            &
        isoa_first
-  
-  
+
+
   ! subr arguments
-  integer, intent(in), dimension(nbin_a_max) :: jaerosolstate  
+  integer, intent(in), dimension(nbin_a_max) :: jaerosolstate
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(in) :: dtchem
   real(r8), intent(inout), dimension(ngas_aerchtot) :: gas
   real(r8), intent(inout), dimension(ngas_volatile) :: sfc_a, sat_soa, total_species
@@ -3690,14 +3690,14 @@ subroutine ASTEM_secondary_organics(dtchem, jaerosolstate,sfc_a,Heff,           
   parameter(nsteps_max = 400)
   real(r8) :: dtmax, t_new, t_old, t_out
   real(r8) :: sum1, sum2
-  
- 
+
+
   ! initialize time
   t_old = 0.0
   t_out = dtchem
   isteps_SOA = 0
 
-  
+
   do iv = isoa_first, ngas_volatile
      total_species(iv) = gas(iv)
      do ibin = 1, nbin_a
@@ -3705,29 +3705,29 @@ subroutine ASTEM_secondary_organics(dtchem, jaerosolstate,sfc_a,Heff,           
         total_species(iv) = total_species(iv) + aer(iv,jtotal,ibin)
      enddo
   enddo
-  
-  
-  
+
+
+
   ! overall integration loop begins over dtchem seconds
 10 isteps_SOA = isteps_SOA + 1
-  
+
   ! compute new fluxes
   ieqblm_soa = mYES			! reset to default
-  
+
   do 501 ibin = 1, nbin_a
      if (jaerosolstate(ibin) .eq. no_aerosol) goto 501
-     
+
 !    call ASTEM_flux_soa(ibin,sfc_a,Heff,integrate,aer,gas,sat_soa,ieqblm_soa)
 ! ??? should phi_volatile_l be passed into astem_flux_soa ???
      call ASTEM_flux_soa(ibin,sfc_a,Heff,integrate,aer,gas,sat_soa,ieqblm_soa, &
                          phi_volatile_l )
-     
+
 501 continue
   if(ieqblm_soa .eq. mYES)goto 30 ! all bins have reached equilibrium
-  
+
   !-----------------------
-  
-  
+
+
 ! calculate maximum possible internal time-step
 11 call ASTEM_dtmax_soa(dtchem, dtmax, phi_volatile_l,integrate,kg)
   t_new = t_old + dtmax	! update time
@@ -3735,51 +3735,51 @@ subroutine ASTEM_secondary_organics(dtchem, jaerosolstate,sfc_a,Heff,           
      dtmax = t_out - t_old
      t_new = t_out*1.01
   endif
-  
-  
-  
-  
+
+
+
+
   !------------------------------------------
   ! do internal time-step (dtmax) integration
-  
+
   jp = jtotal
-  
+
   do 20 iv = isoa_first, ngas_volatile
-     
+
      sum1 = 0.0
      sum2 = 0.0
-     
+
      do 21 ibin = 1, nbin_a
         if(jaerosolstate(ibin) .eq. no_aerosol)goto 21
-        
+
         sum1 = sum1 + aer(iv,jp,ibin)/   &
              (1. + dtmax*kg(iv,ibin)*Heff(iv,ibin)*integrate(iv,jp,ibin))
         sum2 = sum2 + kg(iv,ibin)*integrate(iv,jp,ibin)/   &
              (1. + dtmax*kg(iv,ibin)*Heff(iv,ibin)*integrate(iv,jp,ibin))
-        
+
 21   continue
-        
+
      ! first update gas concentration
      gas(iv) = (total_species(iv) - sum1)/   &
           (1. + dtmax*sum2)
-     
+
      ! now update aer concentration in the jp phase
      do 22 ibin = 1, nbin_a
-        if (jaerosolstate(ibin) .eq. no_aerosol) goto 22 
-        
+        if (jaerosolstate(ibin) .eq. no_aerosol) goto 22
+
         if(integrate(iv,jp,ibin) .eq. mYES)then
            aer(iv,jp,ibin) =   &
                 (aer(iv,jp,ibin) + dtmax*kg(iv,ibin)*gas(iv))/   &
                 (1. + dtmax*kg(iv,ibin)*Heff(iv,ibin))
         endif
-        
+
 22   continue
-        
+
 20 continue
   !------------------------------------------
   ! sub-step integration done
 
-        
+
   ! update jtotal
   !      do iv = isoa_first, ngas_volatile
   !        aer(iv,jtotal,ibin)=aer(iv,jsolid,ibin)+aer(iv,jliquid,ibin)
@@ -3788,14 +3788,14 @@ subroutine ASTEM_secondary_organics(dtchem, jaerosolstate,sfc_a,Heff,           
 
   ! update time
   t_old = t_new
-  
+
   if(t_new .lt. 0.9999*t_out) goto 10
   !================================================
   ! end of integration
-  
+
 30 continue
-  
-  
+
+
   return
 end subroutine ASTEM_secondary_organics
 
@@ -3815,13 +3815,13 @@ end subroutine ASTEM_secondary_organics
   use module_data_mosaic_aero, only: ngas_aerchtot, ngas_volatile, &
        nbin_a_max,naer, mNO, jtotal, rtol_eqb_ASTEM,                     &
        ioc_a, isoa_first, use_cam5mam_soa_params
-  
-  
+
+
   ! subr arguments
   integer, intent(in) :: ibin
   integer, intent(inout) :: ieqblm_soa
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(inout), dimension(ngas_aerchtot) :: gas
   real(r8), intent(inout), dimension(ngas_volatile) :: sfc_a, sat_soa
   real(r8), intent(inout), dimension(ngas_volatile,nbin_a_max) :: Heff
@@ -3833,8 +3833,8 @@ end subroutine ASTEM_secondary_organics
   real(r8), dimension(ngas_volatile,nbin_a_max) :: df_gas_o,flux_o,phi_volatile_o
 
   small_oc  = 1.e-15		! ng/m^3
-  
-  
+
+
   ! default fluxes and other stuff
   do iv = isoa_first, ngas_volatile
      sfc_a(iv)               = gas(iv)
@@ -3842,10 +3842,10 @@ end subroutine ASTEM_secondary_organics
      flux_o(iv,ibin)         = 0.0
      phi_volatile_o(iv,ibin) = 0.0
   enddo
-  
-  
+
+
   jp = jtotal
-  
+
   ! compute mole fractions of soa species
   sum_soa = 0.0
   do iv = isoa_first, ngas_volatile
@@ -3856,15 +3856,15 @@ end subroutine ASTEM_secondary_organics
   else
      sum_soa = sum_soa + aer(ioc_a,jp,ibin)/200.  ! 200 is assumed MW of primary OC
   end if
-  
-  
+
+
   ! check threshold concentration for SOA formation in the absence of primary OC
   if(aer(ioc_a,jp,ibin) .eq. 0.0)then
      sum_dum = 0.0
      do iv = isoa_first, ngas_volatile
         sum_dum = sum_dum + (gas(iv)+aer(iv,jp,ibin))/sat_soa(iv)
      enddo
-     
+
      if(sum_dum .le. 1.0)then	! transfer all aer to gas and quit
         do iv = isoa_first, ngas_volatile
            gas(iv)         = gas(iv) + aer(iv,jp,ibin)
@@ -3873,21 +3873,21 @@ end subroutine ASTEM_secondary_organics
         enddo
         return
      endif
-     
+
      sum_soa = max(sum_soa, 1.d-10)
-     
+
   endif
-  
-  
-  
-  
+
+
+
+
   ! compute Heff
   do iv = isoa_first, ngas_volatile
-     
+
      Heff(iv,ibin) = sat_soa(iv)/sum_soa
      sfc_a(iv) = aer(iv,jp,ibin)*Heff(iv,ibin)		! nmol/m^3
      df_gas_o(iv,ibin) = gas(iv) - sfc_a(iv)
-     
+
      dum = max(sfc_a(iv),gas(iv))
      if(dum .gt. 0.0)then
         phi_volatile_o(iv,ibin) = df_gas_o(iv,ibin)/dum
@@ -3895,7 +3895,7 @@ end subroutine ASTEM_secondary_organics
         phi_volatile_o(iv,ibin) = 0.0
      endif
      phi_volatile_l(iv,ibin) = phi_volatile_o(iv,ibin)
-     
+
      ! check equilibrium
      if(abs(phi_volatile_o(iv,ibin)) .le. rtol_eqb_ASTEM)then
         integrate(iv,jp,ibin) = 0.0
@@ -3903,10 +3903,10 @@ end subroutine ASTEM_secondary_organics
         integrate(iv,jp,ibin) = 1.0
         ieqblm_soa = mNO
      endif
-     
+
   enddo
-  
-  
+
+
   return
 end subroutine ASTEM_flux_soa
 
@@ -3923,65 +3923,65 @@ subroutine ASTEM_dtmax_soa(dtchem, dtmax, phi_volatile_l,integrate,kg)         !
   use module_data_mosaic_aero, only:  ngas_aerchtot, ngas_volatile,    &
        nbin_a_max,jtotal,mYES, alpha_astem,nbin_a,                     &
        isoa_first, use_cam5mam_soa_params
-  
-  
+
+
   ! subr arguments
   integer, intent(inout), dimension(ngas_volatile,3,nbin_a_max) :: integrate
-  
+
   real(r8), intent(in)  :: dtchem
   real(r8), intent(out) :: dtmax
   real(r8), intent(inout), dimension(ngas_volatile,nbin_a_max) :: phi_volatile_l
-  real(r8), intent(inout), dimension(ngas_aerchtot,nbin_a_max) :: kg      
-  
+  real(r8), intent(inout), dimension(ngas_aerchtot,nbin_a_max) :: kg
+
   ! local variables
   character(len=500) :: tmp_str
   integer ibin, iv, jp
   real(r8) :: h_gas, h_gas_i(ngas_volatile), h_sub_max,   &
        sum_kg_phi
   real(r8) :: alpha_astem_soa
-  
-  
+
+
   alpha_astem_soa = alpha_astem
   if (use_cam5mam_soa_params > 0) alpha_astem_soa = 0.05_r8
 
   h_sub_max = dtchem/6.	! sec
-  
+
   jp = jtotal
-  
+
   ! GAS-SIDE
   ! calculate h_gas_i and h_gas
 
   h_gas = 2.e16
-  
+
   do 6 iv = isoa_first, ngas_volatile
-     
+
      h_gas_i(iv) = 1.e16
      sum_kg_phi = 0.0
-     
+
      do ibin = 1, nbin_a
         if(integrate(iv,jtotal,ibin) .eq. mYES)then
            sum_kg_phi = sum_kg_phi +   &
                 abs(phi_volatile_l(iv,ibin))*kg(iv,ibin)
         endif
      enddo
-     
+
      if(sum_kg_phi .gt. 0.0)then
         h_gas_i(iv) = alpha_astem_soa/sum_kg_phi
         h_gas       = min(h_gas, h_gas_i(iv))
      endif
-     
+
 6 continue
 
 
   dtmax = min(h_gas, h_sub_max)
-  
-  
+
+
   if(dtmax .le. 1.0e-10)then
      write(tmp_str,*)' SOA dtmax = ', dtmax
-     call mosaic_warn_mess(trim(adjustl(tmp_str))) 
+     call mosaic_warn_mess(trim(adjustl(tmp_str)))
   endif
-  
-  
+
+
   return
 end subroutine ASTEM_dtmax_soa
 
