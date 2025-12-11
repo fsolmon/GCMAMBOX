@@ -294,7 +294,7 @@
       ! REASTER 08/04/2015 - used in precip evap resuspension to coarse mode
       integer :: mam_prevap_resusp_optaa = 10
 !     0 = no resuspension
-!    10 = original mam method with resus_fix=.false.       (so4_a1 --> so4_a1, so4_c1 --> so4_c1) 
+!    10 = original mam method with resus_fix=.false.       (so4_a1 --> so4_a1, so4_c1 --> so4_c1)
 !    20 = original mam method with resus_fix=.true.        (so4_a1 & so4_c1 --> so4_a1)
 !    30 = resuspend to coarse mode, full non-linear method (so4_a1 & so4_c1 --> so4_a3)
 !    11 = like 10 but output column resuspension tendencies (rcscavt & rsscavt) to history
@@ -311,7 +311,7 @@
 
         subroutine qqcw_set_ptr(index, iptr)
           use mam_utils, only : endrun,  is_first_step
-          
+
 
           integer, intent(in) :: index, iptr
 
@@ -336,13 +336,13 @@
           nullify(qqcw_get_field)
           error = .false.
           if (index>0 .and. index <= pcnst) then
-             if (qqcw(index)>0) then 
+             if (qqcw(index)>0) then
                 call pbuf_get_field(pbuf, qqcw(index), qqcw_get_field)
              else
                 error = .true.
              endif
           else
-             error = .true.             
+             error = .true.
           end if
 
           if (error .and. .not. present(errorhandle)) then

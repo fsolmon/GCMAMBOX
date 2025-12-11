@@ -75,7 +75,7 @@
    use constituents, only: pcnst, cnst_name
    use physconst, only: pi, gravit, mwdry
    use mam_utils, only: getunit,pcols,pver
-   use error_function, only: erfc 
+   use error_function, only: erfc
 
    implicit none
 
@@ -96,18 +96,18 @@
    real(r8), intent(in)    :: qqcw(ncol,pver,pcnstxx) ! like q but for cloud-borne species
 
    real(r8), intent(inout) :: dqdt(ncol,pver,pcnstxx)  ! TMR tendency array;
-                              ! incoming dqdt = tendencies for the 
-                              !     "fromwhere" continuous growth process 
+                              ! incoming dqdt = tendencies for the
+                              !     "fromwhere" continuous growth process
                               ! the renaming tendencies are added on
                               ! *** NOTE ncol and pcnstxx dimensions
    real(r8), intent(inout) :: dqqcwdt(ncol,pver,pcnstxx)
-   real(r8), intent(in)    :: dqdt_other(ncol,pver,pcnstxx)  
-                              ! tendencies for "other" continuous growth process 
+   real(r8), intent(in)    :: dqdt_other(ncol,pver,pcnstxx)
+                              ! tendencies for "other" continuous growth process
                               ! currently in cam3
                               !     dqdt is from gas (h2so4, nh3) condensation
                               !     dqdt_other is from aqchem and soa
                               ! *** NOTE ncol and pcnstxx dimensions
-   real(r8), intent(in)    :: dqqcwdt_other(ncol,pver,pcnstxx)  
+   real(r8), intent(in)    :: dqqcwdt_other(ncol,pver,pcnstxx)
    logical,  intent(inout) :: dotendrn(pcnstxx) ! identifies the species for which
                               !     renaming dqdt is computed
    logical,  intent(inout) :: dotendqqcwrn(pcnstxx)
@@ -119,10 +119,10 @@
    integer,  intent(in)    :: nsrflx               ! last dimension of qsrflx
 
    real(r8), intent(inout) :: qsrflx(pcols,pcnstxx,nsrflx)
-                              ! process-specific column tracer tendencies 
+                              ! process-specific column tracer tendencies
    real(r8), intent(inout) :: qqcwsrflx(pcols,pcnstxx,nsrflx)
 
-! !DESCRIPTION: 
+! !DESCRIPTION:
 ! computes TMR (tracer mixing ratio) tendencies for "mode renaming"
 !    during a continuous growth process
 ! currently this transfers number and mass (and surface) from the aitken
@@ -301,7 +301,7 @@ mainloop1_ipair:  do ipair = 1, npair_renamexf
 	mfrm = modefrm_renamexf(ipair)
 	mtoo = modetoo_renamexf(ipair)
 
-!   dryvol_t_old is the old total (a+c) dry-volume for the "from" mode 
+!   dryvol_t_old is the old total (a+c) dry-volume for the "from" mode
 !	in m^3-AP/kmol-air
 !   dryvol_t_new is the new total dry-volume
 !	(old/new = before/after the continuous growth)
@@ -322,7 +322,7 @@ mainloop1_ipair:  do ipair = 1, npair_renamexf
 	num_t_oldbnd = min( dryvol_t_oldbnd*v2nlorlx(mfrm), num_t_old )
 	num_t_oldbnd = max( dryvol_t_oldbnd*v2nhirlx(mfrm), num_t_oldbnd )
 
-!   no renaming if dgnum < "base" dgnum, 
+!   no renaming if dgnum < "base" dgnum,
 	dgn_t_new = (dryvol_t_new/(num_t_oldbnd*factoraa(mfrm)))**onethird
 	if (dgn_t_new .le. dgnum_amode(mfrm)) cycle mainloop1_ipair
 
@@ -337,7 +337,7 @@ mainloop1_ipair:  do ipair = 1, npair_renamexf
 !   compute old fraction of number and mass in the tail (dp > dp_cut)
 	dgn_t_old =   &
 		(dryvol_t_oldbnd/(num_t_oldbnd*factoraa(mfrm)))**onethird
-!   if dgn_t_new exceeds dp_cut, use the minimum of dgn_t_old and 
+!   if dgn_t_new exceeds dp_cut, use the minimum of dgn_t_old and
 !   dp_belowcut to guarantee some transfer
 	if (dgn_t_new .ge. dp_cut(ipair)) then
 	    dgn_t_old = min( dgn_t_old, dp_belowcut(ipair) )
@@ -355,7 +355,7 @@ mainloop1_ipair:  do ipair = 1, npair_renamexf
 	if (dum .le. 0.0_r8) cycle mainloop1_ipair
 
 	xferfrac_vol = min( dum, dryvol_t_new )/dryvol_t_new
-	xferfrac_vol = min( xferfrac_vol, xferfrac_max ) 
+	xferfrac_vol = min( xferfrac_vol, xferfrac_max )
 	xferfrac_num = tailfr_numnew - tailfr_numold
 	xferfrac_num = max( 0.0_r8, min( xferfrac_num, xferfrac_vol ) )
 

@@ -10,7 +10,7 @@
 !   The variables in this module provide a means of organizing and accessing
 !   aerosol species by their chemical component, size bin (or mode), "type", and "phase"
 !
-!   Their purpose is to allow flexible coding of process modules, 
+!   Their purpose is to allow flexible coding of process modules,
 !   compared to "hard-coding" using specify indices.
 !   Most (if not all) of these variables are usxwed in the i
 !   WRF-chem MOSAIC implementation.
@@ -21,15 +21,15 @@
 !   maxd_asize = maximum allowable number of aerosol size bins
 !   maxd_acomp = maximum allowable number of chemical components
 !	in each aerosol size bin
-!   maxd_aphase = maximum allowable number of aerosol phases 
+!   maxd_aphase = maximum allowable number of aerosol phases
 !	(gas, cloud, ice, rain, ...)
 !
 !   ntype_aer = number of aerosol types
-!	The aerosol type will allow treatment of an externally mixed 
+!	The aerosol type will allow treatment of an externally mixed
 !	aerosol.  For a traditional internally-mixed sectional approach,
-!	ntype_aer=1.  Eventually, multiple types 
-!	could treat fresh primary BC/OC, fresh SO4 from nucleation, 
-!	aged BC/OC/SO4/... mixture, soil dust, sea salt, ... 
+!	ntype_aer=1.  Eventually, multiple types
+!	could treat fresh primary BC/OC, fresh SO4 from nucleation,
+!	aged BC/OC/SO4/... mixture, soil dust, sea salt, ...
 !
 !   nphase_aer = number of aerosol phases
 !
@@ -39,7 +39,7 @@
 !   rn_phase = phase (p) index for aerosol particles in rain
 !   sn_phase = phase (p) index for aerosol particles in snow
 !   gr_phase = phase (p) index for aerosol particles in graupel
-!   [Note:  the value of "xx_phase" will be between 1 and nphase_aer 
+!   [Note:  the value of "xx_phase" will be between 1 and nphase_aer
 !	for phases that are active in a simulation.  The others
 !	will have non-positive values.]
 !
@@ -50,10 +50,10 @@
 !	chemical components for aerosol type t
 !   [Note:  only "regular" components are used for calculating
 !	aerosol physical (mass, volume) and chemical properties.
-!	"Tracer" components are optional, and can be used to track source 
+!	"Tracer" components are optional, and can be used to track source
 !	regions, source mechanisms, etc.]
 !   [Note:  for aerosol type t, all phases have the same number of size
-!	bins, and all size bins have the same number of 
+!	bins, and all size bins have the same number of
 !	both regular and tracer components.]
 !
 !   ntot_mastercomp_aer = number of aerosol chemical components defined
@@ -61,18 +61,18 @@
 !   [Note:  each aerosol type will use some but not necessarily all
 !	of the components in the "master component list".]
 !
-!   mastercompptr_aer(c,t) = the position/index/i.d. in the 
+!   mastercompptr_aer(c,t) = the position/index/i.d. in the
 !       "master component list" for chemical component c of aerosol type t.
 !	(1=sulfate, others to be defined by user.)
 !
-!   massptr_aer(c,s,t,p) = the position/index in the chem array for mixing- 
+!   massptr_aer(c,s,t,p) = the position/index in the chem array for mixing-
 !	ratio for chemical component c, size bin s, type t, and phase p.
 !
 !   lptr_so4_aer(s,t,p) = the position/index in the chem array for mixing-
 !	ratio for sulfate for aerosol size bin s, type t, and phase p
-!   (similar lptr's are defined for no3, cl, msa, co3, 
+!   (similar lptr's are defined for no3, cl, msa, co3,
 !	nh4, na, ca, oin, oc, bc, ...)
-!   [Note:  the massptr_aer allow you to loop over all species of 
+!   [Note:  the massptr_aer allow you to loop over all species of
 !	an aerosol type.  The lptr_so4_aer, etc., allow you to access
 !	a specific chemical component.]
 !
@@ -85,10 +85,10 @@
 !	ratio of aerosol "hysteresis water" content for size bin s, type t.
 !	This is used to determine if aerosol is in the dry or wet state, when
 !	the ambient RH is between the crystallization and deliquescence RH.
-!	[Note:  hysteresis water content is only carried for the 
+!	[Note:  hysteresis water content is only carried for the
 !	interstitial aerosol phase, so there is no p dimension.]
 !
-!   numptr_aer(s,t,p) = the position/index in the chem array for mixing- 
+!   numptr_aer(s,t,p) = the position/index in the chem array for mixing-
 !	ratio of particle number for size bin s, type t, and phase p.
 !
 !   mprognum_aer(s,t,p) - if positive, number mixing-ratio for size s, type t,
@@ -105,48 +105,48 @@
 !   itype_of_ibin(b) - maps from the mosaic "1-D bin index" ibin
 !	to the sectional itype
 !
-!   itype_of_itype_md1md2(t1,t2) - maps from the "new 3d sectional" 
+!   itype_of_itype_md1md2(t1,t2) - maps from the "new 3d sectional"
 !	itype_md1,itype_md2 to the "old sectional" itype
 !   itype_md1_of_itype(t) - maps from the "old sectional" itype
 !	to the "new 3d sectional" itype_md1
 !   itype_md2_of_itype(t) - maps from the "old sectional" itype
 !	to the "new 3d sectional" itype_md2
 !
-!   mastercompindx_so4_aer = the position/index in the 
-!       "master component list" for sulfate.  
-!   (similar lptr's are defined for no3, cl, msa, co3, 
+!   mastercompindx_so4_aer = the position/index in the
+!       "master component list" for sulfate.
+!   (similar lptr's are defined for no3, cl, msa, co3,
 !	nh4, na, ca, oin, oc, bc, ...)
-!   [Note:  the mastercompindx_xxx_aer are used primarily in 
+!   [Note:  the mastercompindx_xxx_aer are used primarily in
 !	initialization routines, and generally aren't needed elsewhere.]
 !
 !-----------------------------------------------------------------------
 !
-!   dens_mastercomp_aer(mc) = dry density (g/cm^3) of component mc 
+!   dens_mastercomp_aer(mc) = dry density (g/cm^3) of component mc
 !	of the master component list.
-!   dens_aer(c,t) = dry density (g/cm^3) of aerosol chemical component 
+!   dens_aer(c,t) = dry density (g/cm^3) of aerosol chemical component
 !	c of type t
 !   [Note:  dens_aer(c,t) == dens_mastercomp_aer(mastercompptr_aer(c,t))
 !	The dens_mastercomp_aer is used in some initialization routines.
 !	The dens_aer is used in most other places because of convenience.]
 !
-!   mw_mastercomp_aer(mc) = molecular weight (g/mol) of component mc 
+!   mw_mastercomp_aer(mc) = molecular weight (g/mol) of component mc
 !	of the master component list.
-!   mw_aer(c,t) = molecular weight (g/mol) of aerosol chemical component 
+!   mw_aer(c,t) = molecular weight (g/mol) of aerosol chemical component
 !	c of type t
 !   [Note:  mw_aer(c,t) == mw_mastercomp_aer(mastercompptr_aer(c,t)) ]
 !
-!   name_mastercomp_aer(mc) = name of component mc of the 
+!   name_mastercomp_aer(mc) = name of component mc of the
 !	master component list (e.g., "sulfate", "nitrate", ...).
 !   name_aer(c,t) = name of aerosol chemical component c of type t
 !   [Note:  name_aer(c,t) == name_mastercomp_aer(mastercompptr_aer(c,t)) ]
 !
 !   hygro_mastercomp_aer(mc) = bulk hygroscopicity (--) at dilute conditions
 !	(RH near 100%) of component mc of the master component list.
-!   hygro_aer(c,t) = bulk hygroscopicity (--) at dilute conditions 
+!   hygro_aer(c,t) = bulk hygroscopicity (--) at dilute conditions
 !	(RH near 100%) of aerosol chemical component c of type t
-!   [For definition of bulk hygroscopicity, 
+!   [For definition of bulk hygroscopicity,
 !	see Abdul-Razzak and Ghan, 2004, J Geophys Res, V105, p. 6837-6844.]
-!   [*** this bulk hygroscopicity is equivalent to the "kappa" of 
+!   [*** this bulk hygroscopicity is equivalent to the "kappa" of
 !       Peters and Kreidenweis, 2007, Atmos Chem Phys, V7, p. 1961-1971.]
 !   [Note:  hygro_aer(c,t) == hygro_mastercomp_aer(mastercompptr_aer(c,t)) ]
 !
@@ -166,7 +166,7 @@
 !
 !-----------------------------------------------------------------------
 
-! 
+!
 ! the sectional mosaci uses a 2d bin structure
 !    dimension 1 (dry diameter) = "size"
 !    dimension 2 (composition ) = "type"
@@ -211,11 +211,11 @@
 	  ncomp_aer(:),   & ! number of chemical components
 	  ncomp_plustracer_aer(:),   &
 	  mastercompptr_aer(:,:), &   !  mastercomp index
-	  massptr_aer(:,:,:,:), & 
+	  massptr_aer(:,:,:,:), &
 		! index for mixing ratio
 	  waterptr_aer(:,:), & ! index for aerosol water
 	  hyswptr_aer(:,:), &
-	  numptr_aer(:,:,:), & 
+	  numptr_aer(:,:,:), &
 		! index for the number mixing ratio
 	  mprognum_aer(:,:,:)
 
@@ -241,7 +241,7 @@
         integer, save :: mastercompindx_oin_aer = -999888777
         integer, save :: mastercompindx_oc_aer  = -999888777
         integer, save :: mastercompindx_bc_aer  = -999888777
-        integer, save :: mastercompindx_mom_aer = -999888777        
+        integer, save :: mastercompindx_mom_aer = -999888777
 
         !BSINGH - 05/28/2013(RCE updates)
 	real(r8), save, allocatable ::   &
@@ -295,7 +295,7 @@
           lptr_bc_aer(:,:,:),       &
           lptr_mom_aer(:,:,:)
          !BSINGH - 05/28/2013(RCE updates ENDS)
-!   in the mosaic box model, the molecular weight, densities, 
+!   in the mosaic box model, the molecular weight, densities,
 !       and hygroscopities in module_data_mosaic_aero are the
 !       correct ones to use
 !   those values are copied into the mw_aer and dens_aer arrays
@@ -314,7 +314,7 @@
 !	real(r8), parameter :: mw_oin_aer = 1.0
 !	real(r8), parameter :: mw_oc_aer  = 1.0
 !	real(r8), parameter :: mw_bc_aer  = 1.0
-	
+
 !   dry densities (g/cm3)
 !	real(r8), parameter :: dens_so4_aer = 1.80
 !	real(r8), parameter :: dens_no3_aer = 1.80
@@ -352,17 +352,17 @@
 !   following are used in movesect, newnuc, and coag routines
 !   to identify bins with essentially negligible mass
 !
-!   if bin mass mixrat < smallmassaa (1.0e-22 g/g-air), 
+!   if bin mass mixrat < smallmassaa (1.0e-22 g/g-air),
 !   then assume no growth AND no water AND conform number so that size is within bin limits
 	real(r8), parameter :: smallmassaa = 1.0e-22_r8
 !   if bin mass mixrat < smallmassab (1.0e-32 g/g-air),
 !   then assume default density to avoid divide by zero
 	real(r8), parameter :: smallmassbb = 1.0e-32_r8
 !
-!   with single-particle diameter = 1 nm and mass ~1e-21 g, 
+!   with single-particle diameter = 1 nm and mass ~1e-21 g,
 !	and number = 1e-4 #/cm3 ~= 1e-1 #/g-air, the mass mixing ratio ~= 1e-22 g/g-air
-!   for simulations focusing on nucleation and ultrafine particles, 
-!      one might want to use reduce smallmassaa 
+!   for simulations focusing on nucleation and ultrafine particles,
+!      one might want to use reduce smallmassaa
 
 
 !-----------------------------------------------------------------------
@@ -382,9 +382,9 @@
 !   BUT are subr parameters in the mosaic box code
 !
 !	drymass_pregrow(s,t) = dry-mass (g/mol-air) before gas-aerosol mass transfer
-!	drymass_aftgrow(s,t) = dry-mass (g/mol-air) after   "     "     "      "    
-!	drydens_pregrow(s,t) = dry-density (g/cm3)  before  "     "     "      "    
-!	drydens_aftgrow(s,t) = dry-density (g/cm3)  after   "     "     "      "    
+!	drymass_aftgrow(s,t) = dry-mass (g/mol-air) after   "     "     "      "
+!	drydens_pregrow(s,t) = dry-density (g/cm3)  before  "     "     "      "
+!	drydens_aftgrow(s,t) = dry-density (g/cm3)  after   "     "     "      "
 !
 !       aqvoldry_box(s,t)  = dry-volume mixing ratio (cm^3-aerosol/mol-air)
 !       aqmassdry_box(s,t) = dry-mass mixing ratio (g-aerosol/mol-air)

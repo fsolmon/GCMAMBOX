@@ -13,7 +13,7 @@ module physconst
    ! Physical constants.  Use GEOS-Chem shared values whenever available.
 
    use Precision_Mod, only: r8 => f8
- 
+
    use Physconstants, only : g0, airmw, avo, boltzm=>boltz
 
 !   use shr_const_mod, only: shr_const_g,      shr_const_stebol, shr_const_tkfrz,  &
@@ -24,7 +24,7 @@ module physconst
 !                            shr_const_avogad, shr_const_boltz,  shr_const_cpfw,   &
 !                            shr_const_rwv,    shr_const_zvir,   shr_const_pi,     &
 !                            shr_const_rearth, shr_const_sday,   shr_const_cday,   &
-!                            shr_const_spval         
+!                            shr_const_spval
    implicit none
    private
    save
@@ -37,22 +37,22 @@ module physconst
    integer, public, parameter :: spec_class_other      = 4
 
    ! Constants based off share code or defined in physconst
-    real(r8), public, parameter :: pi= 3.14159265358979323_r8  
+    real(r8), public, parameter :: pi= 3.14159265358979323_r8
 
    !
-    real(r8), public, parameter :: gravit=g0  
-    real(r8), public, parameter :: mwdry=airmw 
-    real(r8), public, parameter :: avogadro = avo * 1.E3_r8 ! Avogadro's number (1/kmol) 
+    real(r8), public, parameter :: gravit=g0
+    real(r8), public, parameter :: mwdry=airmw
+    real(r8), public, parameter :: avogadro = avo * 1.E3_r8 ! Avogadro's number (1/kmol)
     real(r8), public, parameter :: boltz = boltzm
-    real(r8), public, parameter :: r_universal = avogadro*boltz  ! Universal gas constant (J/K/kmol)   
-    real(r8),  public, parameter :: rgas = r_universal *1.E-3_r8 ! same in (J/K/mol)  
+    real(r8), public, parameter :: r_universal = avogadro*boltz  ! Universal gas constant (J/K/kmol)
+    real(r8),  public, parameter :: rgas = r_universal *1.E-3_r8 ! same in (J/K/mol)
     real(r8), public, parameter :: pstd        = 101325.0_r8       ! Standard pressure (Pascals)
-    
-    real(r8), public           :: vmdry        = 20.1_r8     ! molecular diffusion volume of dry air (unitless)    
-    real(r8), public, parameter :: mwh2o      = 18.016_r8 
-    real(r8), public, parameter :: rhoh2o      = 1.000E3_r8    
+
+    real(r8), public           :: vmdry        = 20.1_r8     ! molecular diffusion volume of dry air (unitless)
+    real(r8), public, parameter :: mwh2o      = 18.016_r8
+    real(r8), public, parameter :: rhoh2o      = 1.000E3_r8
     real(r8), public           :: tmelt    = 273.15_r8
-    real(r8), public, parameter :: rair        = r_universal/mwdry 
+    real(r8), public, parameter :: rair        = r_universal/mwdry
      !   SHR_CONST_BOLTZ   = 1.38065e-23_R8  ! Boltzmann's constant ~ J/K/molecule
 !   real(R8),parameter :: SHR_CONST_AVOGAD  = 6.02214e26_R8   ! Avogadro's number ~ molecules/kmole
 
@@ -68,7 +68,7 @@ module physconst
 !   real(r8), public, parameter :: pstd        = shr_const_pstd       ! Standard pressure (Pascals)
 !   real(r8), public, parameter :: r_universal = shr_const_rgas       ! Universal gas constant (J/K/kmol)
 !   real(r8), public, parameter :: rhoh2o      = shr_const_rhofw      ! Density of liquid water (STP)
-!   real(r8), public, parameter :: spval       = shr_const_spval      !special value 
+!   real(r8), public, parameter :: spval       = shr_const_spval      !special value
 !   real(r8), public, parameter :: stebol      = shr_const_stebol     ! Stefan-Boltzmann's constant (W/m^2/K^4)
 
 !   real(r8), public, parameter :: c0          = 2.99792458e8_r8      ! Speed of light in a vacuum (m/s)
@@ -96,15 +96,15 @@ module physconst
 !   real(r8), public           :: omega        = 2.0_R8*shr_const_pi/shr_const_sday! earth rot ~ rad/sec
    real(r8), public           :: rh2o         = r_universal/mwh2o     ! Water vapor gas constant ~ J/K/kg
 !   real(r8), public           :: rair         = shr_const_rdair   ! Dry air gas constant     ~ J/K/kg
-   real(r8), public           :: epsilo       = mwh2o/mwdry   ! ratio of h2o to dry air molecular weights 
+   real(r8), public           :: epsilo       = mwh2o/mwdry   ! ratio of h2o to dry air molecular weights
 !   real(r8), public           :: zvir         = (shr_const_rwv/shr_const_rdair)-1.0_R8 ! (rh2o/rair) - 1
 !   real(r8), public           :: cpvir        = (shr_const_cpwv/shr_const_cpdair)-1.0_R8 ! CPWV/CPDAIR - 1.0
 !   real(r8), public           :: rhodair      = shr_const_pstd/(shr_const_rdair*shr_const_tkfrz)
 !   real(r8), public           :: cappa        = (shr_const_rgas/shr_const_mwdair)/shr_const_cpdair  ! R/Cp
-!   real(r8), public           :: ez           ! Coriolis expansion coeff -> omega/sqrt(0.375)   
+!   real(r8), public           :: ez           ! Coriolis expansion coeff -> omega/sqrt(0.375)
 !   real(r8), public           :: Cpd_on_Cpv   = shr_const_cpdair/shr_const_cpwv
 
-!!---------------  Variables below here are for Gauss-Hermite quadrature points  -----------------------                         
+!!---------------  Variables below here are for Gauss-Hermite quadrature points  -----------------------
 
    integer, public             :: nghq        = 2
    real(r8), public, parameter :: xghq50(1:50) = (/  &
@@ -197,7 +197,7 @@ module physconst
                  3.4831012431868485e-04_r8,  2.9387252289229880e-05_r8,  1.5790948873247110e-06_r8, &
                  5.1085224507759580e-08_r8,  9.1785804243784853e-10_r8,  8.1061862974630327e-12_r8, &
                  2.8786070805487023e-14_r8,  2.8103336027508752e-17_r8,  2.9082547001312045e-21_r8 /)
-  
+
    real(r8), public, parameter :: xghq20(1:20) = (/  &
                 -5.3874808900112328e+00_r8, -4.6036824495507442e+00_r8, -3.9447640401156252e+00_r8, &
                 -3.3478545673832163e+00_r8, -2.7888060584281305e+00_r8, -2.2549740020892757e+00_r8, &

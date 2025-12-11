@@ -1,9 +1,9 @@
 module module_data_mosaic_aero
-  
+
   use precision_mod, only: r8 => f8
-  
+
   implicit none
-  
+
   ! mosaic.21.0.h
   !   09-jan-07 raz - major clean up of variables
   !   31-jul-06 raz - implemented Li and Lu (2001) surface tension model
@@ -17,11 +17,11 @@ module module_data_mosaic_aero
   !   09-oct-02 raz - explicitly declared all variables
   !   29-oct-02 raz - defined naercomp as the total number of aerosol compounds
   !----------------------------------------------------------------------
-  
+
   ! number of aerosol bins
   integer, save :: nbin_a_max = -999888777  ! maximum number of aerosol bins !BSINGH - 05/28/2013(RCE updates)
   integer, save :: nbin_a     = -999888777  ! in-use  number of aerosol bins !BSINGH - namelist variable
-  
+
   ! mosaic-specific parameters
   integer, parameter :: ngas_ioa = 4+1  ! inorganic volatile aerosol species that have a gaseous counterpart
   integer, parameter :: ngas_soa = 8    ! volatile soa species that have a gaseous counterpart
@@ -35,12 +35,12 @@ module module_data_mosaic_aero
   integer, parameter :: nsoluble= 16+4  ! num of soluble electrolytes
   integer, parameter :: ncation = 4     ! num of cations
   integer, parameter :: nanion  = 4+1   ! num of anions
-  
+
   integer, parameter :: nrxn_aer_gl = 4 ! num of gas-liquid equilibria
   integer, parameter :: nrxn_aer_ll = 3 ! num of liquid-liquid equilibria
   integer, parameter :: nrxn_aer_sg = 2 ! num of solid-gas equilibria
   integer, parameter :: nrxn_aer_sl = nsalt! num of solid-liquid equilibria
-  
+
   integer, parameter :: mASTEM = 1	! Adaptive Step Time-Split Euler Method
   integer, parameter :: mLSODE = 2	! LSODES integrator
   integer, parameter :: mMODAL  = 1	! Modal size distribution framework
@@ -51,30 +51,30 @@ module module_data_mosaic_aero
   integer, parameter :: mOFF    = 0    ! flag:OFF
   integer, parameter :: mYES	= mON	! flag: yes or true
   integer, parameter :: mNO	= mOFF	! flag: no or false
-  
+
   integer, parameter :: jsolid = 1
   integer, parameter :: jliquid= 2
   integer, parameter :: jtotal = 3
-  
+
   integer, parameter :: jhyst_lo = 0	! lower hysteresis leg
   integer, parameter :: jhyst_up = 1 	! upper hysteresis leg
   integer, parameter :: jhyst_undefined = -1	! undefined
-  
+
   ! values for mhyst_method
-  integer, parameter :: mhyst_uporlo_jhyst = 1	
+  integer, parameter :: mhyst_uporlo_jhyst = 1
   ! select upper/lower using "box method" involving jhyst_leg
   !     *** this should only be used for box model applications
   !     *** do not use with for transport model applications (cam5, wrf-chem, etc)
-  integer, parameter :: mhyst_uporlo_waterhyst = 2	
+  integer, parameter :: mhyst_uporlo_waterhyst = 2
   ! select upper/lower using "3-d method" involving water_a_hyst
   integer, parameter :: mhyst_force_up = 3	! force upper leg
   integer, parameter :: mhyst_force_lo = 4	! force lower leg
-  
+
   integer, parameter :: no_aerosol = 0	! flag
   integer, parameter :: all_solid  = 1 ! flag
   integer, parameter :: all_liquid = 2 ! flag
   integer, parameter :: mixed      = 3	! flag
-  
+
   integer, parameter :: soluble   = 1  ! flag
   integer, parameter :: insoluble = 2  ! flag
 
@@ -84,12 +84,12 @@ module module_data_mosaic_aero
   integer, parameter :: d_mdrh_DIM2    = 4      !BSINGH - Number of entities in d_MDRH 2nd dimension
   !     real(r8), parameter :: mass_cutoff = 1.e-3	! ng/m^3
   real(r8), parameter :: mass_cutoff = 1.e-6	! new value on 02-mar-2010
-  
+
   real(r8), parameter :: density_min_allow = 1.0	! minimum allowed density (g/cc)
   real(r8), parameter :: density_max_allow = 3.0	! maximum allowed density (g/cc)
   real(r8), parameter :: ah2o_max = 0.99                ! maximum water activity allowed in aerosol water uptake calculations
 
-  ! note - purpose of this data structure is to simplify passing new variables 
+  ! note - purpose of this data structure is to simplify passing new variables
   !        into and out of the many mosaic routines
   type :: mosaic_vars_aa_type
      integer :: it_host
@@ -114,8 +114,8 @@ module module_data_mosaic_aero
      integer, dimension(:), allocatable :: iter_mesa
   end type mosaic_vars_aa_type
 
-  
-  
+
+
   !----------------------------------------------------------------------
   ! MOSAIC species indices
   !
@@ -130,14 +130,14 @@ module module_data_mosaic_aero
        imsa_g,   &
        iaro1_g,      iaro2_g,      ialk1_g,     iole1_g,   &
        iapi1_g,      iapi2_g,      ilim1_g,     ilim2_g
-  
+
   ! aerosol generic
   integer, save ::   &
        iso4_a,     ino3_a,     icl_a,     inh4_a,     ico3_a,   &
        imsa_a,     ina_a,      ica_a,     ioc_a,      ibc_a,   &
-       ioin_a,     imom_a,     iaro1_a,   iaro2_a,    ialk1_a,  &  
+       ioin_a,     imom_a,     iaro1_a,   iaro2_a,    ialk1_a,  &
        iole1_a,    iapi1_a,    iapi2_a,   ilim1_a,    ilim2_a
-  
+
   ! aerosol elecctrolytes/compounds
   integer, save ::   &
        jnh4so4,    jlvcite,    jnh4hso4,   jnh4no3,    jnh4cl,   &
@@ -146,14 +146,14 @@ module module_data_mosaic_aero
        jhno3,      jhcl,       jhhso4,   &
        jnh4msa,    jnamsa,     jcamsa2,    jmsa,   &
        joc,        jbc,        join,       jmom,       jaro1,   &
-       jaro2,      jalk1,      jole1,      japi1,      japi2,   &   
+       jaro2,      jalk1,      jole1,      japi1,      japi2,   &
        jlim1,      jlim2,      jh2o
-  
+
   ! aerosol ions
   integer, save ::   &
        jc_h,    jc_nh4, jc_na,  jc_ca,   &
        ja_hso4, ja_so4, ja_no3, ja_cl, ja_msa     ! , ja_co3
-  
+
   !----------------------------------------------------------------------
   ! MOSAIC variables
 
@@ -161,7 +161,7 @@ module module_data_mosaic_aero
   !    pure MOSAIC box model runs - these should be 0
   !    pure CAM5 runs - these can be 0 or 1 (usually 1)
   !       their values are set in module_mosaic_cam_init.F90
-  !    MOSAIC box model runs that emulate CAM5 behavior (e.g. for debugging etc.) - 
+  !    MOSAIC box model runs that emulate CAM5 behavior (e.g. for debugging etc.) -
   !       their values should match those in the CAM5 run (usually 1)
   integer, save :: use_cam5mam_soa_params  = 0   ! if >0, use cam5-mam soa/soag parameter values
   integer, save :: use_cam5mam_accom_coefs = 0   ! if >0, use cam5-mam accomodation coefficient values
@@ -187,13 +187,13 @@ module module_data_mosaic_aero
        method_kappa,       		   &  ! flag: ...
        ifreq_coag,            		   &  ! frequency at which coagulation is done
        ipmcmos_aero,                       &
-       maeroptic_aero                       
+       maeroptic_aero
        !jaerosolstate(nbin_a_max),	   &  ! flag: no_aerosol, all_solid, all_liquid, mixed
        !jaerosolstate_bgn(nbin_a_max)!,	   &  ! flag: no_aerosol, all_solid, all_liquid, mixed
   !jphase(nbin_a_max),		   &  ! phase index: jtotal, jsolid, jliquid
   !jhyst_leg(nbin_a_max)!,		   &  ! hysteresis leg: jhyst_up, jhyst_lo
   !iprint_input			      ! flag: mON, mOFF
-  
+
   !real(r8), save :: 	&
        !num_a(nbin_a_max), 		   &  ! #/cc(air)
        !Dpgn_a(nbin_a_max), 		   &  ! cm
@@ -238,7 +238,7 @@ module module_data_mosaic_aero
        !ext_cross(nbin_a_max),             &  ! extinction cross section of a particle (cm^-2)
        !scat_cross(nbin_a_max),            &  ! scattering cross section of a particle (cm^-2)
        !asym_particle(nbin_a_max)             ! asymmetry parameter of a particle (dimensionless)
-  
+
   real(r8), save :: 	&
        dlo_aersize_init, 		   &  ! lowermost dry Dp for aersize init (micron)
        dhi_aersize_init, 		   &  ! uppermost dry Dp for aersize init (micron)
@@ -246,12 +246,12 @@ module module_data_mosaic_aero
        xcuthi_atype_md1_init, 		   &  !    for initializing the "atype_md1" dimension
        xcutlo_atype_md2_init, 		   &  ! lowermost & uppermost hygroscopicity (kappa) for
        xcuthi_atype_md2_init  		      !    for initializing the "atype_md2" dimension
-  
+
   integer, save :: 	&
        method_atype_md1_init, 		   &  ! method for initializing "atype_md1"
        method_atype_md2_init  		      ! method for initializing "atype_md2"
-  
-  
+
+
   !----------------------------------------------------------------------
   ! ASTEM variables
   integer, save ::	   &
@@ -271,10 +271,10 @@ module module_data_mosaic_aero
 ! m_gas2bin_uptk_flag = 1 if all gases can condense to all bins,
 !    and = 0 otherwise, which currently only happens with cam5-mosaic
   integer, allocatable :: i_gas2bin_uptk_flag(:,:)
-! i_gas2bin_uptk_flag(iv,ibin) = 1 if gas iv can condense to bin ibin, 
+! i_gas2bin_uptk_flag(iv,ibin) = 1 if gas iv can condense to bin ibin,
 !    and = 0 if it cannot (i.e., is not allowed to)
 ! mosaic box model, partmc-mosaic, and wrf-chem do not have to allocate it
-  
+
   real(r8), save ::	&
   !Po_soa(ngas_volatile),		     &  ! Pascal
   !sat_soa(ngas_volatile),		     &  ! nmol/m^3(air)
@@ -317,10 +317,10 @@ module module_data_mosaic_aero
   ptol_mol_ASTEM!,			     &  ! 0.01 to 1.0
   !cumul_steps_ASTEM,		     &
   !avg_steps_ASTEM
-  
+
   real(r8), save :: overall_massbal_rtoler = 1.0e-4_r8
   real(r8), save :: overall_massbal_atoler = 0.0_r8
-  
+
   !----------------------------------------------------------------------
   ! MESA variables
   integer, save ::	&
@@ -349,21 +349,21 @@ module module_data_mosaic_aero
        !growth_factor(nbin_a_max),   &
        d_mdrh(MDRH_T_NUM,d_mdrh_DIM2),		   &  ! mdrh(T) poly coeffs
        !MDRH(nbin_a_max),   &
-       !MDRH_T(MDRH_T_NUM),   & 
+       !MDRH_T(MDRH_T_NUM),   &
        !molality0(nelectrolyte),   &
        rtol_mesa!,   &
        !niter_MESA,   &
        !niter_MESA_avg,   &
        !G_MX(nelectrolyte),   &
        !K_MX(nelectrolyte)
-  
+
   !----------------------------------------------------------------------
   ! MOSAIC physico-chemical constants
   character(len=6), save :: phasestate(0:4)
   character(len=8), save :: ename(nelectrolyte)	! electrolyte names
   character(len=8), save :: aer_name(naer)              ! generic aerosol species name
   character(len=8), save :: gas_name(ngas_aerchtot)     ! gas species name
-  
+
   real(r8), save ::      &
        !T_K,					   &  ! temperature (K)
        !P_atm,					   &  ! pressure (atm)
@@ -395,16 +395,16 @@ module module_data_mosaic_aero
        !Kp_nh3, 				   &  !
        !Kp_nh4no3, 				   &  !
        !Kp_nh4cl				      !
-  
+
   complex   &
        ref_index_a(naercomp)!,			   &  ! refractive index of compounds
   !     ri_avg_a(nbin_a_max),			   &  ! vol avg ref index of bin
   !     ri_shell_a(nbin_a_max),			   &  ! vol avg ref index of bin for shell
   !     ri_core_a(nbin_a_max) 			      ! vol avg ref index of bin for core
-  
+
   !----------------------------------------------------------------------
   ! MOSAIC activity coefficient models variables
-  
+
   real(r8), save ::	&
        !mc(Ncation,nbin_a_max),		     &  ! mol/kg(water)
        !ma(Nanion,nbin_a_max),		     &  ! mol/kg(water)
@@ -424,7 +424,7 @@ module module_data_mosaic_aero
        b_zsr(nelectrolyte),		     &  ! binary molality coeff
        aw_min(nelectrolyte),		     &  ! minimum frh at which molality polynomial can be used
        b_mtem(6,nelectrolyte,nelectrolyte)     ! MTEM poly coeffs
-  
+
   !----------------------------------------------------------------------
   ! MOSAIC massbalance variables
 ! real(r8), save ::   &
@@ -452,7 +452,7 @@ module module_data_mosaic_aero
 !      reldiff_nh4,   &
 !      reldiff_na,   &
 !      reldiff_ca
-  
+
   !----------------------------------------------------------------------
 
 end module module_data_mosaic_aero

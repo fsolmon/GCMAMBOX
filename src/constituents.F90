@@ -13,15 +13,15 @@
       implicit none
 
       public
-!FAB integer, parameter :: pcnst = PCNST 
-!Initially PCNST is provided as a precompiling key. 
-!Here add precompiling hard-coded options for limiting errorsin dimensioning 
-!mam arrays (no dynamical allocations) 
+!FAB integer, parameter :: pcnst = PCNST
+!Initially PCNST is provided as a precompiling key.
+!Here add precompiling hard-coded options for limiting errorsin dimensioning
+!mam arrays (no dynamical allocations)
 !Now only retains the options considered for Geos-Chem.
-!A consistency test has also been added in modal_aero_initialize (inspired from box model).  
+!A consistency test has also been added in modal_aero_initialize (inspired from box model).
 
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined RAIN_EVAP_TO_COARSE_AERO ) && ( defined MOSAIC_SPECIES ) )
-      integer, parameter :: pcnst = 54 
+      integer, parameter :: pcnst = 54
 #elif ( defined MODAL_AERO_4MODE )
       integer, parameter :: pcnst = 28
 #endif
@@ -32,12 +32,12 @@
 !==============================================================================
 
   subroutine cnst_get_ind (name, ind, abort)
-!----------------------------------------------------------------------- 
-! 
-! Purpose: Get the index of a constituent 
-! 
+!-----------------------------------------------------------------------
+!
+! Purpose: Get the index of a constituent
+!
 ! Author:  B.A. Boville
-! 
+!
 !-----------------------------Arguments---------------------------------
 !
     character(len=*),  intent(in)  :: name  ! constituent name

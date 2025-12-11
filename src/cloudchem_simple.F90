@@ -31,7 +31,7 @@ subroutine cloudchem_simple_sub(            &
 
 use mam_utils  ,       only:  iulog,pcols,pver,endrun
 use constituents,      only:  pcnst, cnst_name, cnst_get_ind
-                                                                                                                                            
+
 
 use modal_aero_data
 
@@ -52,7 +52,7 @@ implicit none
    real(r8), intent(inout) :: qqcw(ncol,pver,pcnst) ! like q but for cloud-borner tracers
    real(r8), intent(in)    :: cldn(ncol,pver)      ! cloud fraction
 
-! !DESCRIPTION: 
+! !DESCRIPTION:
 ! computes TMR (tracer mixing ratio) tendencies for gas condensation
 !    onto aerosol particles
 !

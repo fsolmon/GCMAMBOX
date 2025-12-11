@@ -1,7 +1,7 @@
 module module_mosaic_init_aerpar
-  
+
   use precision_mod, only: r8 => f8
- 
+
   implicit none
   private
 
@@ -12,11 +12,11 @@ contains
     !BSINGH - All initialzations for Mosiac model
 
     call load_mosaic_parameters
-    
+
   end subroutine mosaic_init_aer_params
 
   !---------------------------------------------------------------------------------------!
-  !BSINGH: load_mosaic_parameters subroutine is directly copied form the mosaic_box.25.f90 
+  !BSINGH: load_mosaic_parameters subroutine is directly copied form the mosaic_box.25.f90
   !        code
   !---------------------------------------------------------------------------------------!
 
@@ -106,7 +106,7 @@ contains
     ! for the soa species, the ordering of the ixxx_a, ixxx_g, and jyyy
     !    must be identical
     !
-    
+
     ! electrolyte indices (used for water content calculations)
     ! these indices are order sensitive
     ! inorganic species first
@@ -138,21 +138,21 @@ contains
     join       = 26    ! insoluble - part of naercomp
 
     ! aerosol and gas indices for inorganic species
-    iso4_a     =  1 ;  ih2so4_g   =  1     
-    ino3_a     =  2 ;  ihno3_g    =  2     
-    icl_a      =  3 ;  ihcl_g     =  3     
-    inh4_a     =  4 ;  inh3_g     =  4     
-    imsa_a     =  5 ;  imsa_g     =  5     
+    iso4_a     =  1 ;  ih2so4_g   =  1
+    ino3_a     =  2 ;  ihno3_g    =  2
+    icl_a      =  3 ;  ihcl_g     =  3
+    inh4_a     =  4 ;  inh3_g     =  4
+    imsa_a     =  5 ;  imsa_g     =  5
 
     ! aerosol, gas, and electrolyte indices for secondary organic species
-    iaro1_a    =  6 ;  iaro1_g    =  6 ;  jaro1      = 27     
-    iaro2_a    =  7 ;  iaro2_g    =  7 ;  jaro2      = 28     
-    ialk1_a    =  8 ;  ialk1_g    =  8 ;  jalk1      = 29     
-    iole1_a    =  9 ;  iole1_g    =  9 ;  jole1      = 30     
-    iapi1_a    = 10 ;  iapi1_g    = 10 ;  japi1      = 31     
-    iapi2_a    = 11 ;  iapi2_g    = 11 ;  japi2      = 32     
-    ilim1_a    = 12 ;  ilim1_g    = 12 ;  jlim1      = 33     
-    ilim2_a    = 13 ;  ilim2_g    = 13 ;  jlim2      = 34     
+    iaro1_a    =  6 ;  iaro1_g    =  6 ;  jaro1      = 27
+    iaro2_a    =  7 ;  iaro2_g    =  7 ;  jaro2      = 28
+    ialk1_a    =  8 ;  ialk1_g    =  8 ;  jalk1      = 29
+    iole1_a    =  9 ;  iole1_g    =  9 ;  jole1      = 30
+    iapi1_a    = 10 ;  iapi1_g    = 10 ;  japi1      = 31
+    iapi2_a    = 11 ;  iapi2_g    = 11 ;  japi2      = 32
+    ilim1_a    = 12 ;  ilim1_g    = 12 ;  jlim1      = 33
+    ilim2_a    = 13 ;  ilim2_g    = 13 ;  jlim2      = 34
 
     isoa_first = iaro1_g
     jsoa_first = jaro1
@@ -171,8 +171,8 @@ contains
 
     ! gas indices for other species
     ! ico2_g   = 14  ! *** currently not used
-                     ! *** if co3_a was treated as a volatile inorganic, 
-                     !     then ico3_a and ico2_g would have to be 6 
+                     ! *** if co3_a was treated as a volatile inorganic,
+                     !     then ico3_a and ico2_g would have to be 6
 
     ! local aerosol ions
     ! cations
