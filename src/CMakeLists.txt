@@ -97,7 +97,7 @@ set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_D
 # Fortran compiler flags
 if (CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0")
     set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
-else
+else()
     set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none " CACHE STRING "Fortran compiler flags")
 endif()
 
