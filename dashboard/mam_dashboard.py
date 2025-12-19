@@ -86,6 +86,8 @@ mam_dt         = {params['mam_dt']},
 mam_nstep      = {params['mam_nstep']},
 /
 &cntl_input
+mdo_mambox     = {params['mdo_mambox']},
+mdo_coldstart  = {params['mdo_coldstart']},
 mdo_gaschem    = {params['mdo_gaschem']},
 mdo_gasaerexch = {params['mdo_gasaerexch']},
 mdo_rename     = {params['mdo_rename']},
@@ -575,7 +577,7 @@ html.Div([
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '10px'}),
                 
-            ], style={'padding': '15px', 'overflowY': 'scroll', 'height': 'calc(100vh - 160px)'})
+            ], style={'padding': '15px', 'overflowY': 'scroll', 'height': 'calc(100vh - 130px)'})
         ], style={'width': '15%', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
         
         # Right panel - Visualization
@@ -713,6 +715,8 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             'mdo_rename': 1 if 'rename' in processes else 0,
             'mdo_newnuc': 1 if 'newnuc' in processes else 0,
             'mdo_coag': 1 if 'coag' in processes else 0,
+            'mdo_mambox': 1,
+            'mdo_coldstart': 1,
             'mtmin': mtmin,
             'mtmax': mtmax,
             'mrhmin':mrhmin,
