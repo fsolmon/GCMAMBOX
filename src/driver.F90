@@ -16,7 +16,7 @@
 
       use precision_mod, only: r8 => f8,  fp, f8
       use mam_utils, only: masterproc, endrun, iulog, pcols, pver,plev, begchunk, endchunk,&
-                           mdo_gaschem, mdo_cloudchem,&
+                           mdo_gaschem, mdo_cloudchem, mdo_coldstart, mdo_mambox, &
                            mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
 
       use constituents, only: pcnst, cnst_name, cnst_get_ind
@@ -83,13 +83,8 @@
  
       plev = pver
 
-      mdo_gaschem=1
-      mdo_cloudchem =1
 
-      mdo_gasaerexch=1
-      mdo_rename=1
-      mdo_newnuc=1
-      mdo_coag=1
+
 
       masterproc = .true. 
 
@@ -158,6 +153,7 @@
 
       write(*,'(/a)') '*** main call MAM_cold_start'
       call MAM_cold_start (physta,nstop=nstop, deltat=deltat, tmin = tmin, tmax =tmax, rhmin =rhmin, rhmax =rhmax)!
+
 
 ! iniialise ( q(:,:,1 ) call gestbl to build saturation vapor pressure table.
       tmn   = 173.16_r8
