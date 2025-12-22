@@ -31,7 +31,7 @@ subroutine gaschem_simple_sub(                     &
 
 use mam_utils  ,       only:  iulog, pcols, pver, endrun
 use constituents,      only:  pcnst, cnst_name, cnst_get_ind
-                                                                                                                                            
+
 
 
 implicit none
@@ -50,7 +50,7 @@ implicit none
    real(r8), intent(inout) :: tau_gaschem_simple(ncol,pver)
                                                    ! like q but for cloud-borner tracers
 
-! !DESCRIPTION: 
+! !DESCRIPTION:
 ! computes TMR (tracer mixing ratio) tendencies for gas condensation
 !    onto aerosol particles
 !
