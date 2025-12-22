@@ -1,0 +1,3 @@
+[submodule "src/MAM"]
+	path = src/MAM
+	url = https://github.com/fsolmon/MAMLIB.git

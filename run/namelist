@@ -1,8 +1,10 @@
 &time_input
-mam_dt         = 4800,
-mam_nstep      = 400,
+mam_dt         = 1200,
+mam_nstep      = 100,
 /
 &cntl_input
+mdo_mambox     = 1,
+mdo_coldstart   = 1,
 mdo_gaschem    = 1,
 mdo_gasaerexch = 1,
 mdo_rename     = 1,
