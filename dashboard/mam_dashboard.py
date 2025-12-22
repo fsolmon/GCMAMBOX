@@ -52,7 +52,7 @@ def coltr(colo,t):
     if (colo == 'toto'):
       out = 'rgba'+ str(mpc.to_rgba(colo)[:3]+(t,))
     else:
-      out = colo 
+      out = colo
     return out
 tr = 0.8
 specolor = {
@@ -128,9 +128,9 @@ qhcl          = {params['qhcl']}
 def run_fortran_model(work_dir='.'):
     """Run the Fortran gcmambox executable"""
     try:
-        result = subprocess.run(['./gcmambox'], 
-                              capture_output=True, 
-                              text=True, 
+        result = subprocess.run(['./gcmambox'],
+                              capture_output=True,
+                              text=True,
                               timeout=30,
                               cwd=work_dir)
         if result.returncode != 0:
@@ -155,7 +155,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             x=0.5, y=0.5, showarrow=False,
             font=dict(size=20)
         )
-    
+
     frames = []
     for s in ds.nsteps:
         df = ds.sel(nsteps=s)
@@ -188,12 +188,12 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             trace = go.Scatter(
                 x=x_vol, y=ycum, fill=fil,
                 mode='none', fillcolor=specolor[c],
-                opacity=0.3, name=c 
+                opacity=0.3, name=c
             )
             data_list.append(trace)
             ntrac2 = ntrac2+1
             fil = 'tonexty'
-        
+
         # Total mass
         trace = go.Scatter(
             x=x_vol, y=ycum, mode='lines',
@@ -201,7 +201,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         )
         data_list.append(trace)
         ntrac2 = ntrac2+1
-# Text 
+# Text
         trace = go.Scatter(
         x=[0.005] ,
         y=[np.max(ycum)*0.6] ,
@@ -223,7 +223,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         mode='text',  # Show both markers and text
         text=['TEMP = %s'%round(float(df['temp']),2)],
         textposition='top left',
-        name= "  ",  
+        name= "  ",
         #        marker=dict(size=10, color='blue'),
         textfont=dict(size=16, color='red')
         )
@@ -268,15 +268,15 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
 
 
         frames += [go.Frame(data=data_list, name='step%s' % s)]
-    
+
     # Create figure with subplots
     fig = go.Figure().set_subplots(3, 1,vertical_spacing=0.07)
                                    #insets=[{'cell':(2,1), 'l':0.5, 'b':0.5 , 'w' : 0.1, 'h' : 0.1}])
-#    fig = make_subplots(rows=3, cols=1, 
+#    fig = make_subplots(rows=3, cols=1,
 #                    specs=[[{'type': 'xy'}], [{'type': 'xy'}], [{'type': 'xy'}]],
 #                    vertical_spacing=0.07,
 #                    insets=[dict(cell=(1,1), l=0.55, b= 0.43, w = 0.1, h = 0.1),
-#                            dict(cell=(2,1), l=0.5, h=0.65, b=0.1,  type='polar')]) 
+#                            dict(cell=(2,1), l=0.5, h=0.65, b=0.1,  type='polar')])
     fig.add_traces(frames[0].data[0:ntrac1], 1, 1)
     fig.add_traces(frames[0].data[ntrac1:ntrac2], 2, 1)
     fig.add_traces(frames[0].data[ntrac2:ntrac3], 3, 1)
@@ -286,13 +286,13 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
     # Update axes
     fig.update_xaxes(range=[-1, len(ds.nsteps)], title='time steps', row=1, col=1)
     fig.update_yaxes(type='log', range=[-1., 2], title='gas conc. (ppb)', row=1, col=1)
-    
+
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=2, col=1)
     fig.update_yaxes(range=[0, np.max(ycum)], title='aer. dm/dlogD (kg.kg-1)', row=2, col=1)
-    
+
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=3, col=1)
     fig.update_yaxes(type='log', range=[5, 11], title='aer. dN/dlogD (#.kg-1)', row=3, col=1)
-    
+
     fig.frames = frames
 
 # Animation controls
@@ -319,7 +319,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             for k, f in enumerate(fig.frames)
         ],
     }]
-   
+
     fig.update_layout(
         sliders=sliders,
         legend={'traceorder': 'normal','font': {'size': 18} },
@@ -357,7 +357,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             "yanchor": "bottom",
         }]
     )
-    
+
     return fig
 
 # ============================================================================
@@ -388,15 +388,15 @@ app = dash.Dash(__name__)
 app.layout = html.Div([
 
 #    html.Div([
-#           html.Img(src='assets/logo.png', style={'height': '130px', 'width': '600px'}),], 
+#           html.Img(src='assets/logo.png', style={'height': '130px', 'width': '600px'}),],
 #           style={'textAlign': 'center', 'marginBottom': '10px', 'padding': '10px'}),
 
 html.Div([
     html.Div(style={'flex': '1'}),  # Spacer
     html.Img(src='assets/logo.png', style={'height': '130px', 'width': '600px'}),
     html.Div([
-        html.A('📄 Doc !', 
-               href='assets/doc.pdf', 
+        html.A('📄 Doc !',
+               href='assets/doc.pdf',
                target='_blank',
                style={'padding': '16px 16px',
                       'backgroundColor': '#0066cc', 'color': 'white', 'textDecoration': 'none',
@@ -410,26 +410,26 @@ html.Div([
         html.Div([
             html.Div([
                 html.H3("Simulation Controls", style={'marginTop': '0'}),
-                
+
                 # Run button at the top
                 html.Button('Run Simulation', id='run-button', n_clicks=0,
                            style={'width': '100%', 'height': '40px', 'fontSize': '16px',
                                  'backgroundColor': '#4CAF50', 'color': 'white',
                                  'border': 'none', 'cursor': 'pointer', 'borderRadius': '5px', 'marginBottom': '10px'}),
-                
+
                 html.Div(id='status-message', style={'marginTop': '5px', 'marginBottom': '10px', 'fontWeight': 'bold', 'fontSize': '12px'}),
-                
+
                 html.Hr(style={'margin': '10px 0'}),
-                
+
                 # Time parameters
                 html.H4("Time Parameters", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("Time step (s):", style={'fontSize': '12px'}),
                 dcc.Input(id='mam_dt', type='number', value=1200, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Number of steps:", style={'fontSize': '12px'}),
                 dcc.Input(id='mam_nstep', type='number', value=100, style={'width': '100%', 'marginBottom': '10px'}),
-                
+
                 html.Hr(style={'margin': '10px 0'}),
-                
+
                 # Process controls
                 html.H4("Process Controls", style={'fontSize': '16px', 'marginTop': '10px'}),
                 dcc.Checklist(
@@ -444,9 +444,9 @@ html.Div([
                     value=['gaschem', 'gasaerexch', 'rename', 'newnuc', 'coag'],
                     style={'fontSize': '12px'}
                 ),
-                
+
                 html.Hr(style={'margin': '10px 0'}),
-                
+
                 # Meteorology
                 html.H4("Meteorological Parameters", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("Temperature Initial (K):", style={'fontSize': '12px'}),
@@ -459,9 +459,9 @@ html.Div([
                 dcc.Input(id='mrhmin', type='number', value=0.5, step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Relative Humidity Final:", style={'fontSize': '12px'}),
                 dcc.Input(id='mrhmax', type='number', value=0.5, step=0.01, style={'width': '100%', 'marginBottom': '10px'}),
-                
+
                 html.Hr(style={'margin': '10px 0'}),
-                
+
                 # Gas concentrations
                 html.H4("Gas Concentrations (ppb)", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("SO2:", style={'fontSize': '12px'}),
@@ -476,9 +476,9 @@ html.Div([
                 dcc.Input(id='qsoag', type='number', value=0., style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("HCl:", style={'fontSize': '12px'}),
                 dcc.Input(id='qhcl', type='number', value=0., style={'width': '100%', 'marginBottom': '10px'}),
-                
+
                 html.Hr(style={'margin': '10px 0'}),
-                
+
                 # Number concentrations
                 html.H4("Number Concentrations (#/cm³)", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Div([
@@ -499,12 +499,12 @@ html.Div([
                         dcc.Input(id='numc-3', type='number', value=0.e5, style={'width': 'calc(100% - 55px)', 'fontSize': '11px'}),
                     ], style={'marginBottom': '10px'}),
                 ]),
-                
+
                 html.Hr(style={'margin': '10px 0'}),
-                
+
                 # Mass fractions by mode
                 html.H4("Mass Fractions by Mode", style={'fontSize': '16px', 'marginTop': '10px'}),
-                
+
                 # Mode 0
                 html.Details([
                     html.Summary("Mode 0 - Accumulation", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
@@ -522,7 +522,7 @@ html.Div([
                         create_mass_fraction_input("CL", 0, 0.15),
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
-                
+
                 # Mode 1
                 html.Details([
                     html.Summary("Mode 1 - Aitken", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
@@ -540,7 +540,7 @@ html.Div([
                         create_mass_fraction_input("CL", 1, 0.0),
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
-                
+
                 # Mode 2
                 html.Details([
                     html.Summary("Mode 2 - Coarse", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
@@ -558,7 +558,7 @@ html.Div([
                         create_mass_fraction_input("CL", 2, 0.6),
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
-                
+
                 # Mode 3
                 html.Details([
                     html.Summary("Mode 3 - Primary Carbon", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
@@ -576,10 +576,10 @@ html.Div([
                         create_mass_fraction_input("CL", 3, 0.0),
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '10px'}),
-                
+
             ], style={'padding': '15px', 'overflowY': 'scroll', 'height': 'calc(100vh - 130px)'})
         ], style={'width': '15%', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
-        
+
         # Right panel - Visualization
         html.Div([
             dcc.Loading(
@@ -588,7 +588,7 @@ html.Div([
                 children=dcc.Graph(id='animation-plot', style={'height': 'calc(100vh - 160px)'})
             ),
         ], style={'width': '85%', 'padding': '10px', 'boxSizing': 'border-box', 'backgroundColor': '#e6f2ff'}),
-        
+
     ], style={'display': 'flex', 'height': 'calc(100vh - 160px)'}),
 ], style={'fontFamily': 'Arial, sans-serif', 'margin': '0', 'padding': '0', 'backgroundColor': '#e6f2ff'})
 
@@ -686,7 +686,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
                    mfso4_3, mfpom_3, mfsoa_3, mfbc_3, mfdst_3, mfncl_3,
                    mfno3_3, mfnh4_3, mfco3_3, mfca_3, mfcl_3):
     """Run simulation when button is clicked and update the plot"""
-    
+
     # For initial load, just create figure from existing data
     if n_clicks == 0:
         if os.path.exists('mam_output.nc'):
@@ -700,11 +700,11 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
                 font=dict(size=24)
             )
             return empty_fig, "Ready to run simulation"
-    
+
     # Create unique temporary directory for this simulation
     session_id = str(uuid.uuid4())
     temp_dir = tempfile.mkdtemp(prefix=f'mam_sim_{session_id}_')
-    
+
     try:
         # Build parameters dictionary
         params = {
@@ -741,7 +741,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             'qnh3': qnh3,
             'qhcl': qhcl,
         }
-        
+
         # Copy executable to temp directory
         if os.path.exists('./gcmambox'):
             shutil.copy('./gcmambox', temp_dir)
@@ -752,14 +752,14 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
                 x=0.5, y=0.5, showarrow=False,
                 font=dict(size=20, color='red')
             ), "❌ Executable not found")
-        
+
         # Write namelist file in temp directory
         namelist_path = os.path.join(temp_dir, 'namelist')
         write_namelist(params, namelist_path)
-        
+
         # Run Fortran model in temp directory
         success, message = run_fortran_model(temp_dir)
-        
+
         if not success:
             error_fig = go.Figure().add_annotation(
                 text=f"Simulation failed: {message}",
@@ -768,22 +768,22 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
                 font=dict(size=20, color='red')
             )
             return error_fig, f"❌ {message}"
-        
+
         # Copy output file back to main directory with unique session name
         output_nc = os.path.join(temp_dir, 'mam_output.nc')
         if os.path.exists(output_nc):
             session_output = f'mam_output_{session_id}.nc'
             shutil.copy(output_nc, session_output)
-            print('mam_dt',mam_dt) 
+            print('mam_dt',mam_dt)
             # Create figure from session-specific results
             fig = create_animated_figure(session_output, dt=mam_dt)
-            
+
             # Clean up session-specific output file after creating figure
             try:
                 os.remove(session_output)
             except Exception as e:
                 print(f"Warning: Could not remove {session_output}: {e}")
-            
+
             return fig, "✅ " + message
         else:
             return (go.Figure().add_annotation(
@@ -792,7 +792,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
                 x=0.5, y=0.5, showarrow=False,
                 font=dict(size=20, color='red')
             ), "❌ No output generated")
-    
+
     finally:
         # Clean up temporary directory
         try:
