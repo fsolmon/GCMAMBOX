@@ -42,7 +42,7 @@ endif()
 # Option 2: Manual search if pkg-config fails
 if(NOT NETCDF_FOUND)
     message(STATUS "Searching for NetCDF manually...")
-    
+
     # Set potential search paths
     set(NETCDF_SEARCH_PATHS
         /home/fsolmon/miniconda3
@@ -54,28 +54,28 @@ if(NOT NETCDF_FOUND)
 	$ENV{NETCDF_LIB}
         $ENV{NETCDF_FORTRAN_HOME}
     )
-    
+
     # Find NetCDF C library
     find_library(NETCDF_C_LIB
         NAMES netcdf
         PATHS ${NETCDF_SEARCH_PATHS}
         PATH_SUFFIXES lib lib64
     )
-    
+
     # Find NetCDF Fortran library
     find_library(NETCDF_F_LIB
         NAMES netcdff
         PATHS ${NETCDF_SEARCH_PATHS}
         PATH_SUFFIXES lib lib64
     )
-    
+
     # Find NetCDF include directory
     find_path(NETCDF_INCLUDE_DIR
         NAMES netcdf.mod netcdf.inc
         PATHS ${NETCDF_SEARCH_PATHS}
         PATH_SUFFIXES include Include
     )
-    
+
     if(NETCDF_C_LIB AND NETCDF_F_LIB AND NETCDF_INCLUDE_DIR)
         set(NETCDF_FOUND TRUE)
         set(NETCDF_LIBRARIES ${NETCDF_F_LIB} ${NETCDF_C_LIB})
@@ -94,10 +94,38 @@ endif()
 set(CPP "cpp" CACHE STRING "C preprocessor")
 set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
 
-# Fortran compiler flags
-#set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none -fallow-invalid-boz" CACHE STRING "Fortran compiler flags")
+#-----------------------------------------------------------------------------
+# Test compiler flags
+#-----------------------------------------------------------------------------
+include(CheckFortranCompilerFlag)
 
-set(FCFLAGS "-g -O0 -fno-range-check -ffree-line-length-none " CACHE STRING "Fortran compiler flags")
+# Base Fortran compiler flags (always included)
+set(BASE_FCFLAGS "-g -O0")
+
+# Test common gfortran flags
+check_fortran_compiler_flag("-fno-range-check" COMPILER_SUPPORTS_NO_RANGE_CHECK)
+if(COMPILER_SUPPORTS_NO_RANGE_CHECK)
+    set(BASE_FCFLAGS "${BASE_FCFLAGS} -fno-range-check")
+endif()
+
+check_fortran_compiler_flag("-ffree-line-length-none" COMPILER_SUPPORTS_FREE_LINE_LENGTH_NONE)
+if(COMPILER_SUPPORTS_FREE_LINE_LENGTH_NONE)
+    set(BASE_FCFLAGS "${BASE_FCFLAGS} -ffree-line-length-none")
+endif()
+
+# Test if -fallow-invalid-boz is supported (gfortran >= 10)
+check_fortran_compiler_flag("-fallow-invalid-boz" COMPILER_SUPPORTS_ALLOW_INVALID_BOZ)
+if(COMPILER_SUPPORTS_ALLOW_INVALID_BOZ)
+    message(STATUS "Compiler supports -fallow-invalid-boz")
+    set(BASE_FCFLAGS "${BASE_FCFLAGS} -fallow-invalid-boz")
+else()
+    message(STATUS "Compiler does not support -fallow-invalid-boz (likely gfortran < 10), omitting flag")
+endif()
+
+# Allow user override via cache
+set(FCFLAGS "${BASE_FCFLAGS}" CACHE STRING "Fortran compiler flags")
+
+message(STATUS "Final Fortran compiler flags: ${FCFLAGS}")
 
 # Build the full Fortran flags
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FCFLAGS} ${CPPFLAGS}")
@@ -111,7 +139,7 @@ set(EXE "gcmambox" CACHE STRING "Executable name")
 function(preprocess_fortran input_file output_file)
     get_filename_component(file_name ${input_file} NAME_WE)
     get_filename_component(file_ext ${input_file} EXT)
-    
+
     if(file_ext STREQUAL ".F" OR file_ext STREQUAL ".F90")
         # Determine output extension
         if(file_ext STREQUAL ".F")
@@ -119,16 +147,16 @@ function(preprocess_fortran input_file output_file)
         else()
             set(out_ext ".f90")
         endif()
-        
+
         set(preprocessed_file "${OUT_DIR}/${file_name}${out_ext}")
-        
+
         add_custom_command(
             OUTPUT ${preprocessed_file}
             COMMAND ${CPP} ${CPPFLAGS} ${input_file} ${preprocessed_file}
             DEPENDS ${input_file}
             COMMENT "Preprocessing ${input_file}"
         )
-        
+
         set(${output_file} ${preprocessed_file} PARENT_SCOPE)
     else()
         set(${output_file} ${input_file} PARENT_SCOPE)
@@ -138,7 +166,7 @@ endfunction()
 #-----------------------------------------------------------------------------
 # Source file lists
 # normally the OBJ1-OBJ5 are sources that are used in the MAM lib in GeosCore
-# OBJ 9 is the driver 
+# OBJ 9 is the driver
 #-----------------------------------------------------------------------------
 
 # OBJ1: Shared modules
@@ -148,7 +176,7 @@ set(OBJ1_SOURCES
     mam_utils.F90
 )
 
-# OBJ2: declaration and utilities from CAM env.  
+# OBJ2: declaration and utilities from CAM env.
 set(OBJ2_SOURCES
     constituents.F90
     radconstants.F90
@@ -190,7 +218,7 @@ set(OBJ5_SOURCES
     modal_aero_initialize_data.F90
 )
 
-# OBJ9: Driver and utilitie for box model  
+# OBJ9: Driver and utilitie for box model
 set(OBJ9_SOURCES
     gaschem_simple.F90
     cloudchem_simple.F90
@@ -207,22 +235,39 @@ set(ALL_SOURCES
     ${OBJ9_SOURCES}
 )
 
+# Add subdirectories to search for source files
+set(SOURCE_SEARCH_PATHS
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAM
+)
+
 # Check if source files exist (with common extensions)
 set(VERIFIED_SOURCES)
 foreach(src_file ${ALL_SOURCES})
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src_file}")
-        list(APPEND VERIFIED_SOURCES ${src_file})
-    else()
-        get_filename_component(base_name ${src_file} NAME_WE)
-        get_filename_component(ext ${src_file} EXT)
-        
-        # Try lowercase extension
-        string(TOLOWER ${ext} ext_lower)
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${base_name}${ext_lower}")
-            list(APPEND VERIFIED_SOURCES ${base_name}${ext_lower})
+    set(found FALSE)
+
+    # Try each search path
+    foreach(search_path ${SOURCE_SEARCH_PATHS})
+        if(EXISTS "${search_path}/${src_file}")
+            list(APPEND VERIFIED_SOURCES ${search_path}/${src_file})
+            set(found TRUE)
+            break()
         else()
-            message(WARNING "Source file not found: ${src_file}")
+            # Try lowercase extension
+            get_filename_component(base_name ${src_file} NAME_WE)
+            get_filename_component(ext ${src_file} EXT)
+            string(TOLOWER ${ext} ext_lower)
+
+            if(EXISTS "${search_path}/${base_name}${ext_lower}")
+                list(APPEND VERIFIED_SOURCES ${search_path}/${base_name}${ext_lower})
+                set(found TRUE)
+                break()
+            endif()
         endif()
+    endforeach()
+
+    if(NOT found)
+        message(WARNING "Source file not found in any search path: ${src_file}")
     endif()
 endforeach()
 
