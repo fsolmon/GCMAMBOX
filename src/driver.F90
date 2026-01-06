@@ -26,12 +26,12 @@
 
 #if(defined USE_NC4)
       use netcdf
-#endif 
+#endif
       implicit none
 
       public
 
-! similaire a  GeosCore mam_driv 
+! similaire a  GeosCore mam_driv
 !      integer :: mdo_gaschem, mdo_cloudchem
 !      integer :: mdo_gasaerexch, mdo_rename, mdo_newnuc, mdo_coag
       integer:: loffset, lchnk
@@ -41,7 +41,7 @@
       type(physics_state) :: physta
       type(physics_ptend) :: ptend
 
-       
+
 
 ! propres au driver de mambox
       integer, parameter :: lun_outfld = 90
@@ -53,8 +53,8 @@
       real(r8) :: xopt_cloudf
 
       ! in the multiple nbc/npoa code, the following are in modal_aero_data
-      integer :: lptr_bca_a_amode(ntot_amode) = -999888777 
-      integer :: lptr_poma_a_amode(ntot_amode) = -999888777 
+      integer :: lptr_bca_a_amode(ntot_amode) = -999888777
+      integer :: lptr_poma_a_amode(ntot_amode) = -999888777
 
       integer :: species_class(pcnst) = -1
 
@@ -74,19 +74,19 @@
          qqcw_get_field
 
       use modal_aero_initialize_data, only: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start
-      
+
       integer :: nstop
-      real*8  :: deltat 
-      
+      real*8  :: deltat
+
       pcols = 1
       pver = 1
- 
+
       plev = pver
 
 
 
 
-      masterproc = .true. 
+      masterproc = .true.
 
 
       write(*,'(/a)') '*** Hello from MAIN ***'
@@ -95,8 +95,8 @@
       call MAM_init_basics(pbuf)
       write(*,'(/a)') '*** main call MAM_allocate'
       call MAM_ALLOCATE (physta,ptend )
-     
-      call gcmambox_init_run (nstop,deltat)  
+
+      call gcmambox_init_run (nstop,deltat)
 
       write(*,'(/a)') '*** main calling cambox_do_run'
 
@@ -117,11 +117,11 @@
       use modal_aero_amicphys, only: &
            gaexch_h2so4_uptake_optaa, newnuc_h2so4_conc_optaa, mosaic
 
-      use  modal_aero_initialize_data, only: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start 
-      implicit none 
+      use  modal_aero_initialize_data, only: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start
+      implicit none
       integer,  intent(out  ) :: nstop
       real(r8), intent(out  ) :: deltat
-      
+
       integer :: i
       integer :: k
       integer :: l, ll, loffset, lun
@@ -174,7 +174,7 @@
 
 
 !-------------------------------------------------------------------------------
-      subroutine gcmambox_do_run( nstop, deltat) 
+      subroutine gcmambox_do_run( nstop, deltat)
 
       use chem_mods, only: adv_mass, gas_pcnst, imozart
       use physconst, only: mwdry
@@ -189,7 +189,7 @@
       use gaschem_simple, only: gaschem_simple_sub
       use cloudchem_simple, only: cloudchem_simple_sub
       use wv_saturation, only : qsat
-      implicit none 
+      implicit none
 
       integer,  intent(in   ) :: nstop
 
@@ -224,8 +224,8 @@
       logical :: aero_mmr_flag
       logical :: h2o_mmr_flag
       logical :: dotend(pcnst)
-   
-      real(r8) ::temp, relh 
+
+      real(r8) ::temp, relh
 
       real(r8) :: ev_sat(pcols,pver), qv_sat(pcols,pver)
 
@@ -235,14 +235,14 @@
       real(r8) :: dqdt(pcols,pver,pcnst)        ! Tracer MR tendency array
       real(r8) :: dvmrdt_bb(pcols,pver,gas_pcnst,nqtendbb)   ! mixing ratio changes
       real(r8) :: dvmrcwdt_bb(pcols,pver,gas_pcnst,nqqcwtendbb) ! mixing ratio changes
-      real(r8) :: dvmrdt_cond(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming 
-      real(r8) :: dvmrcwdt_cond(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming 
-      real(r8) :: dvmrdt_nnuc(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming 
-      real(r8) :: dvmrcwdt_nnuc(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming 
-      real(r8) :: dvmrdt_coag(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming 
-      real(r8) :: dvmrcwdt_coag(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming 
-      real(r8) :: dvmrdt_rnam(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming 
-      real(r8) :: dvmrcwdt_rnam(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming 
+      real(r8) :: dvmrdt_cond(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming
+      real(r8) :: dvmrcwdt_cond(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming
+      real(r8) :: dvmrdt_nnuc(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming
+      real(r8) :: dvmrcwdt_nnuc(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming
+      real(r8) :: dvmrdt_coag(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming
+      real(r8) :: dvmrcwdt_coag(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming
+      real(r8) :: dvmrdt_rnam(pcols,pver,gas_pcnst)   ! mixing ratio changes from renaming
+      real(r8) :: dvmrcwdt_rnam(pcols,pver,gas_pcnst) ! mixing ratio changes from renaming
       real(r8) :: h2so4_pre_gaschem(pcols,pver) ! grid-avg h2so4(g) mix ratio before gas chem (mol/mol)
       real(r8) :: h2so4_aft_gaschem(pcols,pver) ! grid-avg h2so4(g) mix ratio after  gas chem (mol/mol)
       real(r8) :: h2so4_clear_avg(  pcols,pver) ! average clear sub-area h2so4(g) mix ratio (mol/mol)
@@ -274,8 +274,8 @@
       integer :: dimids(2), varid(30)
       character (8) :: date
       real(r8), dimension(nstop,ntot_amode) :: tmp_dgn_a, &
-                               tmp_dgn_awet, tmp_num_aer 
-real(r8) :: tmp_so4_aer(nstop, ntot_amode)                               
+                               tmp_dgn_awet, tmp_num_aer
+real(r8) :: tmp_so4_aer(nstop, ntot_amode)
  real(r8) :: tmp_nh4_aer(nstop, ntot_amode)
 real(r8) :: tmp_no3_aer(nstop, ntot_amode)
 real(r8) :: tmp_soa_aer(nstop, ntot_amode)
@@ -284,14 +284,14 @@ real(r8) :: tmp_bc_aer(nstop, ntot_amode)
 real(r8) :: tmp_dust_aer(nstop, ntot_amode)
 real(r8) :: tmp_co3_aer(nstop, ntot_amode)
 real(r8) :: tmp_nacl_aer(nstop, ntot_amode)
-real(r8) :: tmp_ca_aer(nstop, ntot_amode)                 
+real(r8) :: tmp_ca_aer(nstop, ntot_amode)
 real(r8) :: tmp_cl_aer(nstop, ntot_amode)
 real(r8) :: tmp_wat_aer(nstop, ntot_amode)
 real(r8) :: tmp_hygro_aer(nstop, ntot_amode)
 
 
 real(r8), dimension(nstop)            :: tmp_h2so4, tmp_hno3, tmp_nh3, &
-                                         tmp_soag, tmp_hcl, tmp_so2 ,tmp_relh, tmp_temp                                      
+                                         tmp_soag, tmp_hcl, tmp_so2 ,tmp_relh, tmp_temp
 real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
                                                qtend_cond_aging_soa, &
                                                qtend_rename_so4, &
@@ -309,15 +309,15 @@ real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
                                                qtend_coag_h2so4,       &
                                                qtend_coag_soag
 
-#if(defined USE_NC4)                                       
+#if(defined USE_NC4)
 !
 ! output comparison results
 !
-      ! Create the netCDF file. The nf90_clobber parameter tells 
+      ! Create the netCDF file. The nf90_clobber parameter tells
       ! netCDF to overwrite this file, if it already exists.
       call check( nf90_create(FILE_NAME, NF90_CLOBBER, ncid) )
 
-      ! Define the dimensions. NetCDF will hand back an ID for each. 
+      ! Define the dimensions. NetCDF will hand back an ID for each.
       call check( nf90_def_dim(ncid, "nsteps", nstop, nstep_dimid) )
       call check( nf90_def_dim(ncid, "mode", ntot_amode, mode_dimid) )
 
@@ -352,7 +352,7 @@ call check(nf90_def_var(ncid, "ca_aer", &
 call check(nf90_def_var(ncid, "cl_aer", &
           NF90_DOUBLE, dimids, varid(12)) )
 call check(nf90_def_var(ncid, "wat_aer", &
-          NF90_DOUBLE, dimids, varid(13)) )  
+          NF90_DOUBLE, dimids, varid(13)) )
 
 
 
@@ -470,7 +470,7 @@ call check(nf90_put_att(ncid, varid(23), "units", "K") )
       lmz_nh4_a2 = l_nh4_a2 - (imozart-1)
 
 
-main_time_loop:&  
+main_time_loop:&
 do nstep = 1, nstop
       istep = nstep
       if (nstep == 1) tnew = 0.0_r8
@@ -478,39 +478,39 @@ do nstep = 1, nstop
       tnew = told + deltat
 
       if (nstep == 1) then
-        temp = tmin 
+        temp = tmin
         relh = rhmin
-      end if         
-!      if (nstep > 1 .and. tmax > tmin ) then 
-      if (nstep > 1 ) then  
+      end if
+!      if (nstep > 1 .and. tmax > tmin ) then
+      if (nstep > 1 ) then
         temp = temp + (tmax -tmin)/(nstop -1)
         physta%t(1,1) = temp
-      end if 
+      end if
 !      if (nstep > 1 .and. rhmax > rhmin ) then
-      if (nstep > 1) then 
+      if (nstep > 1) then
         relh = relh + (rhmax -rhmin)/(nstop -1)
-       end if  
+       end if
 
        physta%t(:,:) = temp
        physta%relhum(:,:) = relh
        call  qsat( physta%t(1:pcols,1:pver), physta%pmid(1:pcols,1:pver), &
                   ev_sat(1:pcols,1:pver), qv_sat(1:pcols,1:pver) )
-       
+
        physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
        physta%q(:,:,1) = physta%qv(:,:)
-        
+
 
       print*, 'T , H  !! ', physta%t, physta%q(:,:,1)
 !
 ! calcsize
 !
       write(*,'(/a,i8)') 'cambox_do_run doing calcsize, istep=', istep
-      print*, lchnk,pcols 
+      print*, lchnk,pcols
 
 ! *** new calcsize interface ***
 ! load state
       physta%lchnk = lchnk
-      physta%ncol  = pcols 
+      physta%ncol  = pcols
 
 ! load pbuf
       call load_pbuf( pbuf, lchnk, pcols, &
@@ -520,7 +520,7 @@ do nstep = 1, nstop
       ptend%q     = 0.
       call modal_aero_calcsize_sub( physta, ptend, deltat, pbuf, &
          do_adjust_in=.true., do_aitacc_transfer_in=.true. )
-      
+
 ! unload pbuf
       call unload_pbuf( pbuf, lchnk, pcols, &
          physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro )
@@ -644,8 +644,8 @@ IF (nstep > 1) then
       dvmrcwdt_rnam(:,:,:) = dvmrcwdt_bb(:,:,:,iqqcwtend_rnam)
       dvmrcwdt_nnuc(:,:,:) = 0.0_r8
       dvmrcwdt_coag(:,:,:) = 0.0_r8
-      
-END IF      
+
+END IF
 !
 ! done
 !
@@ -657,28 +657,28 @@ END IF
       loffset = imozart - 1
       do l = imozart, pcnst
          l2 = l - loffset
-         physta%q(    :,:,l)  = vmr(  :,:,l2) * adv_mass(l2)/mwdry 
+         physta%q(    :,:,l)  = vmr(  :,:,l2) * adv_mass(l2)/mwdry
          physta%qqcw( :,:,l)  = vmrcw(:,:,l2) * adv_mass(l2)/mwdry
       end do
 !
 ! store the data of each time step for netcdf output
 !
 
-      if (l_h2so4g > 0) tmp_h2so4 (nstep) = physta%q(1,1,l_h2so4g)* adv_mass(l_h2so4g-loffset)/mwdry *1E9               
-      if (l_hno3g > 0) tmp_hno3(nstep) = physta%q(1,1,l_hno3g)* adv_mass(l_hno3g-loffset)/mwdry *1E9 
-      if (l_nh3g > 0)  tmp_nh3(nstep)  = physta%q(1,1,l_nh3g)* adv_mass(l_nh3g-loffset)/mwdry *1E9 
-      if (l_soag > 0)  tmp_soag(nstep) = physta%q(1,1,l_soag)* adv_mass(l_soag-loffset)/mwdry *1E9 
-      if (l_hclg > 0)  tmp_hcl(nstep)  = physta%q(1,1,l_hclg)* adv_mass(l_hclg-loffset)/mwdry *1E9 
-      if (l_so2g > 0)  tmp_so2(nstep)  = physta%q(1,1,l_so2g) * adv_mass(l_so2g-loffset)/mwdry *1E9 
+      if (l_h2so4g > 0) tmp_h2so4 (nstep) = physta%q(1,1,l_h2so4g)* adv_mass(l_h2so4g-loffset)/mwdry *1E9
+      if (l_hno3g > 0) tmp_hno3(nstep) = physta%q(1,1,l_hno3g)* adv_mass(l_hno3g-loffset)/mwdry *1E9
+      if (l_nh3g > 0)  tmp_nh3(nstep)  = physta%q(1,1,l_nh3g)* adv_mass(l_nh3g-loffset)/mwdry *1E9
+      if (l_soag > 0)  tmp_soag(nstep) = physta%q(1,1,l_soag)* adv_mass(l_soag-loffset)/mwdry *1E9
+      if (l_hclg > 0)  tmp_hcl(nstep)  = physta%q(1,1,l_hclg)* adv_mass(l_hclg-loffset)/mwdry *1E9
+      if (l_so2g > 0)  tmp_so2(nstep)  = physta%q(1,1,l_so2g) * adv_mass(l_so2g-loffset)/mwdry *1E9
 
       tmp_dgn_a(nstep,1:ntot_amode)        = physta%dgncur_a(1,1,1:ntot_amode)
       tmp_dgn_awet(nstep,1:ntot_amode)     = physta%dgncur_awet(1,1,1:ntot_amode)
-      tmp_dgn_a(nstep,1:ntot_amode)  = tmp_dgn_awet(nstep,1:ntot_amode)  ! use wet in th output 
+      tmp_dgn_a(nstep,1:ntot_amode)  = tmp_dgn_awet(nstep,1:ntot_amode)  ! use wet in th output
 
       do i = 1, ntot_amode
        tmp_num_aer(nstep,i) = physta%q(1,1,numptr_amode(i))
        if(lptr_so4_a_amode(i)>0)  tmp_so4_aer(nstep,i) = physta%q(1,1,lptr_so4_a_amode(i))
-       if(lptr_nh4_a_amode(i)>0)  tmp_nh4_aer(nstep,i) = physta%q(1,1,lptr_nh4_a_amode(i)) 
+       if(lptr_nh4_a_amode(i)>0)  tmp_nh4_aer(nstep,i) = physta%q(1,1,lptr_nh4_a_amode(i))
        if(lptr_no3_a_amode(i)>0)  tmp_no3_aer(nstep,i) = physta%q(1,1,lptr_no3_a_amode(i))
        if(lptr_soa_a_amode(i)>0)  tmp_soa_aer(nstep,i) = physta%q(1,1,lptr_soa_a_amode(i))
        if(lptr_pom_a_amode(i)>0)  tmp_pom_aer(nstep,i) = physta%q(1,1,lptr_pom_a_amode(i))
@@ -694,7 +694,7 @@ END IF
 
        tmp_relh(nstep) = physta%relhum(1,1)
        tmp_temp(nstep) = physta%t(1,1)
-        
+
 end do main_time_loop
 
 #if (defined USE_NC4)
@@ -742,10 +742,10 @@ call check( nf90_put_var(ncid, varid(18), &
             tmp_hcl(1:nstop)) )
 call check( nf90_put_var(ncid, varid(19), &
             tmp_so2(1:nstop)) )
-    
-call check( nf90_put_var(ncid, varid(20), &    
-            tmp_dgn_a(1:nstop,1:ntot_amode)) )    
-    
+
+call check( nf90_put_var(ncid, varid(20), &
+            tmp_dgn_a(1:nstop,1:ntot_amode)) )
+
 call check( nf90_put_var(ncid, varid(21), &
             tmp_hygro_aer(1:nstop,1:ntot_amode)) )
 
@@ -754,7 +754,7 @@ call check( nf90_put_var(ncid, varid(22), &
 
 call check( nf90_put_var(ncid, varid(23), &
             tmp_temp(1:nstop)) )
-    
+
       ! Close the file. This frees up any internal netCDF resources
       ! associated with the file, and flushes any buffers.
       call check( nf90_close(ncid) )
@@ -842,7 +842,7 @@ call check( nf90_put_var(ncid, varid(23), &
          fldcw(1:ncol,:) = qqcw(1:ncol,:,l)
       end do
       end do
-   
+
       print*,'end pbuf'
       return
       end subroutine load_pbuf
