@@ -92,7 +92,8 @@ endif()
 # Preprocessor settings
 # Set your CPP and CPPFLAGS here or via command line
 set(CPP "cpp" CACHE STRING "C preprocessor")
-set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
+#set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
+set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
 
 #-----------------------------------------------------------------------------
 # Test compiler flags
