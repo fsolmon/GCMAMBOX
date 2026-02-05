@@ -143,6 +143,36 @@ def run_fortran_model(work_dir='.'):
     except Exception as e:
         return False, f"Error running simulation: {str(e)}"
 
+def get_optical_input_files(base_dir='./'):
+    """Get list of optical property NetCDF files needed by MAM"""
+    # List of required optical input files
+    optical_files = [
+        # Species optical properties
+        'sulfate_rrtmg_c080918.nc',
+        'bcpho_rrtmg_c100508.nc',
+        'ocphi_rrtmg_c100508.nc',
+        'ocpho_rrtmg_c130709.nc',
+        'dust_aeronet_rrtmg_c141106.nc',
+        'ssam_rrtmg_c100508.nc',
+        # Modal optical properties
+        'mam4_mode1_rrtmg_aeronetdust_c141106.nc',
+        'mam4_mode2_rrtmg_aitkendust_c141106.nc',
+        'mam4_mode3_rrtmg_aeronetdust_c141106.nc',
+        'mam4_mode4_rrtmg_c130628.nc',
+    ]
+    
+    # Check which files exist and return their full paths
+    existing_files = []
+    for fname in optical_files:
+        fpath = os.path.join(base_dir, fname)
+        print(fpath)
+        if os.path.exists(fpath):
+            existing_files.append(fpath)
+        else:
+            print(f"Warning: Optical file not found: {fpath}")
+    
+    return existing_files
+
 def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
     """Create the animated plotly figure from NetCDF output"""
     try:
@@ -155,6 +185,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             x=0.5, y=0.5, showarrow=False,
             font=dict(size=20)
         )
+    maxyaod = ds['aod_mode'].max(dim='nsteps').max(dim='mode').values * 1.4
 
     frames = []
     for s in ds.nsteps:
@@ -168,7 +199,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
                 x=conc.nsteps.values,
                 y=conc.values,
                 name=g,
-                line_color=gascolor[g]
+                line_color=gascolor[g],
+                legend='legend'
             )
             data_list.append(trace)
             ntrac1 = ntrac1 +1
@@ -188,7 +220,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             trace = go.Scatter(
                 x=x_vol, y=ycum, fill=fil,
                 mode='none', fillcolor=specolor[c],
-                opacity=0.3, name=c
+                opacity=0.3, name=c,
+                legend='legend2'
             )
             data_list.append(trace)
             ntrac2 = ntrac2+1
@@ -197,7 +230,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         # Total mass
         trace = go.Scatter(
             x=x_vol, y=ycum, mode='lines',
-            name='Total Mass', line_color='grey'
+            name='Total Mass', line_color='grey',
+            legend='legend2'
         )
         data_list.append(trace)
         ntrac2 = ntrac2+1
@@ -211,7 +245,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         name = "   ",
         textposition='top left',
 #        marker=dict(size=10, color='blue'),
-        textfont=dict(size=16, color='blue')
+        textfont=dict(size=16, color='blue'),
+        showlegend = False, 
         )
         data_list.append(trace)
         ntrac2 = ntrac2+1
@@ -223,6 +258,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         mode='text',  # Show both markers and text
         text=['TEMP = %s'%round(float(df['temp']),2)],
         textposition='top left',
+        showlegend = False,
         name= "  ",
         #        marker=dict(size=10, color='blue'),
         textfont=dict(size=16, color='red')
@@ -230,19 +266,20 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         data_list.append(trace)
         ntrac2 = ntrac2+1
 
-        trace = go.Scatter(
-        x=[50] ,
-        y=[np.max(ycum)*0.8] ,
-#        y = [12.E-9],
-        mode='text',  # Show both markers and text
-        text=[],
-        name = "  ",
-        textposition='top left',
+#        trace = go.Scatter(
+#        x=[50] ,
+#        y=[np.max(ycum)*0.8] ,
+##        y = [12.E-9],
+#        mode='text',  # Show both markers and text
+#        text=[],
+#        name = "  ",
+#        textposition='top left',
 #        marker=dict(size=10, color='blue'),
-        textfont=dict(size=16, color='red')
-        )
-        data_list.append(trace)
-        ntrac2 = ntrac2+1
+#        textfont=dict(size=16, color='red'),
+#        legend='legend2'
+#        )
+#        data_list.append(trace)
+#        ntrac2 = ntrac2+1
 
 # Number distribution
         ymodcum = 0
@@ -254,32 +291,195 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             x_num, y_num = lognormal_distribution(Dg, sigma_g, num)
             trace = go.Scatter(
                 x=x_num, y=y_num, fill='tozeroy',
-                mode='none', name=modname[int(m)]
+                mode='none', name=modname[int(m)],
+                legend='legend3'
             )
             data_list.append(trace)
             ymodcum = ymodcum + y_num
             ntrac3 = ntrac3+1
         trace = go.Scatter(
             x=x_num, y=ymodcum, mode='lines',
-            name='Total number', line_color='black'
+            name='Total number', line_color='black',
+            legend='legend3'
         )
         data_list.append(trace)
         ntrac3 = ntrac3+1
+              
+#  Modal AOD Bar Chart
+        ntrac4 = ntrac3
+        
+        # Check if AOD data exists in dataset
+        if 'aod_mode' in ds.variables:
+            # Get wet diameters for bar X positions (convert to micrometers)
+            x_positions = ['Aitken', 'PC','Accum','Coarse' ]
+            #for m in df.mode.values:
+            #    Dg_wet = df['Dgn_mode'].sel(mode=m).values * 1.E6
+            #    x_positions.append(Dg_wet)
+            #    # Calculate bar widths for constant visual width on log scale
+            #log_width = 0.25  # Width in log10 units (adjust to taste)
+            #bar_widths = []
+            #for x_center in x_positions:
+            #    log_center = np.log10(x_center)
+            #    x_left = 10**(log_center - log_width/2)
+            #    x_right = 10**(log_center + log_width/2)
+            #    bar_widths.append(x_right - x_left)
+            
+            # Define species and colors for stacking
+            aod_species = ['aod_sulfate', 'aod_bc', 'aod_pom','aod_mom', 'aod_soa', 'aod_dust', 'aod_seasalt','aod_no3',  'aod_nh4']
+            species_colors = {
+                'aod_sulfate': 'green',
+                'aod_bc': 'black',
+                'aod_pom': 'magenta',
+                'aod_soa': 'indigo',
+                'aod_dust': 'yellow',
+                'aod_seasalt': 'grey',
+                'aod_mom': 'brown',      # Marine organic matter
+                'aod_no3': 'blue',       
+                'aod_nh4': 'orange',     
+            }
+            
+            # Create stacked bars for each species
+            for species in aod_species:
+                if species in ds.variables:
+                    y_values = []
+             #       for m in df.mode.values:
+                    for m in [1,3,0,2]:
+                       aod_val = df[species].sel(mode=m).values
+                       y_values.append(float(aod_val))
+                    
+                    # Create bar trace
+                    trace = go.Bar(
+                        x=x_positions,
+                        y=y_values,
+                        name=species, #.replace('aod_', '').upper(),
+                        marker_color=species_colors[species],
+                        opacity=0.75,
+                        legend='legend4'
+                        #width=bar_widths,  # Array of widths for constant log appear
+                    )
+                    data_list.append(trace)
+                    ntrac4 = ntrac4 + 1
+            
+            # Add total SSA arkers at top of stacks
+            total_aod_values = []
+            total_ssa_values = []
+            total_g_values   = []
+            total_hyg_values = []
+            ytextpos_values = []
+            ytextpos_ssa_values = []
+            ytextpos_g_values = []
+            ytextpos_hyg_values = []
+            #for m in df.mode.values:
+            print(df['hygro_aer'].values)
+            for m in [1,3,0,2]:
+                #if 'aod_mode' in ds.variables:
+                    total_aod = df['aod_mode'].sel(mode=m).values 
+                    total_aod_values.append(float(total_aod))
+                    total_ssa =  df['ssa_mode'].sel(mode=m).values
+                    total_ssa_values.append(float(total_ssa))
+                    total_g =  df['asm_mode'].sel(mode=m).values
+                    total_g_values.append(float(total_g))
+                    total_hyg =  df['hygro_aer'].sel(mode=m).values
+                    
+                    total_hyg_values.append(float(total_hyg))
+                    ytextpos = 0.85 * maxyaod  
+                    ytextpos_values.append(float(ytextpos)) 
+                    ytextpos = 0.80 * maxyaod
+                    ytextpos_ssa_values.append(float(ytextpos))
+                    ytextpos = 0.75 * maxyaod
+                    ytextpos_g_values.append(float(ytextpos))
+                    ytextpos = 0.91 * maxyaod
+                    ytextpos_hyg_values.append(float(ytextpos))
+                #else:
+                #    total_aod_values.append(0.0)
+                #    mode_ssa_values.append(0.0)
+            # ssa as scatter plot on top
+            trace = go.Scatter(
+                x=x_positions,
+               # y=total_aod_values ,switch to fixed position 
+                y= ytextpos_hyg_values , 
+                mode='text',
+                name='mode hygrosc.',
+                marker=dict(size=14, color='black', symbol='diamond'),
+             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
+                text=['hygros. = '+ f'{v:.3f}' for v in total_hyg_values],
+                textposition='top center',
+                textfont=dict(size=16, color='blue'),
+                showlegend=False
+            )
+            data_list.append(trace)
+            ntrac4 = ntrac4 + 1
+
+            trace = go.Scatter(
+                x=x_positions,
+               # y=total_aod_values ,switch to fixed position
+                y= ytextpos_values ,
+                mode='text',
+                name='Mode AOD',
+                marker=dict(size=14, color='black', symbol='diamond'),
+             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
+                text=['aod = '+ f'{v:.3f}' for v in total_aod_values],
+                textposition='top center',
+                textfont=dict(size=16, color='black'),
+                showlegend=False
+            )
+            data_list.append(trace)
+            ntrac4 = ntrac4 + 1
+
+            trace = go.Scatter(
+                x=x_positions,
+               # y=total_aod_values ,switch to fixed position 
+                y= ytextpos_ssa_values ,
+                mode='text',
+                name='Mode ssa',
+                marker=dict(size=14, color='black', symbol='diamond'),
+             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
+                text=['ssa = '+ f'{v:.3f}' for v in total_ssa_values],
+                textposition='top center',
+                textfont=dict(size=16, color='black'),
+                showlegend=False
+            )
+            data_list.append(trace)
+            ntrac4 = ntrac4 + 1
+
+            trace = go.Scatter(
+                x=x_positions,
+               # y=total_aod_values ,switch to fixed position 
+                y= ytextpos_g_values ,
+                mode='text',
+                name='Mode asy',
+                marker=dict(size=14, color='black', symbol='diamond'),
+             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
+                text=['asy = '+ f'{v:.3f}' for v in total_g_values],
+                textposition='top center',
+                textfont=dict(size=16, color='black'),
+                showlegend=False
+            )
+            data_list.append(trace)
+            ntrac4 = ntrac4 + 1
+
+        else:
+            # Placeholder if no AOD data
+            trace = go.Scatter(
+                x=[0.1], y=[0.1],
+                mode='text',
+                text=['AOD data not available'],
+                textfont=dict(size=14, color='red'),
+                showlegend=False
+            )
+            data_list.append(trace)
+            ntrac4 = ntrac4 + 1
 
 
         frames += [go.Frame(data=data_list, name='step%s' % s)]
 
     # Create figure with subplots
-    fig = go.Figure().set_subplots(3, 1,vertical_spacing=0.07)
-                                   #insets=[{'cell':(2,1), 'l':0.5, 'b':0.5 , 'w' : 0.1, 'h' : 0.1}])
-#    fig = make_subplots(rows=3, cols=1,
-#                    specs=[[{'type': 'xy'}], [{'type': 'xy'}], [{'type': 'xy'}]],
-#                    vertical_spacing=0.07,
-#                    insets=[dict(cell=(1,1), l=0.55, b= 0.43, w = 0.1, h = 0.1),
-#                            dict(cell=(2,1), l=0.5, h=0.65, b=0.1,  type='polar')])
+    fig = go.Figure().set_subplots(4, 1, vertical_spacing=0.05)
+
     fig.add_traces(frames[0].data[0:ntrac1], 1, 1)
     fig.add_traces(frames[0].data[ntrac1:ntrac2], 2, 1)
     fig.add_traces(frames[0].data[ntrac2:ntrac3], 3, 1)
+    fig.add_traces(frames[0].data[ntrac3:ntrac4], 4, 1)
 
 
 
@@ -292,6 +492,11 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
 
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=3, col=1)
     fig.update_yaxes(type='log', range=[5, 11], title='aer. dN/dlogD (#.kg-1)', row=3, col=1)
+
+    
+#    fig.update_xaxes(type="log", range=[-3, 2], title='Wet Diameter (µm)', row=4, col=1)
+    fig.update_xaxes(title='MAM mode', row=4, col=1)
+    fig.update_yaxes(range=[0, maxyaod ], title='wet AOD @ 550nm / DZ =1 km', row=4, col=1)
 
     fig.frames = frames
 
@@ -322,9 +527,33 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
 
     fig.update_layout(
         sliders=sliders,
-        legend={'traceorder': 'normal','font': {'size': 18} },
-        height=1200,
+        barmode='stack',  # Enable stacking for AOD bars
+        height=1600,
         margin=dict(t=80, b=40, l=60, r=40),  # Add top margin for controls
+        # Legend 1 - Gas concentrations (top subplot, ~75% from bottom)
+        legend=dict(
+            x=1.02, y=0.98, xanchor='left', yanchor='top',
+            font=dict(size=14),
+            traceorder='normal'
+        ),
+        # Legend 2 - Volume distribution (~50% from bottom)
+        legend2=dict(
+            x=1.02, y=0.73, xanchor='left', yanchor='top',
+            font=dict(size=14),
+            traceorder='normal'
+        ),
+        # Legend 3 - Number distribution (~25% from bottom)
+        legend3=dict(
+            x=1.02, y=0.40, xanchor='left', yanchor='top',
+            font=dict(size=14),
+            traceorder='normal'
+        ),
+        # Legend 4 - AOD (bottom subplot)
+        legend4=dict(
+            x=1.02, y=0.19, xanchor='left', yanchor='top',
+            font=dict(size=14),
+            traceorder='normal'
+        ),
         updatemenus=[{
             "buttons": [
                 {
@@ -450,15 +679,15 @@ html.Div([
                 # Meteorology
                 html.H4("Meteorological Parameters", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("Temperature Initial (K):", style={'fontSize': '12px'}),
-                dcc.Input(id='mtmin', type='number', value=275, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
+                dcc.Input(id='mtmin', type='number', value=280, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Temperature Final (K):", style={'fontSize': '12px'}),
-                dcc.Input(id='mtmax', type='number', value=275, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
+                dcc.Input(id='mtmax', type='number', value=280, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Pressure (Pa):", style={'fontSize': '12px'}),
                 dcc.Input(id='press', type='number', value=1.e5, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Relative Humidity Initial:", style={'fontSize': '12px'}),
-                dcc.Input(id='mrhmin', type='number', value=0.5, step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
+                dcc.Input(id='mrhmin', type='number', value=0.0, step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Relative Humidity Final:", style={'fontSize': '12px'}),
-                dcc.Input(id='mrhmax', type='number', value=0.5, step=0.01, style={'width': '100%', 'marginBottom': '10px'}),
+                dcc.Input(id='mrhmax', type='number', value=0.0, step=0.01, style={'width': '100%', 'marginBottom': '10px'}),
 
                 html.Hr(style={'margin': '10px 0'}),
 
@@ -481,24 +710,14 @@ html.Div([
 
                 # Number concentrations
                 html.H4("Number Concentrations (#/cm³)", style={'fontSize': '16px', 'marginTop': '10px'}),
-                html.Div([
-                    html.Div([
-                        html.Label("Accum:", style={'fontSize': '11px', 'width': '50px', 'display': 'inline-block'}),
-                        dcc.Input(id='numc-0', type='number', value=0.e5, style={'width': 'calc(100% - 55px)', 'fontSize': '11px'}),
-                    ], style={'marginBottom': '3px'}),
-                    html.Div([
-                        html.Label("Aitken:", style={'fontSize': '11px', 'width': '50px', 'display': 'inline-block'}),
-                        dcc.Input(id='numc-1', type='number', value=0.e5, style={'width': 'calc(100% - 55px)', 'fontSize': '11px'}),
-                    ], style={'marginBottom': '3px'}),
-                    html.Div([
-                        html.Label("Coarse:", style={'fontSize': '11px', 'width': '50px', 'display': 'inline-block'}),
-                        dcc.Input(id='numc-2', type='number', value=0.e7, style={'width': 'calc(100% - 55px)', 'fontSize': '11px'}),
-                    ], style={'marginBottom': '3px'}),
-                    html.Div([
-                        html.Label("Prim C:", style={'fontSize': '11px', 'width': '50px', 'display': 'inline-block'}),
-                        dcc.Input(id='numc-3', type='number', value=0.e5, style={'width': 'calc(100% - 55px)', 'fontSize': '11px'}),
-                    ], style={'marginBottom': '10px'}),
-                ]),
+                html.Label("Accum:", style={'fontSize': '12px'}),
+                dcc.Input(id='numc-0', type='number', value=0.e5, style={'width': '100%', 'marginBottom': '5px'}),
+                html.Label("Aitken:", style={'fontSize': '12px'}),
+                dcc.Input(id='numc-1', type='number', value=0.e5, style={'width': '100%', 'marginBottom': '5px'}),
+                html.Label("Coarse:", style={'fontSize': '12px'}),
+                dcc.Input(id='numc-2', type='number', value=3, style={'width': '100%', 'marginBottom': '5px'}),
+                html.Label("Prim C:", style={'fontSize': '12px'}),
+                dcc.Input(id='numc-3', type='number', value=1.e5, style={'width': '100%', 'marginBottom': '10px'}),
 
                 html.Hr(style={'margin': '10px 0'}),
 
@@ -549,13 +768,13 @@ html.Div([
                         create_mass_fraction_input("POM", 2, 0.0),
                         create_mass_fraction_input("SOA", 2, 0.0),
                         create_mass_fraction_input("BC", 2, 0.0),
-                        create_mass_fraction_input("DST", 2, 0.0),
-                        create_mass_fraction_input("NCL", 2, 0.4),
+                        create_mass_fraction_input("DST", 2, 0.4),
+                        create_mass_fraction_input("NCL", 2, 0.3),
                         create_mass_fraction_input("NO3", 2, 0.0),
                         create_mass_fraction_input("NH4", 2, 0.0),
                         create_mass_fraction_input("CO3", 2, 0.0),
                         create_mass_fraction_input("CA", 2, 0.0),
-                        create_mass_fraction_input("CL", 2, 0.6),
+                        create_mass_fraction_input("CL", 2, 0.3),
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
 
@@ -577,19 +796,19 @@ html.Div([
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '10px'}),
 
-            ], style={'padding': '15px', 'overflowY': 'scroll', 'height': 'calc(100vh - 130px)'})
-        ], style={'width': '15%', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
+            ], style={'padding': '15px', 'overflowY': 'auto', 'minHeight': '100%'})
+        ], style={'width': '15%', 'minHeight': '1650px', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
 
         # Right panel - Visualization
         html.Div([
             dcc.Loading(
                 id="loading",
                 type="default",
-                children=dcc.Graph(id='animation-plot', style={'height': 'calc(100vh - 160px)'})
+                children=dcc.Graph(id='animation-plot', style={'height': '100%'})
             ),
-        ], style={'width': '85%', 'padding': '10px', 'boxSizing': 'border-box', 'backgroundColor': '#e6f2ff'}),
+        ], style={'width': '85%', 'height': '100%', 'padding': '10px', 'boxSizing': 'border-box', 'backgroundColor': '#e6f2ff'}),
 
-    ], style={'display': 'flex', 'height': 'calc(100vh - 160px)'}),
+    ], style={'display': 'flex', 'minHeight': '1650px'}),
 ], style={'fontFamily': 'Arial, sans-serif', 'margin': '0', 'padding': '0', 'backgroundColor': '#e6f2ff'})
 
 # ============================================================================
@@ -694,7 +913,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             return fig, "Showing previous simulation results"
         else:
             empty_fig = go.Figure().add_annotation(
-                text="Click 'Run Simulation' to start",
+                text="Check Parameters & Click 'Run Simulation' to start",
                 xref="paper", yref="paper",
                 x=0.5, y=0.5, showarrow=False,
                 font=dict(size=24)
@@ -752,6 +971,19 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
                 x=0.5, y=0.5, showarrow=False,
                 font=dict(size=20, color='red')
             ), "❌ Executable not found")
+
+        # Copy optical input files to temp directory
+        optical_files = get_optical_input_files('./assets')
+        if not optical_files:
+            print("Warning: No optical input files found. Simulation may fail.")
+        else:
+            for fpath in optical_files:
+                try:
+                    shutil.copy(fpath, temp_dir)
+                    print(f"Copied optical file: {os.path.basename(fpath)}")
+                except Exception as e:
+                    print(f"Warning: Could not copy {fpath}: {e}")
+
 
         # Write namelist file in temp directory
         namelist_path = os.path.join(temp_dir, 'namelist')

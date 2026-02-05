@@ -217,6 +217,7 @@ set(OBJ5_SOURCES
     modal_aero_wateruptake.F90
     modal_aero_calcsize.F90
     modal_aero_initialize_data.F90
+    mam_opt.F90
 )
 
 # OBJ9: Driver and utilitie for box model

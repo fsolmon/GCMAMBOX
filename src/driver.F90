@@ -23,7 +23,7 @@
       use modal_aero_data, only: ntot_amode
       use physics_buffer, only: physics_buffer_desc
       use physics_types, only : physics_state, physics_ptend
-
+      use mam_opt, only : mam_optics_diagnostics, mamoptdiag
 #if(defined USE_NC4)
       use netcdf
 #endif
@@ -40,7 +40,6 @@
       type(physics_buffer_desc), pointer :: pbuf(:)
       type(physics_state) :: physta
       type(physics_ptend) :: ptend
-
 
 
 ! propres au driver de mambox
@@ -74,7 +73,8 @@
          qqcw_get_field
 
       use modal_aero_initialize_data, only: MAM_init_basics, MAM_ALLOCATE, MAM_cold_start
-
+      use mam_opt, only : mam_init_opt 
+                                                                                            
       integer :: nstop
       real*8  :: deltat
 
@@ -95,6 +95,8 @@
       call MAM_init_basics(pbuf)
       write(*,'(/a)') '*** main call MAM_allocate'
       call MAM_ALLOCATE (physta,ptend )
+      write(*,'(/a)') '*** main call MAM_init_opt'
+      call MAM_INIT_OPT()
 
       call gcmambox_init_run (nstop,deltat)
 
@@ -177,7 +179,7 @@
       subroutine gcmambox_do_run( nstop, deltat)
 
       use chem_mods, only: adv_mass, gas_pcnst, imozart
-      use physconst, only: mwdry
+      use physconst, only: mwdry,rga
       use physics_types, only: physics_state, physics_ptend
       use physics_buffer, only: physics_buffer_desc, pbuf_get_chunk
       use mam_utils, only: l_h2so4g, l_nh3g, l_so2g, l_hno3g, l_hclg, l_soag
@@ -189,6 +191,9 @@
       use gaschem_simple, only: gaschem_simple_sub
       use cloudchem_simple, only: cloudchem_simple_sub
       use wv_saturation, only : qsat
+      use radconstants, only : nswbands, nlwbands
+      use mam_opt , only : mam_aero_sw, mamoptdiag 
+
       implicit none
 
       integer,  intent(in   ) :: nstop
@@ -265,13 +270,20 @@
       real(r8) :: vmrcw_svdd(pcols,pver,gas_pcnst)
       real(r8) :: vmrcw_svee(pcols,pver,gas_pcnst)
 
+!optical properties 
+
+      real(r8)  :: tauxar(pcols,pver,nswbands)  ! aerosol extinction optical depth
+      real(r8)  :: wa(pcols,pver,nswbands)      ! aerosol single scattering albedo * tau
+      real(r8)  :: ga(pcols,pver,nswbands)      ! aerosol asymmetry parameter * wa
+      real(r8)  :: fa(pcols,pver,nswbands)      ! aerosol forward scattered fraction * ga
+
 !
 ! for netcdf file
 !
       character (len = *), parameter :: FILE_NAME = "mam_output.nc"
       integer :: ncid, nstep_dimid, mode_dimid
       integer :: error
-      integer :: dimids(2), varid(30)
+      integer :: dimids(2), varid(60)
       character (8) :: date
       real(r8), dimension(nstop,ntot_amode) :: tmp_dgn_a, &
                                tmp_dgn_awet, tmp_num_aer
@@ -288,7 +300,35 @@ real(r8) :: tmp_ca_aer(nstop, ntot_amode)
 real(r8) :: tmp_cl_aer(nstop, ntot_amode)
 real(r8) :: tmp_wat_aer(nstop, ntot_amode)
 real(r8) :: tmp_hygro_aer(nstop, ntot_amode)
+! Optical diagnostics - species optical depths (AOD)
+real(r8), dimension(nstop,ntot_amode) :: tmp_aod_sulfate, tmp_aod_bc, &
+                                         tmp_aod_pom, tmp_aod_soa, &
+                                         tmp_aod_dust, tmp_aod_seasalt, &
+                                         tmp_aod_mode
 
+! Optical diagnostics - species single scattering albedo
+real(r8), dimension(nstop,ntot_amode) :: tmp_ssa_sulfate, tmp_ssa_bc, &
+                                         tmp_ssa_pom, tmp_ssa_soa, &
+                                         tmp_ssa_dust, tmp_ssa_seasalt, &
+                                         tmp_ssa_mode
+
+! Optical diagnostics - species asymmetry parameter
+real(r8), dimension(nstop,ntot_amode) :: tmp_asm_sulfate, tmp_asm_bc, &
+                                         tmp_asm_pom, tmp_asm_soa, &
+                                         tmp_asm_dust, tmp_asm_seasalt, &
+                                         tmp_asm_mode
+
+#if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
+! All three MOSAIC species
+real(r8), dimension(nstop,ntot_amode) :: tmp_aod_mom, tmp_aod_no3, tmp_aod_nh4
+real(r8), dimension(nstop,ntot_amode) :: tmp_ssa_mom, tmp_ssa_no3, tmp_ssa_nh4
+real(r8), dimension(nstop,ntot_amode) :: tmp_asm_mom, tmp_asm_no3, tmp_asm_nh4
+#elif ( defined MODAL_AERO_4MODE_MOM )
+! Only MOM (marine organic matter)
+real(r8), dimension(nstop,ntot_amode) :: tmp_aod_mom
+real(r8), dimension(nstop,ntot_amode) :: tmp_ssa_mom
+real(r8), dimension(nstop,ntot_amode) :: tmp_asm_mom
+#endif
 
 real(r8), dimension(nstop)            :: tmp_h2so4, tmp_hno3, tmp_nh3, &
                                          tmp_soag, tmp_hcl, tmp_so2 ,tmp_relh, tmp_temp
@@ -381,7 +421,80 @@ call check(nf90_def_var(ncid, "relhum", &
 call check(nf90_def_var(ncid, "temp", &
           NF90_DOUBLE, dimids(1), varid(23)) )
 
+! Optical depth (AOD) for each species per mode
+call check(nf90_def_var(ncid, "aod_sulfate", &
+          NF90_DOUBLE, dimids, varid(24)) )
+call check(nf90_def_var(ncid, "aod_bc", &
+          NF90_DOUBLE, dimids, varid(25)) )
+call check(nf90_def_var(ncid, "aod_pom", &
+          NF90_DOUBLE, dimids, varid(26)) )
+call check(nf90_def_var(ncid, "aod_soa", &
+          NF90_DOUBLE, dimids, varid(27)) )
+call check(nf90_def_var(ncid, "aod_dust", &
+          NF90_DOUBLE, dimids, varid(28)) )
+call check(nf90_def_var(ncid, "aod_seasalt", &
+          NF90_DOUBLE, dimids, varid(29)) )
+call check(nf90_def_var(ncid, "aod_mode", &
+          NF90_DOUBLE, dimids, varid(30)) )
 
+! Single scattering albedo for each species per mode
+call check(nf90_def_var(ncid, "ssa_sulfate", &
+          NF90_DOUBLE, dimids, varid(31)) )
+call check(nf90_def_var(ncid, "ssa_bc", &
+          NF90_DOUBLE, dimids, varid(32)) )
+call check(nf90_def_var(ncid, "ssa_pom", &
+          NF90_DOUBLE, dimids, varid(33)) )
+call check(nf90_def_var(ncid, "ssa_soa", &
+          NF90_DOUBLE, dimids, varid(34)) )
+call check(nf90_def_var(ncid, "ssa_dust", &
+          NF90_DOUBLE, dimids, varid(35)) )
+call check(nf90_def_var(ncid, "ssa_seasalt", &
+          NF90_DOUBLE, dimids, varid(36)) )
+call check(nf90_def_var(ncid, "ssa_mode", &
+          NF90_DOUBLE, dimids, varid(37)) )
+
+! Asymmetry parameter for each species per mode
+call check(nf90_def_var(ncid, "asm_sulfate", &
+          NF90_DOUBLE, dimids, varid(38)) )
+call check(nf90_def_var(ncid, "asm_bc", &
+          NF90_DOUBLE, dimids, varid(39)) )
+call check(nf90_def_var(ncid, "asm_pom", &
+          NF90_DOUBLE, dimids, varid(40)) )
+call check(nf90_def_var(ncid, "asm_soa", &
+          NF90_DOUBLE, dimids, varid(41)) )
+call check(nf90_def_var(ncid, "asm_dust", &
+          NF90_DOUBLE, dimids, varid(42)) )
+call check(nf90_def_var(ncid, "asm_seasalt", &
+          NF90_DOUBLE, dimids, varid(43)) )
+call check(nf90_def_var(ncid, "asm_mode", &
+          NF90_DOUBLE, dimids, varid(44)) )
+
+#if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
+! Marine organic matter (MOM)
+call check(nf90_def_var(ncid, "aod_mom", &
+          NF90_DOUBLE, dimids, varid(45)) )
+call check(nf90_def_var(ncid, "ssa_mom", &
+          NF90_DOUBLE, dimids, varid(46)) )
+call check(nf90_def_var(ncid, "asm_mom", &
+          NF90_DOUBLE, dimids, varid(47)) )
+
+! Nitrate (NO3)
+call check(nf90_def_var(ncid, "aod_no3", &
+          NF90_DOUBLE, dimids, varid(48)) )
+call check(nf90_def_var(ncid, "ssa_no3", &
+          NF90_DOUBLE, dimids, varid(49)) )
+call check(nf90_def_var(ncid, "asm_no3", &
+          NF90_DOUBLE, dimids, varid(50)) )
+
+! Ammonium (NH4)
+call check(nf90_def_var(ncid, "aod_nh4", &
+          NF90_DOUBLE, dimids, varid(51)) )
+call check(nf90_def_var(ncid, "ssa_nh4", &
+          NF90_DOUBLE, dimids, varid(52)) )
+call check(nf90_def_var(ncid, "asm_nh4", &
+          NF90_DOUBLE, dimids, varid(53)) )
+#endif
+  
 call check(nf90_put_att(ncid, varid(1), "units", "#/kg-air") )
 call check(nf90_put_att(ncid, varid(2), "units", "kg-aer/kg-air") )
 call check(nf90_put_att(ncid, varid(3), "units", "kg-aer/kg-air") )
@@ -408,6 +521,75 @@ call check(nf90_put_att(ncid, varid(21), "units", "none") )
 
 call check(nf90_put_att(ncid, varid(22), "units", "none") )
 call check(nf90_put_att(ncid, varid(23), "units", "K") )
+
+! Add units attributes for optical properties
+call check(nf90_put_att(ncid, varid(24), "units", "none") )
+call check(nf90_put_att(ncid, varid(24), "long_name", "Sulfate AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(25), "units", "none") )
+call check(nf90_put_att(ncid, varid(25), "long_name", "BC AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(26), "units", "none") )
+call check(nf90_put_att(ncid, varid(26), "long_name", "POM AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(27), "units", "none") )
+call check(nf90_put_att(ncid, varid(27), "long_name", "SOA AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(28), "units", "none") )
+call check(nf90_put_att(ncid, varid(28), "long_name", "Dust AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(29), "units", "none") )
+call check(nf90_put_att(ncid, varid(29), "long_name", "Sea salt AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(30), "units", "none") )
+call check(nf90_put_att(ncid, varid(30), "long_name", "Total mode AOD at 550nm") )
+
+call check(nf90_put_att(ncid, varid(31), "units", "none") )
+call check(nf90_put_att(ncid, varid(31), "long_name", "Sulfate SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(32), "units", "none") )
+call check(nf90_put_att(ncid, varid(32), "long_name", "BC SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(33), "units", "none") )
+call check(nf90_put_att(ncid, varid(33), "long_name", "POM SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(34), "units", "none") )
+call check(nf90_put_att(ncid, varid(34), "long_name", "SOA SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(35), "units", "none") )
+call check(nf90_put_att(ncid, varid(35), "long_name", "Dust SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(36), "units", "none") )
+call check(nf90_put_att(ncid, varid(36), "long_name", "Sea salt SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(37), "units", "none") )
+call check(nf90_put_att(ncid, varid(37), "long_name", "Total mode SSA at 550nm") )
+
+call check(nf90_put_att(ncid, varid(38), "units", "none") )
+call check(nf90_put_att(ncid, varid(38), "long_name", "Sulfate asymmetry parameter at 550nm") )
+call check(nf90_put_att(ncid, varid(39), "units", "none") )
+call check(nf90_put_att(ncid, varid(39), "long_name", "BC asymmetry parameter at 550nm") )
+call check(nf90_put_att(ncid, varid(40), "units", "none") )
+call check(nf90_put_att(ncid, varid(40), "long_name", "POM asymmetry parameter at 550nm") )
+call check(nf90_put_att(ncid, varid(41), "units", "none") )
+call check(nf90_put_att(ncid, varid(41), "long_name", "SOA asymmetry parameter at 550nm") )
+call check(nf90_put_att(ncid, varid(42), "units", "none") )
+call check(nf90_put_att(ncid, varid(42), "long_name", "Dust asymmetry parameter at 550nm") )
+call check(nf90_put_att(ncid, varid(43), "units", "none") )
+call check(nf90_put_att(ncid, varid(43), "long_name", "Sea salt asymmetry parameter at 550nm") )
+call check(nf90_put_att(ncid, varid(44), "units", "none") )
+call check(nf90_put_att(ncid, varid(44), "long_name", "Total mode asymmetry parameter at 550nm") )
+
+#if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
+call check(nf90_put_att(ncid, varid(45), "units", "none") )
+call check(nf90_put_att(ncid, varid(45), "long_name", "Marine organic matter AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(46), "units", "none") )
+call check(nf90_put_att(ncid, varid(46), "long_name", "Marine organic matter SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(47), "units", "none") )
+call check(nf90_put_att(ncid, varid(47), "long_name", "Marine organic matter asymmetry parameter at 550nm") )
+
+call check(nf90_put_att(ncid, varid(48), "units", "none") )
+call check(nf90_put_att(ncid, varid(48), "long_name", "Nitrate AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(49), "units", "none") )
+call check(nf90_put_att(ncid, varid(49), "long_name", "Nitrate SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(50), "units", "none") )
+call check(nf90_put_att(ncid, varid(50), "long_name", "Nitrate asymmetry parameter at 550nm") )
+
+call check(nf90_put_att(ncid, varid(51), "units", "none") )
+call check(nf90_put_att(ncid, varid(51), "long_name", "Ammonium AOD at 550nm") )
+call check(nf90_put_att(ncid, varid(52), "units", "none") )
+call check(nf90_put_att(ncid, varid(52), "long_name", "Ammonium SSA at 550nm") )
+call check(nf90_put_att(ncid, varid(53), "units", "none") )
+call check(nf90_put_att(ncid, varid(53), "long_name", "Ammonium asymmetry parameter at 550nm") )
+#endif
 
 ! Add global attribute
       call check( nf90_put_att(ncid, NF90_GLOBAL, &
@@ -436,6 +618,30 @@ call check(nf90_put_att(ncid, varid(23), "units", "K") )
       qtend_rename_h2so4     = 0._r8 ; qtend_rename_soag     = 0._r8
       qtend_newnuc_h2so4     = 0._r8 ; qtend_newnuc_soag     = 0._r8
       qtend_coag_h2so4       = 0._r8 ; qtend_coag_soag       = 0._r8
+
+      tmp_aod_sulfate  = 0._r8 ; tmp_aod_bc       = 0._r8
+      tmp_aod_pom      = 0._r8 ; tmp_aod_soa      = 0._r8
+      tmp_aod_dust     = 0._r8 ; tmp_aod_seasalt  = 0._r8
+      tmp_aod_mode     = 0._r8
+
+      tmp_ssa_sulfate  = 0._r8 ; tmp_ssa_bc       = 0._r8
+      tmp_ssa_pom      = 0._r8 ; tmp_ssa_soa      = 0._r8
+      tmp_ssa_dust     = 0._r8 ; tmp_ssa_seasalt  = 0._r8
+      tmp_ssa_mode     = 0._r8
+
+      tmp_asm_sulfate  = 0._r8 ; tmp_asm_bc       = 0._r8
+      tmp_asm_pom      = 0._r8 ; tmp_asm_soa      = 0._r8
+      tmp_asm_dust     = 0._r8 ; tmp_asm_seasalt  = 0._r8
+      tmp_asm_mode     = 0._r8
+
+#if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
+tmp_aod_mom      = 0._r8 ; tmp_aod_no3      = 0._r8 ; tmp_aod_nh4      = 0._r8
+tmp_ssa_mom      = 0._r8 ; tmp_ssa_no3      = 0._r8 ; tmp_ssa_nh4      = 0._r8
+tmp_asm_mom      = 0._r8 ; tmp_asm_no3      = 0._r8 ; tmp_asm_nh4      = 0._r8
+#endif
+
+
+
 
       lchnk = begchunk
 
@@ -469,7 +675,7 @@ call check(nf90_put_att(ncid, varid(23), "units", "K") )
       lmz_so4_a2 = l_so4_a2 - (imozart-1)
       lmz_nh4_a2 = l_nh4_a2 - (imozart-1)
 
-
+print*, 'starting time integration' 
 main_time_loop:&
 do nstep = 1, nstop
       istep = nstep
@@ -500,7 +706,6 @@ do nstep = 1, nstop
        physta%q(:,:,1) = physta%qv(:,:)
 
 
-      print*, 'T , H  !! ', physta%t, physta%q(:,:,1)
 !
 ! calcsize
 !
@@ -568,7 +773,7 @@ IF (nstep > 1) then
 ! gaschem_simple
 !
       lun = 6
-      write(lun,'(/a,i8)') 'cambox_do_run doing gaschem simple, istep=', istep
+      write(*,'(/a,i8)') 'cambox_do_run doing gaschem simple, istep=', istep
       vmr_svaa   = vmr
       vmrcw_svaa = vmrcw
       h2so4_pre_gaschem(:,:) = vmr(:,:,lmz_h2so4g)
@@ -661,7 +866,19 @@ END IF
          physta%qqcw( :,:,l)  = vmrcw(:,:,l2) * adv_mass(l2)/mwdry
       end do
 !
-! store the data of each time step for netcdf output
+! calculate optical properties 
+!
+
+       call  mam_aero_sw(physta, tauxar, wa, ga, fa, mamoptdiag)
+
+       write(*,'(/a,i8)') 'modal optical properties done, istep=', istep 
+       print*,'tauxar', tauxar 
+       print*, 'wa/tauxar', wa/tauxar  
+       do l=1,4
+       
+       print*,physta%pdeldry(:,:)*rga, mamoptdiag(l)%vext_sulfate(:,:),  mamoptdiag(l)%vext_mode(:,:)*physta%pdeldry(:,:)*rga  
+       end do
+       ! store the data of each time step for netcdf output
 !
 
       if (l_h2so4g > 0) tmp_h2so4 (nstep) = physta%q(1,1,l_h2so4g)* adv_mass(l_h2so4g-loffset)/mwdry *1E9
@@ -694,6 +911,58 @@ END IF
 
        tmp_relh(nstep) = physta%relhum(1,1)
        tmp_temp(nstep) = physta%t(1,1)
+
+
+       ! Store optical properties for each mode
+! Convert extinction (m2/kg-air) to AOD (dimensionless) using pdeldry*rga
+do i = 1, ntot_amode
+   ! AOD = extinction * (pdeldry * rga)
+   ! pdeldry is in Pa, rga = 1/g = 0.102 kg/m2/Pa
+   tmp_aod_sulfate(nstep,i)  = mamoptdiag(i)%vext_sulfate(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_bc(nstep,i)       = mamoptdiag(i)%vext_bc(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_pom(nstep,i)      = mamoptdiag(i)%vext_pom(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_soa(nstep,i)      = mamoptdiag(i)%vext_soa(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_dust(nstep,i)     = mamoptdiag(i)%vext_dust(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_seasalt(nstep,i)  = mamoptdiag(i)%vext_seasalt(1,1) * physta%pdeldry(1,1) * rga
+!   tmp_aod_mode(nstep,i)     = mamoptdiag(i)%vext_mode(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_mode(nstep,i)     = mamoptdiag(i)%tauxar(1,1,10)
+   
+   ! Single scattering albedo (dimensionless)
+   tmp_ssa_sulfate(nstep,i)  = mamoptdiag(i)%vssa_sulfate(1,1)
+   tmp_ssa_bc(nstep,i)       = mamoptdiag(i)%vssa_bc(1,1)
+   tmp_ssa_pom(nstep,i)      = mamoptdiag(i)%vssa_pom(1,1)
+   tmp_ssa_soa(nstep,i)      = mamoptdiag(i)%vssa_soa(1,1)
+   tmp_ssa_dust(nstep,i)     = mamoptdiag(i)%vssa_dust(1,1)
+   tmp_ssa_seasalt(nstep,i)  = mamoptdiag(i)%vssa_seasalt(1,1)
+   tmp_ssa_mode(nstep,i)     = mamoptdiag(i)%vssa_mode(1,1)
+!   tmp_ssa_mode(nstep,i)     = mamoptdiag(i)%ssav(1,1,10)   
+   ! Asymmetry parameter (dimensionless)
+   tmp_asm_sulfate(nstep,i)  = mamoptdiag(i)%vasm_sulfate(1,1)
+   tmp_asm_bc(nstep,i)       = mamoptdiag(i)%vasm_bc(1,1)
+   tmp_asm_pom(nstep,i)      = mamoptdiag(i)%vasm_pom(1,1)
+   tmp_asm_soa(nstep,i)      = mamoptdiag(i)%vasm_soa(1,1)
+   tmp_asm_dust(nstep,i)     = mamoptdiag(i)%vasm_dust(1,1)
+   tmp_asm_seasalt(nstep,i)  = mamoptdiag(i)%vasm_seasalt(1,1)
+   tmp_asm_mode(nstep,i)     = mamoptdiag(i)%vasm_mode(1,1)
+end do
+#if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
+do i = 1, ntot_amode
+   ! Marine organic matter (MOM)
+   tmp_aod_mom(nstep,i)  = mamoptdiag(i)%vext_mom(1,1) * physta%pdeldry(1,1) * rga
+   tmp_ssa_mom(nstep,i)  = mamoptdiag(i)%vssa_mom(1,1)
+   tmp_asm_mom(nstep,i)  = mamoptdiag(i)%vasm_mom(1,1)
+   
+   ! Nitrate (NO3)
+   tmp_aod_no3(nstep,i)  = mamoptdiag(i)%vext_no3(1,1) * physta%pdeldry(1,1) * rga
+   tmp_ssa_no3(nstep,i)  = mamoptdiag(i)%vssa_no3(1,1)
+   tmp_asm_no3(nstep,i)  = mamoptdiag(i)%vasm_no3(1,1)
+   
+   ! Ammonium (NH4)
+   tmp_aod_nh4(nstep,i)  = mamoptdiag(i)%vext_nh4(1,1) * physta%pdeldry(1,1) * rga
+   tmp_ssa_nh4(nstep,i)  = mamoptdiag(i)%vssa_nh4(1,1)
+   tmp_asm_nh4(nstep,i)  = mamoptdiag(i)%vasm_nh4(1,1)
+end do
+#endif
 
 end do main_time_loop
 
@@ -755,7 +1024,84 @@ call check( nf90_put_var(ncid, varid(22), &
 call check( nf90_put_var(ncid, varid(23), &
             tmp_temp(1:nstop)) )
 
-      ! Close the file. This frees up any internal netCDF resources
+
+! Write optical depth (AOD)
+call check( nf90_put_var(ncid, varid(24), &
+            tmp_aod_sulfate(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(25), &
+            tmp_aod_bc(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(26), &
+            tmp_aod_pom(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(27), &
+            tmp_aod_soa(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(28), &
+            tmp_aod_dust(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(29), &
+            tmp_aod_seasalt(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(30), &
+            tmp_aod_mode(1:nstop,1:ntot_amode)) )
+
+! Write single scattering albedo (SSA)
+call check( nf90_put_var(ncid, varid(31), &
+            tmp_ssa_sulfate(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(32), &
+            tmp_ssa_bc(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(33), &
+            tmp_ssa_pom(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(34), &
+            tmp_ssa_soa(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(35), &
+            tmp_ssa_dust(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(36), &
+            tmp_ssa_seasalt(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(37), &
+            tmp_ssa_mode(1:nstop,1:ntot_amode)) )
+
+! Write asymmetry parameter
+call check( nf90_put_var(ncid, varid(38), &
+            tmp_asm_sulfate(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(39), &
+            tmp_asm_bc(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(40), &
+            tmp_asm_pom(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(41), &
+            tmp_asm_soa(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(42), &
+            tmp_asm_dust(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(43), &
+            tmp_asm_seasalt(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(44), &
+            tmp_asm_mode(1:nstop,1:ntot_amode)) )
+
+#if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
+! Marine organic matter (MOM)
+call check( nf90_put_var(ncid, varid(45), &
+            tmp_aod_mom(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(46), &
+            tmp_ssa_mom(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(47), &
+            tmp_asm_mom(1:nstop,1:ntot_amode)) )
+
+! Nitrate (NO3)
+call check( nf90_put_var(ncid, varid(48), &
+            tmp_aod_no3(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(49), &
+            tmp_ssa_no3(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(50), &
+            tmp_asm_no3(1:nstop,1:ntot_amode)) )
+
+! Ammonium (NH4)
+call check( nf90_put_var(ncid, varid(51), &
+            tmp_aod_nh4(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(52), &
+            tmp_ssa_nh4(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(53), &
+            tmp_asm_nh4(1:nstop,1:ntot_amode)) )
+
+#endif
+
+
+    ! Close the file. This frees up any internal netCDF resources
       ! associated with the file, and flushes any buffers.
       call check( nf90_close(ncid) )
 
