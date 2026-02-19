@@ -157,20 +157,15 @@
       call MAM_cold_start (physta,nstop=nstop, deltat=deltat, tmin = tmin, tmax =tmax, rhmin =rhmin, rhmax =rhmax)!
 
 
-! iniialise ( q(:,:,1 ) call gestbl to build saturation vapor pressure table.
-      tmn   = 173.16_r8
-      tmx   = 375.16_r8
-      trice =  20.00_r8
-      ip    = .true.
-      call gestbl(tmn     ,tmx     ,trice   ,ip      ,epsilo  , &
-                  latvap  ,latice  ,rh2o    ,cpair   ,tmelt )
+! require gestbl to build saturation vapor pressure table.
 
       call  qsat( physta%t(1:pcols,1:pver), physta%pmid(1:pcols,1:pver), &
                   ev_sat(1:pcols,1:pver), qv_sat(1:pcols,1:pver) )
+!test !
+      qv_sat = 4.35E-3
       physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
       physta%q(:,:,1) = physta%qv(:,:)
-
-
+       
       return
       end subroutine gcmambox_init_run
 
@@ -187,7 +182,7 @@
       use modal_aero_calcsize, only: modal_aero_calcsize_sub
       use modal_aero_amicphys, only: modal_aero_amicphys_intr, &
           gaexch_h2so4_uptake_optaa, newnuc_h2so4_conc_optaa, mosaic
-      use modal_aero_wateruptake, only: modal_aero_wateruptake_dr
+      use modal_aero_wateruptake, only: modal_aero_wateruptake_dr, load_pbuf, unload_pbuf
       use gaschem_simple, only: gaschem_simple_sub
       use cloudchem_simple, only: cloudchem_simple_sub
       use wv_saturation, only : qsat
@@ -705,7 +700,7 @@ do nstep = 1, nstop
        physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
        physta%q(:,:,1) = physta%qv(:,:)
 
-
+       print*, 'FAB QVSAT DE QSAT', qv_sat(:,:)
 !
 ! calcsize
 !
@@ -876,7 +871,7 @@ END IF
        print*, 'wa/tauxar', wa/tauxar  
        do l=1,4
        
-       print*,physta%pdeldry(:,:)*rga, mamoptdiag(l)%vext_sulfate(:,:),  mamoptdiag(l)%vext_mode(:,:)*physta%pdeldry(:,:)*rga  
+       print*,physta%pdeldry(:,:)*rga, mamoptdiag(l)%vext_sulfate(:,:,10),  mamoptdiag(l)%vext_mode(:,:,10)*physta%pdeldry(:,:)*rga  
        end do
        ! store the data of each time step for netcdf output
 !
@@ -918,49 +913,49 @@ END IF
 do i = 1, ntot_amode
    ! AOD = extinction * (pdeldry * rga)
    ! pdeldry is in Pa, rga = 1/g = 0.102 kg/m2/Pa
-   tmp_aod_sulfate(nstep,i)  = mamoptdiag(i)%vext_sulfate(1,1) * physta%pdeldry(1,1) * rga
-   tmp_aod_bc(nstep,i)       = mamoptdiag(i)%vext_bc(1,1) * physta%pdeldry(1,1) * rga
-   tmp_aod_pom(nstep,i)      = mamoptdiag(i)%vext_pom(1,1) * physta%pdeldry(1,1) * rga
-   tmp_aod_soa(nstep,i)      = mamoptdiag(i)%vext_soa(1,1) * physta%pdeldry(1,1) * rga
-   tmp_aod_dust(nstep,i)     = mamoptdiag(i)%vext_dust(1,1) * physta%pdeldry(1,1) * rga
-   tmp_aod_seasalt(nstep,i)  = mamoptdiag(i)%vext_seasalt(1,1) * physta%pdeldry(1,1) * rga
+   tmp_aod_sulfate(nstep,i)  = mamoptdiag(i)%vext_sulfate(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_aod_bc(nstep,i)       = mamoptdiag(i)%vext_bc(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_aod_pom(nstep,i)      = mamoptdiag(i)%vext_pom(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_aod_soa(nstep,i)      = mamoptdiag(i)%vext_soa(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_aod_dust(nstep,i)     = mamoptdiag(i)%vext_dust(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_aod_seasalt(nstep,i)  = mamoptdiag(i)%vext_seasalt(1,1,10) * physta%pdeldry(1,1) * rga
 !   tmp_aod_mode(nstep,i)     = mamoptdiag(i)%vext_mode(1,1) * physta%pdeldry(1,1) * rga
    tmp_aod_mode(nstep,i)     = mamoptdiag(i)%tauxar(1,1,10)
    
    ! Single scattering albedo (dimensionless)
-   tmp_ssa_sulfate(nstep,i)  = mamoptdiag(i)%vssa_sulfate(1,1)
-   tmp_ssa_bc(nstep,i)       = mamoptdiag(i)%vssa_bc(1,1)
-   tmp_ssa_pom(nstep,i)      = mamoptdiag(i)%vssa_pom(1,1)
-   tmp_ssa_soa(nstep,i)      = mamoptdiag(i)%vssa_soa(1,1)
-   tmp_ssa_dust(nstep,i)     = mamoptdiag(i)%vssa_dust(1,1)
-   tmp_ssa_seasalt(nstep,i)  = mamoptdiag(i)%vssa_seasalt(1,1)
-   tmp_ssa_mode(nstep,i)     = mamoptdiag(i)%vssa_mode(1,1)
+   tmp_ssa_sulfate(nstep,i)  = mamoptdiag(i)%vssa_sulfate(1,1,10)
+   tmp_ssa_bc(nstep,i)       = mamoptdiag(i)%vssa_bc(1,1,10)
+   tmp_ssa_pom(nstep,i)      = mamoptdiag(i)%vssa_pom(1,1,10)
+   tmp_ssa_soa(nstep,i)      = mamoptdiag(i)%vssa_soa(1,1,10)
+   tmp_ssa_dust(nstep,i)     = mamoptdiag(i)%vssa_dust(1,1,10)
+   tmp_ssa_seasalt(nstep,i)  = mamoptdiag(i)%vssa_seasalt(1,1,10)
+   tmp_ssa_mode(nstep,i)     = mamoptdiag(i)%vssa_mode(1,1,10)
 !   tmp_ssa_mode(nstep,i)     = mamoptdiag(i)%ssav(1,1,10)   
    ! Asymmetry parameter (dimensionless)
-   tmp_asm_sulfate(nstep,i)  = mamoptdiag(i)%vasm_sulfate(1,1)
-   tmp_asm_bc(nstep,i)       = mamoptdiag(i)%vasm_bc(1,1)
-   tmp_asm_pom(nstep,i)      = mamoptdiag(i)%vasm_pom(1,1)
-   tmp_asm_soa(nstep,i)      = mamoptdiag(i)%vasm_soa(1,1)
-   tmp_asm_dust(nstep,i)     = mamoptdiag(i)%vasm_dust(1,1)
-   tmp_asm_seasalt(nstep,i)  = mamoptdiag(i)%vasm_seasalt(1,1)
-   tmp_asm_mode(nstep,i)     = mamoptdiag(i)%vasm_mode(1,1)
+   tmp_asm_sulfate(nstep,i)  = mamoptdiag(i)%vasm_sulfate(1,1,10)
+   tmp_asm_bc(nstep,i)       = mamoptdiag(i)%vasm_bc(1,1,10)
+   tmp_asm_pom(nstep,i)      = mamoptdiag(i)%vasm_pom(1,1,10)
+   tmp_asm_soa(nstep,i)      = mamoptdiag(i)%vasm_soa(1,1,10)
+   tmp_asm_dust(nstep,i)     = mamoptdiag(i)%vasm_dust(1,1,10)
+   tmp_asm_seasalt(nstep,i)  = mamoptdiag(i)%vasm_seasalt(1,1,10)
+   tmp_asm_mode(nstep,i)     = mamoptdiag(i)%vasm_mode(1,1,10)
 end do
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 do i = 1, ntot_amode
    ! Marine organic matter (MOM)
-   tmp_aod_mom(nstep,i)  = mamoptdiag(i)%vext_mom(1,1) * physta%pdeldry(1,1) * rga
-   tmp_ssa_mom(nstep,i)  = mamoptdiag(i)%vssa_mom(1,1)
-   tmp_asm_mom(nstep,i)  = mamoptdiag(i)%vasm_mom(1,1)
+   tmp_aod_mom(nstep,i)  = mamoptdiag(i)%vext_mom(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_ssa_mom(nstep,i)  = mamoptdiag(i)%vssa_mom(1,1,10)
+   tmp_asm_mom(nstep,i)  = mamoptdiag(i)%vasm_mom(1,1,10)
    
    ! Nitrate (NO3)
-   tmp_aod_no3(nstep,i)  = mamoptdiag(i)%vext_no3(1,1) * physta%pdeldry(1,1) * rga
-   tmp_ssa_no3(nstep,i)  = mamoptdiag(i)%vssa_no3(1,1)
-   tmp_asm_no3(nstep,i)  = mamoptdiag(i)%vasm_no3(1,1)
+   tmp_aod_no3(nstep,i)  = mamoptdiag(i)%vext_no3(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_ssa_no3(nstep,i)  = mamoptdiag(i)%vssa_no3(1,1,10)
+   tmp_asm_no3(nstep,i)  = mamoptdiag(i)%vasm_no3(1,1,10)
    
    ! Ammonium (NH4)
-   tmp_aod_nh4(nstep,i)  = mamoptdiag(i)%vext_nh4(1,1) * physta%pdeldry(1,1) * rga
-   tmp_ssa_nh4(nstep,i)  = mamoptdiag(i)%vssa_nh4(1,1)
-   tmp_asm_nh4(nstep,i)  = mamoptdiag(i)%vasm_nh4(1,1)
+   tmp_aod_nh4(nstep,i)  = mamoptdiag(i)%vext_nh4(1,1,10) * physta%pdeldry(1,1) * rga
+   tmp_ssa_nh4(nstep,i)  = mamoptdiag(i)%vssa_nh4(1,1,10)
+   tmp_asm_nh4(nstep,i)  = mamoptdiag(i)%vasm_nh4(1,1,10)
 end do
 #endif
 
@@ -1111,175 +1106,6 @@ call check( nf90_put_var(ncid, varid(53), &
       end subroutine gcmambox_do_run
 
 
-!-------------------------------------------------------------------------------
-      subroutine load_pbuf( pbuf, lchnk, ncol, &
-         cld, qqcw, dgncur_a, dgncur_awet, qaerwat, wetdens, hygro )
-
-      use mam_utils, only: pcols,pver
-      use constituents, only : pcnst
-      use chem_mods, only: adv_mass, gas_pcnst, imozart
-      use physconst, only: mwdry
-
-      use modal_aero_data, only:  &
-         lmassptrcw_amode, nspec_amode, numptrcw_amode, &
-         qqcw_get_field
-
-      use physics_buffer, only: physics_buffer_desc, &
-         pbuf_get_index, pbuf_get_field
-
-      type(physics_buffer_desc), pointer :: pbuf(:)  ! physics buffer for a chunk
-
-      integer,  intent(in   ) :: lchnk, ncol
-
-      real(r8), intent(in   ) :: cld(pcols,pver)    ! stratiform cloud fraction
-      real(r8), intent(in   ) :: qqcw(pcols,pver,pcnst)  ! Cloudborne aerosol MR array
-      real(r8), intent(in   ) :: dgncur_a(pcols,pver,ntot_amode)
-      real(r8), intent(in   ) :: dgncur_awet(pcols,pver,ntot_amode)
-      real(r8), intent(in   ) :: qaerwat(pcols,pver,ntot_amode)
-      real(r8), intent(in   ) :: wetdens(pcols,pver,ntot_amode)
-      real(r8), intent(in   ) :: hygro(pcols,pver,ntot_amode)
-
-      integer :: idx, l, ll, n
-
-      real(r8), pointer :: fldcw(:,:)
-      real(r8), pointer :: ycld(:,:)
-      real(r8), pointer :: ydgnum(:,:,:)
-      real(r8), pointer :: ydgnumwet(:,:,:)
-      real(r8), pointer :: yqaerwat(:,:,:)
-      real(r8), pointer :: ywetdens(:,:,:)
-      real(r8), pointer :: yhygro(:,:,:)
-
-      idx = pbuf_get_index( 'CLD' )
-      call pbuf_get_field( pbuf, idx, ycld )
-      ycld(:,:) = 0.0_r8
-      ycld(1:ncol,:) = cld(1:ncol,:)
-
-      idx = pbuf_get_index( 'DGNUM' )
-      call pbuf_get_field( pbuf, idx, ydgnum )
-      ydgnum(:,:,:) = 0.0_r8
-      ydgnum(1:ncol,:,:) = dgncur_a(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'DGNUMWET' )
-      call pbuf_get_field( pbuf, idx, ydgnumwet )
-      ydgnumwet(:,:,:) = 0.0_r8
-      ydgnumwet(1:ncol,:,:) = dgncur_awet(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'QAERWAT' )
-      call pbuf_get_field( pbuf, idx, yqaerwat )
-      yqaerwat(:,:,:) = 0.0_r8
-      yqaerwat(1:ncol,:,:) = qaerwat(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'WETDENS_AP' )
-      call pbuf_get_field( pbuf, idx, ywetdens )
-      ywetdens(:,:,:) = 0.0_r8
-      ywetdens(1:ncol,:,:) = wetdens(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'HYGROM' )
-      call pbuf_get_field( pbuf, idx, yhygro )
-      yhygro(:,:,:) = 0.0_r8
-      yhygro(1:ncol,:,:) = hygro(1:ncol,:,:)
-
-      do n = 1, ntot_amode
-      do ll = 0, nspec_amode(n)
-         l = numptrcw_amode(n)
-         if (ll > 0) l = lmassptrcw_amode(ll,n)
-         fldcw => qqcw_get_field( pbuf, l, lchnk )
-         fldcw(:,:) = 0.0_r8
-         fldcw(1:ncol,:) = qqcw(1:ncol,:,l)
-      end do
-      end do
-
-      print*,'end pbuf'
-      return
-      end subroutine load_pbuf
-
-
-!-------------------------------------------------------------------------------
-      subroutine unload_pbuf( pbuf, lchnk, ncol, &
-         cld, qqcw, dgncur_a, dgncur_awet, qaerwat, wetdens, hygro )
-
-      use mam_utils, only: pcols,pver
-      use constituents, only : pcnst
-      use chem_mods, only: adv_mass, gas_pcnst, imozart
-      use physconst, only: mwdry
-
-      use modal_aero_data, only:  &
-         lmassptrcw_amode, nspec_amode, numptrcw_amode, &
-         qqcw_get_field
-
-      use physics_buffer, only: physics_buffer_desc, &
-         pbuf_get_index, pbuf_get_field
-
-      type(physics_buffer_desc), pointer :: pbuf(:)  ! physics buffer for a chunk
-
-      integer,  intent(in   ) :: lchnk, ncol
-
-      real(r8), intent(in   ) :: cld(pcols,pver)    ! stratiform cloud fraction
-
-      real(r8), intent(inout) :: qqcw(pcols,pver,pcnst)  ! Cloudborne aerosol MR array
-      real(r8), intent(inout) :: dgncur_a(pcols,pver,ntot_amode)
-      real(r8), intent(inout) :: dgncur_awet(pcols,pver,ntot_amode)
-      real(r8), intent(inout) :: qaerwat(pcols,pver,ntot_amode)
-      real(r8), intent(inout) :: wetdens(pcols,pver,ntot_amode)
-      real(r8), intent(inout) :: hygro(pcols,pver,ntot_amode)
-
-      integer :: i, idx, k, l, ll, n
-      real(r8) :: tmpa
-
-      real(r8), pointer :: fldcw(:,:)
-      real(r8), pointer :: ycld(:,:)
-      real(r8), pointer :: ydgnum(:,:,:)
-      real(r8), pointer :: ydgnumwet(:,:,:)
-      real(r8), pointer :: yqaerwat(:,:,:)
-      real(r8), pointer :: ywetdens(:,:,:)
-      real(r8), pointer :: yhygro(:,:,:)
-
-      idx = pbuf_get_index( 'CLD' )
-      call pbuf_get_field( pbuf, idx, ycld )
-! cld should not have changed, so check for changes rather than unloading it
-!     cld(1:ncol,:) = ycld(1:ncol,:)
-      tmpa = maxval( abs( cld(1:ncol,:) - ycld(1:ncol,:) ) )
-      if (tmpa /= 0.0_r8) then
-         write(*,*) '*** unload_pbuf cld change error - ', tmpa
-         stop
-      end if
-
-      idx = pbuf_get_index( 'DGNUM' )
-      call pbuf_get_field( pbuf, idx, ydgnum )
-      dgncur_a(1:ncol,:,:) = ydgnum(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'DGNUMWET' )
-      call pbuf_get_field( pbuf, idx, ydgnumwet )
-      dgncur_awet(1:ncol,:,:) = ydgnumwet(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'QAERWAT' )
-      call pbuf_get_field( pbuf, idx, yqaerwat )
-      qaerwat(1:ncol,:,:) = yqaerwat(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'WETDENS_AP' )
-      call pbuf_get_field( pbuf, idx, ywetdens )
-      wetdens(1:ncol,:,:) = ywetdens(1:ncol,:,:)
-
-      idx = pbuf_get_index( 'HYGROM' )
-      call pbuf_get_field( pbuf, idx, yhygro )
-      hygro(1:ncol,:,:) = yhygro(1:ncol,:,:)
-
-
-      do n = 1, ntot_amode
-      do ll = 0, nspec_amode(n)
-         l = numptrcw_amode(n)
-         if (ll > 0) l = lmassptrcw_amode(ll,n)
-         fldcw => qqcw_get_field( pbuf, l, lchnk )
-         qqcw(1:ncol,:,l) = fldcw(1:ncol,:)
-      end do
-      end do
-
-
-      return
-      end subroutine unload_pbuf
-
-
-!-------------------------------------------------------------------------------
 
 
       subroutine check(status)

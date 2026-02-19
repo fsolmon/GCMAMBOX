@@ -495,7 +495,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
 
     
 #    fig.update_xaxes(type="log", range=[-3, 2], title='Wet Diameter (µm)', row=4, col=1)
-    fig.update_xaxes(title='MAM mode', row=4, col=1)
+    fig.update_xaxes(title='MAM mode', tickfont=dict(size=16), row=4, col=1)
     fig.update_yaxes(range=[0, maxyaod ], title='wet AOD @ 550nm / DZ =1 km', row=4, col=1)
 
     fig.frames = frames

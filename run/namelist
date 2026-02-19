@@ -14,8 +14,8 @@ mdo_coag       = 1,
 &met_input
 mtmin           = 275,
 mtmax           = 275,
-mrhmin          = 0.5,
-mrhmax         = 0.5,
+mrhmin          = 0.0,
+mrhmax         = 1.,
 press          = 100000,
 /
 &chem_input
