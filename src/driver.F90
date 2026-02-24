@@ -187,7 +187,7 @@
       use cloudchem_simple, only: cloudchem_simple_sub
       use wv_saturation, only : qsat
       use radconstants, only : nswbands, nlwbands
-      use mam_opt , only : mam_aero_sw, mamoptdiag 
+      use mam_opt , only : mam_aero_sw, mam_aero_lw, mamoptdiag 
 
       implicit none
 
@@ -271,6 +271,7 @@
       real(r8)  :: wa(pcols,pver,nswbands)      ! aerosol single scattering albedo * tau
       real(r8)  :: ga(pcols,pver,nswbands)      ! aerosol asymmetry parameter * wa
       real(r8)  :: fa(pcols,pver,nswbands)      ! aerosol forward scattered fraction * ga
+      real(r8)  :: taux_lw(pcols,pver,nlwbands) ! aerosol LW absorption optical depth
 
 !
 ! for netcdf file
@@ -312,6 +313,18 @@ real(r8), dimension(nstop,ntot_amode) :: tmp_asm_sulfate, tmp_asm_bc, &
                                          tmp_asm_pom, tmp_asm_soa, &
                                          tmp_asm_dust, tmp_asm_seasalt, &
                                          tmp_asm_mode
+
+! LW optical diagnostics - per-mode total LW absorption optical depth
+! and per-species contributions.  Reference band: ilw=9 (atmospheric window,
+! ~8-12 um, 1000-1390 cm-1), analogous to isw=10 (550 nm) for the SW.
+integer, parameter :: ilw_diag = 9   ! LW diagnostic band index
+real(r8), dimension(nstop,ntot_amode) :: tmp_aod_lw_mode, &
+                                         tmp_aod_lw_sulfate, &
+                                         tmp_aod_lw_bc, &
+                                         tmp_aod_lw_pom, &
+                                         tmp_aod_lw_soa, &
+                                         tmp_aod_lw_dust, &
+                                         tmp_aod_lw_seasalt
 
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 ! All three MOSAIC species
@@ -563,6 +576,18 @@ call check(nf90_put_att(ncid, varid(43), "long_name", "Sea salt asymmetry parame
 call check(nf90_put_att(ncid, varid(44), "units", "none") )
 call check(nf90_put_att(ncid, varid(44), "long_name", "Total mode asymmetry parameter at 550nm") )
 
+! -----------------------------------------------------------------------
+! LW absorption optical depth variables (reference band: ilw_diag=9, ~8-12 um)
+! varid(54-60): mode total + 6 species
+! -----------------------------------------------------------------------
+call check(nf90_def_var(ncid, "aod_lw_mode",    NF90_DOUBLE, dimids, varid(54)) )
+call check(nf90_def_var(ncid, "aod_lw_sulfate", NF90_DOUBLE, dimids, varid(55)) )
+call check(nf90_def_var(ncid, "aod_lw_bc",      NF90_DOUBLE, dimids, varid(56)) )
+call check(nf90_def_var(ncid, "aod_lw_pom",     NF90_DOUBLE, dimids, varid(57)) )
+call check(nf90_def_var(ncid, "aod_lw_soa",     NF90_DOUBLE, dimids, varid(58)) )
+call check(nf90_def_var(ncid, "aod_lw_dust",    NF90_DOUBLE, dimids, varid(59)) )
+call check(nf90_def_var(ncid, "aod_lw_seasalt", NF90_DOUBLE, dimids, varid(60)) )
+
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 call check(nf90_put_att(ncid, varid(45), "units", "none") )
 call check(nf90_put_att(ncid, varid(45), "long_name", "Marine organic matter AOD at 550nm") )
@@ -585,6 +610,22 @@ call check(nf90_put_att(ncid, varid(52), "long_name", "Ammonium SSA at 550nm") )
 call check(nf90_put_att(ncid, varid(53), "units", "none") )
 call check(nf90_put_att(ncid, varid(53), "long_name", "Ammonium asymmetry parameter at 550nm") )
 #endif
+
+! LW optical depth attributes (reference band ilw_diag=9, atmospheric window ~8-12 um)
+call check(nf90_put_att(ncid, varid(54), "units", "none") )
+call check(nf90_put_att(ncid, varid(54), "long_name", "Total mode LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(55), "units", "none") )
+call check(nf90_put_att(ncid, varid(55), "long_name", "Sulfate LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(56), "units", "none") )
+call check(nf90_put_att(ncid, varid(56), "long_name", "BC LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(57), "units", "none") )
+call check(nf90_put_att(ncid, varid(57), "long_name", "POM LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(58), "units", "none") )
+call check(nf90_put_att(ncid, varid(58), "long_name", "SOA LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(59), "units", "none") )
+call check(nf90_put_att(ncid, varid(59), "long_name", "Dust LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(60), "units", "none") )
+call check(nf90_put_att(ncid, varid(60), "long_name", "Sea salt LW absorption optical depth (band 9, ~8-12 um)") )
 
 ! Add global attribute
       call check( nf90_put_att(ncid, NF90_GLOBAL, &
@@ -628,6 +669,11 @@ call check(nf90_put_att(ncid, varid(53), "long_name", "Ammonium asymmetry parame
       tmp_asm_pom      = 0._r8 ; tmp_asm_soa      = 0._r8
       tmp_asm_dust     = 0._r8 ; tmp_asm_seasalt  = 0._r8
       tmp_asm_mode     = 0._r8
+
+      tmp_aod_lw_mode     = 0._r8
+      tmp_aod_lw_sulfate  = 0._r8 ; tmp_aod_lw_bc       = 0._r8
+      tmp_aod_lw_pom      = 0._r8 ; tmp_aod_lw_soa      = 0._r8
+      tmp_aod_lw_dust     = 0._r8 ; tmp_aod_lw_seasalt  = 0._r8
 
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 tmp_aod_mom      = 0._r8 ; tmp_aod_no3      = 0._r8 ; tmp_aod_nh4      = 0._r8
@@ -781,9 +827,9 @@ IF (nstep > 1) then
             lchnk,    pcols,     nstep,               &
             loffset,  deltat,                        &
             vmr,                tau_gaschem_simple      )
-      else
+!      else
          ! assumed constant gas chemistry production rate (mol/mol)
-         vmr(:,:,lmz_h2so4g) = vmr(:,:,lmz_h2so4g) + 1.e-16_r8*deltat
+!         vmr(:,:,lmz_h2so4g) = vmr(:,:,lmz_h2so4g) + 1.e-16_r8*deltat
       end if
 
       h2so4_aft_gaschem(:,:) = vmr(:,:,lmz_h2so4g)
@@ -873,6 +919,11 @@ END IF
        
        print*,physta%pdeldry(:,:)*rga, mamoptdiag(l)%vext_sulfate(:,:,10),  mamoptdiag(l)%vext_mode(:,:,10)*physta%pdeldry(:,:)*rga  
        end do
+
+       call  mam_aero_lw(physta, taux_lw, mamoptdiag)
+
+       write(*,'(/a,i8)') 'modal LW optical properties done, istep=', istep
+       print*,'taux_lw (band',ilw_diag,')', taux_lw(:,:,ilw_diag)
        ! store the data of each time step for netcdf output
 !
 
@@ -939,6 +990,17 @@ do i = 1, ntot_amode
    tmp_asm_dust(nstep,i)     = mamoptdiag(i)%vasm_dust(1,1,10)
    tmp_asm_seasalt(nstep,i)  = mamoptdiag(i)%vasm_seasalt(1,1,10)
    tmp_asm_mode(nstep,i)     = mamoptdiag(i)%vasm_mode(1,1,10)
+
+   ! LW absorption optical depth (reference band ilw_diag, ~8-12 um)
+   ! tauxar_lw already has units of optical depth (dimensionless)
+   ! vext_lw_* is m2/kg-air -> multiply by pdeldry*rga to get optical depth
+   tmp_aod_lw_mode    (nstep,i) = mamoptdiag(i)%tauxar_lw(1,1,ilw_diag)
+   tmp_aod_lw_sulfate (nstep,i) = mamoptdiag(i)%vext_lw_sulfate (1,1,ilw_diag) * physta%pdeldry(1,1) * rga
+   tmp_aod_lw_bc      (nstep,i) = mamoptdiag(i)%vext_lw_bc      (1,1,ilw_diag) * physta%pdeldry(1,1) * rga
+   tmp_aod_lw_pom     (nstep,i) = mamoptdiag(i)%vext_lw_pom     (1,1,ilw_diag) * physta%pdeldry(1,1) * rga
+   tmp_aod_lw_soa     (nstep,i) = mamoptdiag(i)%vext_lw_soa     (1,1,ilw_diag) * physta%pdeldry(1,1) * rga
+   tmp_aod_lw_dust    (nstep,i) = mamoptdiag(i)%vext_lw_dust    (1,1,ilw_diag) * physta%pdeldry(1,1) * rga
+   tmp_aod_lw_seasalt (nstep,i) = mamoptdiag(i)%vext_lw_seasalt (1,1,ilw_diag) * physta%pdeldry(1,1) * rga
 end do
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 do i = 1, ntot_amode
@@ -1067,6 +1129,22 @@ call check( nf90_put_var(ncid, varid(43), &
             tmp_asm_seasalt(1:nstop,1:ntot_amode)) )
 call check( nf90_put_var(ncid, varid(44), &
             tmp_asm_mode(1:nstop,1:ntot_amode)) )
+
+! Write LW absorption optical depth (reference band ilw_diag=9, ~8-12 um)
+call check( nf90_put_var(ncid, varid(54), &
+            tmp_aod_lw_mode(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(55), &
+            tmp_aod_lw_sulfate(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(56), &
+            tmp_aod_lw_bc(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(57), &
+            tmp_aod_lw_pom(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(58), &
+            tmp_aod_lw_soa(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(59), &
+            tmp_aod_lw_dust(1:nstop,1:ntot_amode)) )
+call check( nf90_put_var(ncid, varid(60), &
+            tmp_aod_lw_seasalt(1:nstop,1:ntot_amode)) )
 
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 ! Marine organic matter (MOM)

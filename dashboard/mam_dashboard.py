@@ -204,6 +204,88 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             )
             data_list.append(trace)
             ntrac1 = ntrac1 +1
+
+        # RH and TEMP gauges — top-right of subplot 1 (gas concentrations)
+        rh_value   = float(df['relhum'] * 100)
+        temp_value = float(df['temp'])
+
+        x_rh_pos   = len(ds.nsteps) * 0.78
+        x_temp_pos = len(ds.nsteps) * 0.92
+        y_rh_pos   = 10**1.5   # ~31 ppb on log scale
+        y_temp_pos = 10**1.5
+
+        # RH colour: white → blue
+        if rh_value > 75:
+            rh_outer = '#0047AB'; rh_inner = '#1E90FF'; text_color_rh = 'white'
+        elif rh_value > 50:
+            rh_outer = '#4169E1'; rh_inner = '#6495ED'; text_color_rh = 'white'
+        elif rh_value > 25:
+            rh_outer = '#87CEEB'; rh_inner = '#B0E0E6'; text_color_rh = 'black'
+        else:
+            rh_outer = '#E6F3FF'; rh_inner = '#FFFFFF';  text_color_rh = 'black'
+
+        # TEMP colour: white → red
+        if temp_value > 315:
+            temp_outer = '#8B0000'; temp_inner = '#DC143C'; text_color_temp = 'black'
+        elif temp_value > 295:
+            temp_outer = '#FF4500'; temp_inner = '#FF6347'; text_color_temp = 'black'
+        elif temp_value > 273:
+            temp_outer = '#FFA07A'; temp_inner = '#FFB6C1'; text_color_temp = 'black'
+        else:
+            temp_outer = '#FFE6E6'; temp_inner = '#FFFFFF';  text_color_temp = 'black'
+
+        trace_rh_bg = go.Scatter(
+            x=[x_rh_pos, x_rh_pos, x_rh_pos],
+            y=[y_rh_pos, y_rh_pos, y_rh_pos],
+            mode='markers',
+            marker=dict(
+                size=[80, 75, 65],
+                color=[rh_outer, 'white', rh_inner],
+                opacity=[0.9, 1.0, 0.95],
+                line=dict(color=rh_outer, width=[3, 2, 2])
+            ),
+            showlegend=False, hoverinfo='skip', name=''
+        )
+        data_list.append(trace_rh_bg)
+        ntrac1 = ntrac1 + 1
+
+        trace_rh_text = go.Scatter(
+            x=[x_rh_pos], y=[y_rh_pos],
+            mode='text',
+            text=[f'<b>RH</b><br>{rh_value:.0f}<br><b>%</b>'],
+            textfont=dict(size=12, color=text_color_rh, family='Arial Black'),
+            textposition='middle center',
+            showlegend=False, hoverinfo='skip', name=''
+        )
+        data_list.append(trace_rh_text)
+        ntrac1 = ntrac1 + 1
+
+        trace_temp_bg = go.Scatter(
+            x=[x_temp_pos, x_temp_pos, x_temp_pos],
+            y=[y_temp_pos, y_temp_pos, y_temp_pos],
+            mode='markers',
+            marker=dict(
+                size=[80, 75, 65],
+                color=[temp_outer, 'white', temp_inner],
+                opacity=[0.9, 1.0, 0.95],
+                line=dict(color=temp_outer, width=[3, 2, 2])
+            ),
+            showlegend=False, hoverinfo='skip', name=''
+        )
+        data_list.append(trace_temp_bg)
+        ntrac1 = ntrac1 + 1
+
+        trace_temp_text = go.Scatter(
+            x=[x_temp_pos], y=[y_temp_pos],
+            mode='text',
+            text=[f'<b>TEMP</b><br>{temp_value:.0f}<br><b>K</b>'],
+            textfont=dict(size=12, color=text_color_temp, family='Arial Black'),
+            textposition='middle center',
+            showlegend=False, hoverinfo='skip', name=''
+        )
+        data_list.append(trace_temp_text)
+        ntrac1 = ntrac1 + 1
+
         # Volume distribution (stacked)
         fil = 'tozeroy'
         ycum = 0
@@ -235,51 +317,6 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
         )
         data_list.append(trace)
         ntrac2 = ntrac2+1
-# Text
-        trace = go.Scatter(
-        x=[0.005] ,
-        y=[np.max(ycum)*0.6] ,
-#        y = [5.E-9],
-        mode='text',  # Show both markers and text
-        text=['RH = %s'%round(float(df['relhum']),2)],
-        name = "   ",
-        textposition='top left',
-#        marker=dict(size=10, color='blue'),
-        textfont=dict(size=16, color='blue'),
-        showlegend = False, 
-        )
-        data_list.append(trace)
-        ntrac2 = ntrac2+1
-
-        trace = go.Scatter(
-        x=[0.005] ,
-        y=[np.max(ycum)*0.8] ,
-#        y = [12.E-9],
-        mode='text',  # Show both markers and text
-        text=['TEMP = %s'%round(float(df['temp']),2)],
-        textposition='top left',
-        showlegend = False,
-        name= "  ",
-        #        marker=dict(size=10, color='blue'),
-        textfont=dict(size=16, color='red')
-        )
-        data_list.append(trace)
-        ntrac2 = ntrac2+1
-
-#        trace = go.Scatter(
-#        x=[50] ,
-#        y=[np.max(ycum)*0.8] ,
-##        y = [12.E-9],
-#        mode='text',  # Show both markers and text
-#        text=[],
-#        name = "  ",
-#        textposition='top left',
-#        marker=dict(size=10, color='blue'),
-#        textfont=dict(size=16, color='red'),
-#        legend='legend2'
-#        )
-#        data_list.append(trace)
-#        ntrac2 = ntrac2+1
 
 # Number distribution
         ymodcum = 0

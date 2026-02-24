@@ -19,18 +19,18 @@ mrhmax         = 1.,
 press          = 100000,
 /
 &chem_input
-numc = 1E4,1E4,0.,0.
+numc = 1E4,1E4,5.,0.
 mfso4 = 0.9, 0.8, 0, 0
 mfpom = 0.1, 0, 0, 0.5
 mfsoa = 0.0, 0.2, 0, 0
 mfbc  = 0.0, 0, 0, 0.5
-mfdst = 0.0, 0, 0.3, 0
-mfncl = 0.0, 0, 0.4, 0
+mfdst = 0.0, 0, 0.5, 0
+mfncl = 0.0, 0, 0.3, 0
 mfno3 = 0, 0, 0, 0
 mfnh4 = 0, 0, 0, 0
 mfco3 = 0, 0, 0, 0
 mfca  = 0, 0, 0, 0
-mfcl  = 0.0, 0, 0.3, 0
+mfcl  = 0.0, 0, 0.2, 0
 qso2          = 30,
 qh2so4        = 0,
 qsoag         = 0,
