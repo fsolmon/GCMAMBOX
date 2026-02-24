@@ -402,10 +402,12 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             total_ssa_values = []
             total_g_values   = []
             total_hyg_values = []
+            total_lwabs_values = []
             ytextpos_values = []
             ytextpos_ssa_values = []
             ytextpos_g_values = []
             ytextpos_hyg_values = []
+            ytextpos_lwabs_values = []
             #for m in df.mode.values:
             print(df['hygro_aer'].values)
             for m in [1,3,0,2]:
@@ -417,8 +419,10 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
                     total_g =  df['asm_mode'].sel(mode=m).values
                     total_g_values.append(float(total_g))
                     total_hyg =  df['hygro_aer'].sel(mode=m).values
-                    
                     total_hyg_values.append(float(total_hyg))
+                    if 'aod_lw_mode' in ds.variables:
+                        total_lwabs = df['aod_lw_mode'].sel(mode=m).values
+                        total_lwabs_values.append(float(total_lwabs))
                     ytextpos = 0.85 * maxyaod  
                     ytextpos_values.append(float(ytextpos)) 
                     ytextpos = 0.80 * maxyaod
@@ -427,6 +431,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
                     ytextpos_g_values.append(float(ytextpos))
                     ytextpos = 0.91 * maxyaod
                     ytextpos_hyg_values.append(float(ytextpos))
+                    ytextpos = 0.70 * maxyaod
+                    ytextpos_lwabs_values.append(float(ytextpos))
                 #else:
                 #    total_aod_values.append(0.0)
                 #    mode_ssa_values.append(0.0)
@@ -494,6 +500,20 @@ def create_animated_figure(nc_file='mam_output.nc', dt = 1200):
             )
             data_list.append(trace)
             ntrac4 = ntrac4 + 1
+
+            if 'aod_lw_mode' in ds.variables and total_lwabs_values:
+                trace = go.Scatter(
+                    x=x_positions,
+                    y=ytextpos_lwabs_values,
+                    mode='text',
+                    name='abs LW',
+                    text=['LW aaod = ' + f'{v:.3f}' for v in total_lwabs_values],
+                    textposition='top center',
+                    textfont=dict(size=16, color='red'),
+                    showlegend=False
+                )
+                data_list.append(trace)
+                ntrac4 = ntrac4 + 1
 
         else:
             # Placeholder if no AOD data
@@ -1071,3 +1091,4 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8050)
+
