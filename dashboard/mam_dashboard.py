@@ -1,3 +1,4 @@
+import pathlib
 import dash
 from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
@@ -127,12 +128,15 @@ qhcl          = {params['qhcl']}
 
 def run_fortran_model(work_dir='.'):
     """Run the Fortran gcmambox executable"""
+
+    BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
+    executable = BASE_DIR / "modbin" / "gcmambox"
     try:
-        result = subprocess.run(['./gcmambox'],
+        result = subprocess.run([str(executable)],
                               capture_output=True,
                               text=True,
                               timeout=30,
-                              cwd=work_dir)
+                              cwd=work_dir))
         if result.returncode != 0:
             return False, f"Error: {result.stderr}"
         return True, "Simulation completed successfully ----- Click play for results !"
@@ -733,7 +737,7 @@ html.Div([
 
                 html.Hr(style={'margin': '10px 0'}),
 
-                # Meteorology
+                # Meteorological parameters
                 html.H4("Meteorological Parameters", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("Temperature Initial (K):", style={'fontSize': '12px'}),
                 dcc.Input(id='mtmin', type='number', value=280, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
@@ -765,7 +769,7 @@ html.Div([
 
                 html.Hr(style={'margin': '10px 0'}),
 
-                # Number concentrations
+                # Number concentrations by mode
                 html.H4("Number Concentrations (#/cm³)", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("Accum:", style={'fontSize': '12px'}),
                 dcc.Input(id='numc-0', type='number', value=0.e5, style={'width': '100%', 'marginBottom': '5px'}),
@@ -778,10 +782,10 @@ html.Div([
 
                 html.Hr(style={'margin': '10px 0'}),
 
-                # Mass fractions by mode
+                # Mass fractions
                 html.H4("Mass Fractions by Mode", style={'fontSize': '16px', 'marginTop': '10px'}),
 
-                # Mode 0
+                # Mode 0 - Accumulation
                 html.Details([
                     html.Summary("Mode 0 - Accumulation", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
@@ -799,7 +803,7 @@ html.Div([
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
 
-                # Mode 1
+                # Mode 1 - Aitken
                 html.Details([
                     html.Summary("Mode 1 - Aitken", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
@@ -817,7 +821,7 @@ html.Div([
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
 
-                # Mode 2
+                # Mode 2 - Coarse
                 html.Details([
                     html.Summary("Mode 2 - Coarse", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
@@ -835,7 +839,7 @@ html.Div([
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '5px'}),
 
-                # Mode 3
+                # Mode 3 - Primary Carbon
                 html.Details([
                     html.Summary("Mode 3 - Primary Carbon", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
