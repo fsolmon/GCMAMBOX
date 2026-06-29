@@ -89,11 +89,26 @@ if(NOT NETCDF_FOUND)
     endif()
 endif()
 
+# Ensure NetCDF include dirs are set — pkg-config on some clusters returns empty Cflags
+if(NOT NETCDF_INCLUDE_DIRS OR "${NETCDF_INCLUDE_DIRS}" STREQUAL "")
+    find_program(NF_CONFIG nf-config)
+    if(NF_CONFIG)
+        execute_process(
+            COMMAND ${NF_CONFIG} --includedir
+            OUTPUT_VARIABLE NETCDF_INCLUDE_DIRS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(STATUS "NetCDF include dir from nf-config: ${NETCDF_INCLUDE_DIRS}")
+    else()
+        message(WARNING "nf-config not found; NetCDF include dir may be missing")
+    endif()
+endif()
+
 # Preprocessor settings
 # Set your CPP and CPPFLAGS here or via command line
 set(CPP "cpp" CACHE STRING "C preprocessor")
 #set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DCAMBOX_ACTIVATE_THIS -DCAMBOX_DEACTIVATE_THIS -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
-set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DMODAL_AERO -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
+set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DMODAL_AERO_4MODE_MOM -DRAIN_EVAP_TO_COARSE_AERO -DUSE_NC4" CACHE STRING "C preprocessor flags")
 
 #-----------------------------------------------------------------------------
 # Test compiler flags
@@ -101,7 +116,9 @@ set(CPPFLAGS "-P -traditional -DMOSAIC_SPECIES -DMODAL_AERO -DMODAL_AERO_4MODE_M
 include(CheckFortranCompilerFlag)
 
 # Base Fortran compiler flags (always included)
-set(BASE_FCFLAGS "-g -O0")
+# Match GCHP RelWithDebInfo: -O2 -g -DNDEBUG
+# Set to "-g -O0" for a debug/unoptimised build instead.
+set(BASE_FCFLAGS "-O2 -g -DNDEBUG")
 
 # Test common gfortran flags
 check_fortran_compiler_flag("-fno-range-check" COMPILER_SUPPORTS_NO_RANGE_CHECK)
@@ -123,8 +140,14 @@ else()
     message(STATUS "Compiler does not support -fallow-invalid-boz (likely gfortran < 10), omitting flag")
 endif()
 
-# Allow user override via cache
-set(FCFLAGS "${BASE_FCFLAGS}" CACHE STRING "Fortran compiler flags")
+# Match GCHP: allow argument type mismatches (old-style Fortran interfaces in MOSAIC)
+check_fortran_compiler_flag("-fallow-argument-mismatch" COMPILER_SUPPORTS_ALLOW_ARG_MISMATCH)
+if(COMPILER_SUPPORTS_ALLOW_ARG_MISMATCH)
+    set(BASE_FCFLAGS "${BASE_FCFLAGS} -fallow-argument-mismatch")
+endif()
+
+# Allow user override via cache; FORCE ensures the cache is refreshed on cmake re-run
+set(FCFLAGS "${BASE_FCFLAGS}" CACHE STRING "Fortran compiler flags" FORCE)
 
 message(STATUS "Final Fortran compiler flags: ${FCFLAGS}")
 
@@ -289,6 +312,8 @@ set_target_properties(${EXE} PROPERTIES
 #-----------------------------------------------------------------------------
 if(PkgConfig_FOUND AND TARGET PkgConfig::NETCDF)
     # If using pkg-config, link with the imported target
+    # Also add include dirs explicitly (some clusters leave Cflags empty in pkg-config)
+    target_include_directories(${EXE} PRIVATE ${NETCDF_INCLUDE_DIRS})
     target_link_libraries(${EXE} PRIVATE PkgConfig::NETCDF)
 else()
     # Manual linking

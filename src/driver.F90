@@ -162,7 +162,6 @@
       call  qsat( physta%t(1:pcols,1:pver), physta%pmid(1:pcols,1:pver), &
                   ev_sat(1:pcols,1:pver), qv_sat(1:pcols,1:pver) )
 !test !
-      qv_sat = 4.35E-3
       physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
       physta%q(:,:,1) = physta%qv(:,:)
        
@@ -174,7 +173,7 @@
       subroutine gcmambox_do_run( nstop, deltat)
 
       use chem_mods, only: adv_mass, gas_pcnst, imozart
-      use physconst, only: mwdry,rga
+      use physconst, only: mwdry,rga,rair
       use physics_types, only: physics_state, physics_ptend
       use physics_buffer, only: physics_buffer_desc, pbuf_get_chunk
       use mam_utils, only: l_h2so4g, l_nh3g, l_so2g, l_hno3g, l_hclg, l_soag
@@ -220,6 +219,7 @@
       integer :: lchnk, loffset, lun
       integer :: latndx(pcols), lonndx(pcols)
       integer :: n, nacc, nait, nstep
+      integer :: t_clock1, t_clock2, t_clock_rate
 
       logical :: aero_mmr_flag
       logical :: h2o_mmr_flag
@@ -249,6 +249,7 @@
       real(r8) :: h2so4_clear_fin(  pcols,pver) ! final   clear sub-area h2so4(g) mix ratio (mol/mol)
       real(r8) :: tau_gaschem_simple(pcols,pver)
       real(r8) :: tmpa, tmpb, tmpc
+      real(r8) :: conv_ug   ! kg/kg -> microg/m3 conversion factor
       real(r8) :: tmpveca(999)
       real(r8) :: told, tnew
       real(r8) :: uptkrate_h2so4(   pcols,pver) ! h2so4(g) uptake (by aerosols) rate (1/s)
@@ -279,7 +280,7 @@
       character (len = *), parameter :: FILE_NAME = "mam_output.nc"
       integer :: ncid, nstep_dimid, mode_dimid
       integer :: error
-      integer :: dimids(2), varid(60)
+      integer :: dimids(2), varid(61)
       character (8) :: date
       real(r8), dimension(nstop,ntot_amode) :: tmp_dgn_a, &
                                tmp_dgn_awet, tmp_num_aer
@@ -340,6 +341,8 @@ real(r8), dimension(nstop,ntot_amode) :: tmp_asm_mom
 
 real(r8), dimension(nstop)            :: tmp_h2so4, tmp_hno3, tmp_nh3, &
                                          tmp_soag, tmp_hcl, tmp_so2 ,tmp_relh, tmp_temp
+real(r8), dimension(nstop,ntot_amode) :: tmp_pH_aer
+real(r8)                              :: pH_aer_work(pcols,pver,ntot_amode)
 real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
                                                qtend_cond_aging_soa, &
                                                qtend_rename_so4, &
@@ -366,8 +369,8 @@ real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
       call check( nf90_create(FILE_NAME, NF90_CLOBBER, ncid) )
 
       ! Define the dimensions. NetCDF will hand back an ID for each.
-      call check( nf90_def_dim(ncid, "nsteps", nstop, nstep_dimid) )
-      call check( nf90_def_dim(ncid, "mode", ntot_amode, mode_dimid) )
+      call check( nf90_def_dim(ncid, "nsteps", nstop, nstep_dimid), "nsteps" )
+      call check( nf90_def_dim(ncid, "mode", ntot_amode, mode_dimid), "mode" )
 
       ! The dimids array is used to pass the IDs of the dimensions of
       ! the variables.
@@ -376,31 +379,31 @@ real(r8), dimension(nstop,ntot_amode) :: qtend_cond_aging_so4, &
 ! Original Variables Definition
 
 call check(nf90_def_var(ncid, "num_aer", &
-          NF90_DOUBLE, dimids, varid(1)) )
+          NF90_DOUBLE, dimids, varid(1)), "num_aer" )
 call check(nf90_def_var(ncid, "so4_aer", &
-          NF90_DOUBLE, dimids, varid(2)) )
+          NF90_DOUBLE, dimids, varid(2)), "so4_aer" )
 call check(nf90_def_var(ncid, "nh4_aer", &
-          NF90_DOUBLE, dimids, varid(3)) )
+          NF90_DOUBLE, dimids, varid(3)), "nh4_aer" )
 call check(nf90_def_var(ncid, "no3_aer", &
-          NF90_DOUBLE, dimids, varid(4)) )
+          NF90_DOUBLE, dimids, varid(4)), "no3_aer" )
 call check(nf90_def_var(ncid, "soa_aer", &
-          NF90_DOUBLE, dimids, varid(5)) )
+          NF90_DOUBLE, dimids, varid(5)), "soa_aer" )
 call check(nf90_def_var(ncid, "pom_aer", &
-          NF90_DOUBLE, dimids, varid(6)) )
+          NF90_DOUBLE, dimids, varid(6)), "pom_aer" )
 call check(nf90_def_var(ncid, "bc_aer", &
-          NF90_DOUBLE, dimids, varid(7)) )
+          NF90_DOUBLE, dimids, varid(7)), "bc_aer" )
 call check(nf90_def_var(ncid, "dst_aer", &
-          NF90_DOUBLE, dimids, varid(8)) )
+          NF90_DOUBLE, dimids, varid(8)), "dst_aer" )
 call check(nf90_def_var(ncid, "co3_aer", &
-          NF90_DOUBLE, dimids, varid(9)) )
-call check(nf90_def_var(ncid, "ncl_aer", &
-          NF90_DOUBLE, dimids, varid(10)) )
+          NF90_DOUBLE, dimids, varid(9)), "co3_aer" )
+call check(nf90_def_var(ncid, "na_aer", &
+          NF90_DOUBLE, dimids, varid(10)), "na_aer" )
 call check(nf90_def_var(ncid, "ca_aer", &
-          NF90_DOUBLE, dimids, varid(11)) )
+          NF90_DOUBLE, dimids, varid(11)), "ca_aer" )
 call check(nf90_def_var(ncid, "cl_aer", &
-          NF90_DOUBLE, dimids, varid(12)) )
+          NF90_DOUBLE, dimids, varid(12)), "cl_aer" )
 call check(nf90_def_var(ncid, "wat_aer", &
-          NF90_DOUBLE, dimids, varid(13)) )
+          NF90_DOUBLE, dimids, varid(13)), "wat_aer" )
 
 
 
@@ -419,10 +422,13 @@ call check(nf90_def_var(ncid, "so2_gas", &
           NF90_DOUBLE, dimids(1), varid(19)) )
 
 call check(nf90_def_var(ncid, "Dgn_mode", &
-          NF90_DOUBLE, dimids, varid(20)) )
+          NF90_DOUBLE, dimids, varid(20)), "Dgn_mode" )
 
 call check(nf90_def_var(ncid, "hygro_aer", &
-          NF90_DOUBLE, dimids, varid(21)) )
+          NF90_DOUBLE, dimids, varid(21)), "hygro_aer" )
+
+call check(nf90_def_var(ncid, "pH_aer", &
+          NF90_DOUBLE, dimids, varid(61)), "pH_aer" )
 
 call check(nf90_def_var(ncid, "relhum", &
           NF90_DOUBLE, dimids(1), varid(22)) )
@@ -431,101 +437,103 @@ call check(nf90_def_var(ncid, "temp", &
 
 ! Optical depth (AOD) for each species per mode
 call check(nf90_def_var(ncid, "aod_sulfate", &
-          NF90_DOUBLE, dimids, varid(24)) )
+          NF90_DOUBLE, dimids, varid(24)), "aod_sulfate" )
 call check(nf90_def_var(ncid, "aod_bc", &
-          NF90_DOUBLE, dimids, varid(25)) )
+          NF90_DOUBLE, dimids, varid(25)), "aod_bc" )
 call check(nf90_def_var(ncid, "aod_pom", &
-          NF90_DOUBLE, dimids, varid(26)) )
+          NF90_DOUBLE, dimids, varid(26)), "aod_pom" )
 call check(nf90_def_var(ncid, "aod_soa", &
-          NF90_DOUBLE, dimids, varid(27)) )
+          NF90_DOUBLE, dimids, varid(27)), "aod_soa" )
 call check(nf90_def_var(ncid, "aod_dust", &
-          NF90_DOUBLE, dimids, varid(28)) )
+          NF90_DOUBLE, dimids, varid(28)), "aod_dust" )
 call check(nf90_def_var(ncid, "aod_seasalt", &
-          NF90_DOUBLE, dimids, varid(29)) )
+          NF90_DOUBLE, dimids, varid(29)), "aod_seasalt" )
 call check(nf90_def_var(ncid, "aod_mode", &
-          NF90_DOUBLE, dimids, varid(30)) )
+          NF90_DOUBLE, dimids, varid(30)), "aod_mode" )
 
 ! Single scattering albedo for each species per mode
 call check(nf90_def_var(ncid, "ssa_sulfate", &
-          NF90_DOUBLE, dimids, varid(31)) )
+          NF90_DOUBLE, dimids, varid(31)), "ssa_sulfate" )
 call check(nf90_def_var(ncid, "ssa_bc", &
-          NF90_DOUBLE, dimids, varid(32)) )
+          NF90_DOUBLE, dimids, varid(32)), "ssa_bc" )
 call check(nf90_def_var(ncid, "ssa_pom", &
-          NF90_DOUBLE, dimids, varid(33)) )
+          NF90_DOUBLE, dimids, varid(33)), "ssa_pom" )
 call check(nf90_def_var(ncid, "ssa_soa", &
-          NF90_DOUBLE, dimids, varid(34)) )
+          NF90_DOUBLE, dimids, varid(34)), "ssa_soa" )
 call check(nf90_def_var(ncid, "ssa_dust", &
-          NF90_DOUBLE, dimids, varid(35)) )
+          NF90_DOUBLE, dimids, varid(35)), "ssa_dust" )
 call check(nf90_def_var(ncid, "ssa_seasalt", &
-          NF90_DOUBLE, dimids, varid(36)) )
+          NF90_DOUBLE, dimids, varid(36)), "ssa_seasalt" )
 call check(nf90_def_var(ncid, "ssa_mode", &
-          NF90_DOUBLE, dimids, varid(37)) )
+          NF90_DOUBLE, dimids, varid(37)), "ssa_mode" )
 
 ! Asymmetry parameter for each species per mode
 call check(nf90_def_var(ncid, "asm_sulfate", &
-          NF90_DOUBLE, dimids, varid(38)) )
+          NF90_DOUBLE, dimids, varid(38)), "asm_sulfate" )
 call check(nf90_def_var(ncid, "asm_bc", &
-          NF90_DOUBLE, dimids, varid(39)) )
+          NF90_DOUBLE, dimids, varid(39)), "asm_bc" )
 call check(nf90_def_var(ncid, "asm_pom", &
-          NF90_DOUBLE, dimids, varid(40)) )
+          NF90_DOUBLE, dimids, varid(40)), "asm_pom" )
 call check(nf90_def_var(ncid, "asm_soa", &
-          NF90_DOUBLE, dimids, varid(41)) )
+          NF90_DOUBLE, dimids, varid(41)), "asm_soa" )
 call check(nf90_def_var(ncid, "asm_dust", &
-          NF90_DOUBLE, dimids, varid(42)) )
+          NF90_DOUBLE, dimids, varid(42)), "asm_dust" )
 call check(nf90_def_var(ncid, "asm_seasalt", &
-          NF90_DOUBLE, dimids, varid(43)) )
+          NF90_DOUBLE, dimids, varid(43)), "asm_seasalt" )
 call check(nf90_def_var(ncid, "asm_mode", &
-          NF90_DOUBLE, dimids, varid(44)) )
+          NF90_DOUBLE, dimids, varid(44)), "asm_mode" )
 
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 ! Marine organic matter (MOM)
 call check(nf90_def_var(ncid, "aod_mom", &
-          NF90_DOUBLE, dimids, varid(45)) )
+          NF90_DOUBLE, dimids, varid(45)), "aod_mom" )
 call check(nf90_def_var(ncid, "ssa_mom", &
-          NF90_DOUBLE, dimids, varid(46)) )
+          NF90_DOUBLE, dimids, varid(46)), "ssa_mom" )
 call check(nf90_def_var(ncid, "asm_mom", &
-          NF90_DOUBLE, dimids, varid(47)) )
+          NF90_DOUBLE, dimids, varid(47)), "asm_mom" )
 
 ! Nitrate (NO3)
 call check(nf90_def_var(ncid, "aod_no3", &
-          NF90_DOUBLE, dimids, varid(48)) )
+          NF90_DOUBLE, dimids, varid(48)), "aod_no3" )
 call check(nf90_def_var(ncid, "ssa_no3", &
-          NF90_DOUBLE, dimids, varid(49)) )
+          NF90_DOUBLE, dimids, varid(49)), "ssa_no3" )
 call check(nf90_def_var(ncid, "asm_no3", &
-          NF90_DOUBLE, dimids, varid(50)) )
+          NF90_DOUBLE, dimids, varid(50)), "asm_no3" )
 
 ! Ammonium (NH4)
 call check(nf90_def_var(ncid, "aod_nh4", &
-          NF90_DOUBLE, dimids, varid(51)) )
+          NF90_DOUBLE, dimids, varid(51)), "aod_nh4" )
 call check(nf90_def_var(ncid, "ssa_nh4", &
-          NF90_DOUBLE, dimids, varid(52)) )
+          NF90_DOUBLE, dimids, varid(52)), "ssa_nh4" )
 call check(nf90_def_var(ncid, "asm_nh4", &
-          NF90_DOUBLE, dimids, varid(53)) )
+          NF90_DOUBLE, dimids, varid(53)), "asm_nh4" )
 #endif
   
 call check(nf90_put_att(ncid, varid(1), "units", "#/kg-air") )
-call check(nf90_put_att(ncid, varid(2), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(3), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(4), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(5), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(6), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(7), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(8), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(9), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(10), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(11), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(12), "units", "kg-aer/kg-air") )
-call check(nf90_put_att(ncid, varid(13), "units", "kg-aer/kg-air") )
+call check(nf90_put_att(ncid, varid(2),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(3),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(4),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(5),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(6),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(7),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(8),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(9),  "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(10), "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(11), "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(12), "units", "microg/m3") )
+call check(nf90_put_att(ncid, varid(13), "units", "microg/m3") )
 !gas phase
-call check(nf90_put_att(ncid, varid(14), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(15), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(16), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(17), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(18), "units", "kg-gas/kg-air") )
-call check(nf90_put_att(ncid, varid(19), "units", "kg-gas/kg-air") )
+call check(nf90_put_att(ncid, varid(14), "units", "ppb") )
+call check(nf90_put_att(ncid, varid(15), "units", "ppb") )
+call check(nf90_put_att(ncid, varid(16), "units", "ppb") )
+call check(nf90_put_att(ncid, varid(17), "units", "ppb") )
+call check(nf90_put_att(ncid, varid(18), "units", "ppb") )
+call check(nf90_put_att(ncid, varid(19), "units", "ppb") )
 !properties
 call check(nf90_put_att(ncid, varid(20), "units", "micro-m") )
 call check(nf90_put_att(ncid, varid(21), "units", "none") )
+call check(nf90_put_att(ncid, varid(61), "units", "mol/L") )
+call check(nf90_put_att(ncid, varid(61), "long_name", "aerosol H+ concentration per mode [mol/L]") )
 
 call check(nf90_put_att(ncid, varid(22), "units", "none") )
 call check(nf90_put_att(ncid, varid(23), "units", "K") )
@@ -580,13 +588,13 @@ call check(nf90_put_att(ncid, varid(44), "long_name", "Total mode asymmetry para
 ! LW absorption optical depth variables (reference band: ilw_diag=9, ~8-12 um)
 ! varid(54-60): mode total + 6 species
 ! -----------------------------------------------------------------------
-call check(nf90_def_var(ncid, "aod_lw_mode",    NF90_DOUBLE, dimids, varid(54)) )
-call check(nf90_def_var(ncid, "aod_lw_sulfate", NF90_DOUBLE, dimids, varid(55)) )
-call check(nf90_def_var(ncid, "aod_lw_bc",      NF90_DOUBLE, dimids, varid(56)) )
-call check(nf90_def_var(ncid, "aod_lw_pom",     NF90_DOUBLE, dimids, varid(57)) )
-call check(nf90_def_var(ncid, "aod_lw_soa",     NF90_DOUBLE, dimids, varid(58)) )
-call check(nf90_def_var(ncid, "aod_lw_dust",    NF90_DOUBLE, dimids, varid(59)) )
-call check(nf90_def_var(ncid, "aod_lw_seasalt", NF90_DOUBLE, dimids, varid(60)) )
+call check(nf90_def_var(ncid, "aod_lw_mode", NF90_DOUBLE, dimids, varid(54)), "aod_lw_mode" )
+call check(nf90_def_var(ncid, "aod_lw_sulfate", NF90_DOUBLE, dimids, varid(55)), "aod_lw_sulfate" )
+call check(nf90_def_var(ncid, "aod_lw_bc", NF90_DOUBLE, dimids, varid(56)), "aod_lw_bc" )
+call check(nf90_def_var(ncid, "aod_lw_pom", NF90_DOUBLE, dimids, varid(57)), "aod_lw_pom" )
+call check(nf90_def_var(ncid, "aod_lw_soa", NF90_DOUBLE, dimids, varid(58)), "aod_lw_soa" )
+call check(nf90_def_var(ncid, "aod_lw_dust", NF90_DOUBLE, dimids, varid(59)), "aod_lw_dust" )
+call check(nf90_def_var(ncid, "aod_lw_seasalt", NF90_DOUBLE, dimids, varid(60)), "aod_lw_seasalt" )
 
 #if ( ( defined MODAL_AERO_4MODE_MOM ) && ( defined MOSAIC_SPECIES ) )
 call check(nf90_put_att(ncid, varid(45), "units", "none") )
@@ -646,6 +654,7 @@ call check(nf90_put_att(ncid, varid(60), "long_name", "Sea salt LW absorption op
       tmp_soag               = 0._r8
       tmp_relh =0._r8
       tmp_temp=0._r8
+      tmp_pH_aer = 0._r8 ; pH_aer_work = 0._r8
       qtend_cond_aging_so4   = 0._r8 ; qtend_cond_aging_soa  = 0._r8
       qtend_rename_so4       = 0._r8 ; qtend_rename_soa      = 0._r8
       qtend_newnuc_so4       = 0._r8 ; qtend_newnuc_soa      = 0._r8
@@ -687,8 +696,9 @@ tmp_asm_mom      = 0._r8 ; tmp_asm_no3      = 0._r8 ; tmp_asm_nh4      = 0._r8
       lchnk = begchunk
 
 
-      latndx = -1
-      lonndx = -1
+      latndx = 0
+      lonndx = 0
+      latndx(1) = 1   ! box model: column 1 is always the diagnostic target
 
 
       nacc = modeptr_accum
@@ -716,7 +726,8 @@ tmp_asm_mom      = 0._r8 ; tmp_asm_no3      = 0._r8 ; tmp_asm_nh4      = 0._r8
       lmz_so4_a2 = l_so4_a2 - (imozart-1)
       lmz_nh4_a2 = l_nh4_a2 - (imozart-1)
 
-print*, 'starting time integration' 
+print*, 'starting time integration'
+call system_clock(t_clock1, t_clock_rate)
 main_time_loop:&
 do nstep = 1, nstop
       istep = nstep
@@ -746,12 +757,14 @@ do nstep = 1, nstop
        physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
        physta%q(:,:,1) = physta%qv(:,:)
 
-       print*, 'FAB QVSAT DE QSAT', qv_sat(:,:)
 !
 ! calcsize
 !
+      loffset = imozart - 1
+
+IF (nstep >1) then
+
       write(*,'(/a,i8)') 'cambox_do_run doing calcsize, istep=', istep
-      print*, lchnk,pcols
 
 ! *** new calcsize interface ***
 ! load state
@@ -797,6 +810,7 @@ do nstep = 1, nstop
          physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro)
 
 
+
 !
 ! switch from q & qqcw to vmr and vmrcw
 !
@@ -809,7 +823,6 @@ do nstep = 1, nstop
          vmrcw(:,:,l2) = physta%qqcw(:,:,l)*mwdry/adv_mass(l2)
       end do
 
-IF (nstep > 1) then
 !
 ! gaschem_simple
 !
@@ -862,10 +875,11 @@ IF (nstep > 1) then
       dvmrdt_bb = 0.0_r8 ; dvmrcwdt_bb = 0.0_r8
 
 !      if (nstep > 1) then ! want to write  the initial state in output
-      call modal_aero_amicphys_intr(              &
+
+    call modal_aero_amicphys_intr(              &
          mdo_gasaerexch,     mdo_rename,          &
          mdo_newnuc,         mdo_coag,            &
-         lchnk,    pcols,     nstep,               &
+         lchnk,    pcols,     1,               &
          loffset,  deltat,                        &
          latndx,   lonndx,                        &
          physta%t,   physta%pmid, physta%pdel,    &
@@ -879,8 +893,10 @@ IF (nstep > 1) then
          dvmrdt_bb,          dvmrcwdt_bb,         &
 #endif
          physta%dgncur_a,     physta%dgncur_awet, &
-         physta%wetdens,      physta%qaerwat      )
-
+         physta%wetdens,      physta%qaerwat,&
+         relhum_in  = physta%relhum,    &
+         hplus_aer_out = pH_aer_work    &
+         )
 
       dvmrdt_cond(  :,:,:) = dvmrdt_bb(  :,:,:,iqtend_cond)
       dvmrdt_rnam(  :,:,:) = dvmrdt_bb(  :,:,:,iqtend_rnam)
@@ -891,7 +907,7 @@ IF (nstep > 1) then
       dvmrcwdt_nnuc(:,:,:) = 0.0_r8
       dvmrcwdt_coag(:,:,:) = 0.0_r8
 
-END IF
+
 !
 ! done
 !
@@ -912,51 +928,51 @@ END IF
 
        call  mam_aero_sw(physta, tauxar, wa, ga, fa, mamoptdiag)
 
-       write(*,'(/a,i8)') 'modal optical properties done, istep=', istep 
-       print*,'tauxar', tauxar 
-       print*, 'wa/tauxar', wa/tauxar  
-       do l=1,4
-       
-       print*,physta%pdeldry(:,:)*rga, mamoptdiag(l)%vext_sulfate(:,:,10),  mamoptdiag(l)%vext_mode(:,:,10)*physta%pdeldry(:,:)*rga  
-       end do
 
        call  mam_aero_lw(physta, taux_lw, mamoptdiag)
 
        write(*,'(/a,i8)') 'modal LW optical properties done, istep=', istep
        print*,'taux_lw (band',ilw_diag,')', taux_lw(:,:,ilw_diag)
-       ! store the data of each time step for netcdf output
+
+END IF       
+       
+! store the data of each time step for netcdf output
 !
 
-      if (l_h2so4g > 0) tmp_h2so4 (nstep) = physta%q(1,1,l_h2so4g)* adv_mass(l_h2so4g-loffset)/mwdry *1E9
-      if (l_hno3g > 0) tmp_hno3(nstep) = physta%q(1,1,l_hno3g)* adv_mass(l_hno3g-loffset)/mwdry *1E9
-      if (l_nh3g > 0)  tmp_nh3(nstep)  = physta%q(1,1,l_nh3g)* adv_mass(l_nh3g-loffset)/mwdry *1E9
-      if (l_soag > 0)  tmp_soag(nstep) = physta%q(1,1,l_soag)* adv_mass(l_soag-loffset)/mwdry *1E9
-      if (l_hclg > 0)  tmp_hcl(nstep)  = physta%q(1,1,l_hclg)* adv_mass(l_hclg-loffset)/mwdry *1E9
-      if (l_so2g > 0)  tmp_so2(nstep)  = physta%q(1,1,l_so2g) * adv_mass(l_so2g-loffset)/mwdry *1E9
+      if (l_h2so4g > 0) tmp_h2so4 (nstep) = physta%q(1,1,l_h2so4g)* mwdry/adv_mass(l_h2so4g-loffset) *1E9
+      if (l_hno3g > 0) tmp_hno3(nstep) = physta%q(1,1,l_hno3g)* mwdry/adv_mass(l_hno3g-loffset) *1E9
+      if (l_nh3g > 0)  tmp_nh3(nstep)  = physta%q(1,1,l_nh3g)* mwdry/adv_mass(l_nh3g-loffset) *1E9
+      if (l_soag > 0)  tmp_soag(nstep) = physta%q(1,1,l_soag)* mwdry/adv_mass(l_soag-loffset) *1E9
+      if (l_hclg > 0)  tmp_hcl(nstep)  = physta%q(1,1,l_hclg)* mwdry/adv_mass(l_hclg-loffset) *1E9
+      if (l_so2g > 0)  tmp_so2(nstep)  = physta%q(1,1,l_so2g) * mwdry/adv_mass(l_so2g-loffset) *1E9
 
       tmp_dgn_a(nstep,1:ntot_amode)        = physta%dgncur_a(1,1,1:ntot_amode)
       tmp_dgn_awet(nstep,1:ntot_amode)     = physta%dgncur_awet(1,1,1:ntot_amode)
       tmp_dgn_a(nstep,1:ntot_amode)  = tmp_dgn_awet(nstep,1:ntot_amode)  ! use wet in th output
 
+      ! kg/kg -> microg/m3: rho_air = pmid/(rair*T), then *1e9
+      conv_ug = physta%pmid(1,1) / (rair * physta%t(1,1)) * 1.e9_r8
+
       do i = 1, ntot_amode
        tmp_num_aer(nstep,i) = physta%q(1,1,numptr_amode(i))
-       if(lptr_so4_a_amode(i)>0)  tmp_so4_aer(nstep,i) = physta%q(1,1,lptr_so4_a_amode(i))
-       if(lptr_nh4_a_amode(i)>0)  tmp_nh4_aer(nstep,i) = physta%q(1,1,lptr_nh4_a_amode(i))
-       if(lptr_no3_a_amode(i)>0)  tmp_no3_aer(nstep,i) = physta%q(1,1,lptr_no3_a_amode(i))
-       if(lptr_soa_a_amode(i)>0)  tmp_soa_aer(nstep,i) = physta%q(1,1,lptr_soa_a_amode(i))
-       if(lptr_pom_a_amode(i)>0)  tmp_pom_aer(nstep,i) = physta%q(1,1,lptr_pom_a_amode(i))
-       if(lptr_bc_a_amode(i)>0)   tmp_bc_aer(nstep,i)  = physta%q(1,1,lptr_bc_a_amode(i))
-       if(lptr_dust_a_amode(i)>0) tmp_dust_aer(nstep,i) = physta%q(1,1,lptr_dust_a_amode(i))
-       if(lptr_co3_a_amode(i)>0)  tmp_co3_aer(nstep,i) = physta%q(1,1,lptr_co3_a_amode(i))
-       if(lptr_ca_a_amode(i)>0)   tmp_ca_aer(nstep,i) = physta%q(1,1,lptr_ca_a_amode(i))
-       if(lptr_nacl_a_amode(i)>0) tmp_nacl_aer(nstep,i) = physta%q(1,1,lptr_nacl_a_amode(i))
-       if(lptr_cl_a_amode(i)>0) tmp_cl_aer(nstep,i) = physta%q(1,1,lptr_cl_a_amode(i))
-       tmp_wat_aer(nstep,i) = physta%qaerwat(1,1,i)
+       if(lptr_so4_a_amode(i)>0)  tmp_so4_aer(nstep,i)  = physta%q(1,1,lptr_so4_a_amode(i))  * conv_ug
+       if(lptr_nh4_a_amode(i)>0)  tmp_nh4_aer(nstep,i)  = physta%q(1,1,lptr_nh4_a_amode(i))  * conv_ug
+       if(lptr_no3_a_amode(i)>0)  tmp_no3_aer(nstep,i)  = physta%q(1,1,lptr_no3_a_amode(i))  * conv_ug
+       if(lptr_soa_a_amode(i)>0)  tmp_soa_aer(nstep,i)  = physta%q(1,1,lptr_soa_a_amode(i))  * conv_ug
+       if(lptr_pom_a_amode(i)>0)  tmp_pom_aer(nstep,i)  = physta%q(1,1,lptr_pom_a_amode(i))  * conv_ug
+       if(lptr_bc_a_amode(i)>0)   tmp_bc_aer(nstep,i)   = physta%q(1,1,lptr_bc_a_amode(i))   * conv_ug
+       if(lptr_dust_a_amode(i)>0) tmp_dust_aer(nstep,i) = physta%q(1,1,lptr_dust_a_amode(i)) * conv_ug
+       if(lptr_co3_a_amode(i)>0)  tmp_co3_aer(nstep,i)  = physta%q(1,1,lptr_co3_a_amode(i))  * conv_ug
+       if(lptr_ca_a_amode(i)>0)   tmp_ca_aer(nstep,i)   = physta%q(1,1,lptr_ca_a_amode(i))   * conv_ug
+       if(lptr_nacl_a_amode(i)>0) tmp_nacl_aer(nstep,i) = physta%q(1,1,lptr_nacl_a_amode(i)) * conv_ug
+       if(lptr_cl_a_amode(i)>0)   tmp_cl_aer(nstep,i)   = physta%q(1,1,lptr_cl_a_amode(i))   * conv_ug
+       tmp_wat_aer(nstep,i) = physta%qaerwat(1,1,i) * conv_ug
        tmp_hygro_aer(nstep,i) = physta%hygro(1,1,i)
        end do
 
        tmp_relh(nstep) = physta%relhum(1,1)
        tmp_temp(nstep) = physta%t(1,1)
+       tmp_pH_aer(nstep,1:ntot_amode) = pH_aer_work(1,1,1:ntot_amode)
 
 
        ! Store optical properties for each mode
@@ -1022,6 +1038,11 @@ end do
 #endif
 
 end do main_time_loop
+call system_clock(t_clock2)
+write(*,'(/a,f10.3,a)') 'Total wall time : ', &
+    real(t_clock2 - t_clock1) / real(t_clock_rate), ' s'
+write(*,'(a,f10.6,a)') 'Per timestep    : ', &
+    real(t_clock2 - t_clock1) / real(t_clock_rate) / real(nstop) * 1000.0, ' ms'
 
 #if (defined USE_NC4)
 !
@@ -1074,6 +1095,9 @@ call check( nf90_put_var(ncid, varid(20), &
 
 call check( nf90_put_var(ncid, varid(21), &
             tmp_hygro_aer(1:nstop,1:ntot_amode)) )
+
+call check( nf90_put_var(ncid, varid(61), &
+            tmp_pH_aer(1:nstop,1:ntot_amode)) )
 
 call check( nf90_put_var(ncid, varid(22), &
             tmp_relh(1:nstop)) )
@@ -1186,10 +1210,12 @@ call check( nf90_put_var(ncid, varid(53), &
 
 
 
-      subroutine check(status)
+      subroutine check(status, context)
       integer, intent(in) :: status
+      character(len=*), intent(in), optional :: context
 #if(defined USE_NC4)
       if(status /= nf90_noerr) then
+         if(present(context)) print *, "NetCDF error at: ", trim(context)
          print *, trim(nf90_strerror(status))
          stop "Stopped"
       end if
