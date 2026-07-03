@@ -180,13 +180,14 @@
       use modal_aero_data
       use modal_aero_calcsize, only: modal_aero_calcsize_sub
       use modal_aero_amicphys, only: modal_aero_amicphys_intr, &
-          gaexch_h2so4_uptake_optaa, newnuc_h2so4_conc_optaa, mosaic
+          gaexch_h2so4_uptake_optaa, newnuc_h2so4_conc_optaa, mosaic, update_qaerwat
       use modal_aero_wateruptake, only: modal_aero_wateruptake_dr, load_pbuf, unload_pbuf
       use gaschem_simple, only: gaschem_simple_sub
       use cloudchem_simple, only: cloudchem_simple_sub
       use wv_saturation, only : qsat
       use radconstants, only : nswbands, nlwbands
-      use mam_opt , only : mam_aero_sw, mam_aero_lw, mamoptdiag 
+      use mam_opt , only : mam_aero_sw, mam_aero_lw, mamoptdiag
+      use, intrinsic :: ieee_arithmetic, only: ieee_value, ieee_quiet_nan
 
       implicit none
 
@@ -532,8 +533,8 @@ call check(nf90_put_att(ncid, varid(19), "units", "ppb") )
 !properties
 call check(nf90_put_att(ncid, varid(20), "units", "micro-m") )
 call check(nf90_put_att(ncid, varid(21), "units", "none") )
-call check(nf90_put_att(ncid, varid(61), "units", "mol/L") )
-call check(nf90_put_att(ncid, varid(61), "long_name", "aerosol H+ concentration per mode [mol/L]") )
+call check(nf90_put_att(ncid, varid(61), "units", "none") )
+call check(nf90_put_att(ncid, varid(61), "long_name", "aerosol pH per mode (-log10 of the linearly-averaged H+ concentration)") )
 
 call check(nf90_put_att(ncid, varid(22), "units", "none") )
 call check(nf90_put_att(ncid, varid(23), "units", "K") )
@@ -726,6 +727,10 @@ tmp_asm_mom      = 0._r8 ; tmp_asm_no3      = 0._r8 ; tmp_asm_nh4      = 0._r8
       lmz_so4_a2 = l_so4_a2 - (imozart-1)
       lmz_nh4_a2 = l_nh4_a2 - (imozart-1)
 
+! use the CRH/MDRH-gated qaerwat from amicphys/astem (correct dry state at low RH)
+! rather than the ungated modal_aero_wateruptake_dr/MOSAIC_aerosol_water_only estimate
+update_qaerwat = 1
+
 print*, 'starting time integration'
 call system_clock(t_clock1, t_clock_rate)
 main_time_loop:&
@@ -757,12 +762,11 @@ do nstep = 1, nstop
        physta%qv(:,:) = physta%relhum(:,:)*qv_sat(:,:)
        physta%q(:,:,1) = physta%qv(:,:)
 
+       print*,'RELHUM',physta%relhum(:,:)
 !
 ! calcsize
 !
       loffset = imozart - 1
-
-IF (nstep >1) then
 
       write(*,'(/a,i8)') 'cambox_do_run doing calcsize, istep=', istep
 
@@ -804,12 +808,12 @@ IF (nstep >1) then
         physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro )
 
 !
-     call modal_aero_wateruptake_dr( physta, pbuf,deltat,nstep )
+     call modal_aero_wateruptake_dr( physta, pbuf, deltat, nstep, clear_rh_in=physta%relhum )
 
      call unload_pbuf( pbuf, lchnk, pcols, &
          physta%cld, physta%qqcw, physta%dgncur_a, physta%dgncur_awet,  physta%qaerwat, physta%wetdens, physta%hygro)
 
-
+       print*, 'qaerwat', physta%qaerwat
 
 !
 ! switch from q & qqcw to vmr and vmrcw
@@ -823,6 +827,7 @@ IF (nstep >1) then
          vmrcw(:,:,l2) = physta%qqcw(:,:,l)*mwdry/adv_mass(l2)
       end do
 
+IF (nstep >1) then
 !
 ! gaschem_simple
 !
@@ -879,7 +884,7 @@ IF (nstep >1) then
     call modal_aero_amicphys_intr(              &
          mdo_gasaerexch,     mdo_rename,          &
          mdo_newnuc,         mdo_coag,            &
-         lchnk,    pcols,     1,               &
+         lchnk,    pcols,     nstep,               &
          loffset,  deltat,                        &
          latndx,   lonndx,                        &
          physta%t,   physta%pmid, physta%pdel,    &
@@ -907,6 +912,7 @@ IF (nstep >1) then
       dvmrcwdt_nnuc(:,:,:) = 0.0_r8
       dvmrcwdt_coag(:,:,:) = 0.0_r8
 
+END IF
 
 !
 ! done
@@ -934,8 +940,7 @@ IF (nstep >1) then
        write(*,'(/a,i8)') 'modal LW optical properties done, istep=', istep
        print*,'taux_lw (band',ilw_diag,')', taux_lw(:,:,ilw_diag)
 
-END IF       
-       
+
 ! store the data of each time step for netcdf output
 !
 
@@ -968,11 +973,19 @@ END IF
        if(lptr_cl_a_amode(i)>0)   tmp_cl_aer(nstep,i)   = physta%q(1,1,lptr_cl_a_amode(i))   * conv_ug
        tmp_wat_aer(nstep,i) = physta%qaerwat(1,1,i) * conv_ug
        tmp_hygro_aer(nstep,i) = physta%hygro(1,1,i)
+       ! FAB: pH_aer_work holds H+ concentration [mol/L] (averaged linearly across
+       ! bins/subareas, which is the physically correct way to average acidity).
+       ! Convert to pH = -log10([H+]) only here, at the point of storage, so the
+       ! "pH_aer" netCDF variable is unambiguous to any downstream consumer.
+       if (pH_aer_work(1,1,i) > 0._r8) then
+          tmp_pH_aer(nstep,i) = -log10(pH_aer_work(1,1,i))
+       else
+          tmp_pH_aer(nstep,i) = ieee_value(1._r8, ieee_quiet_nan)  ! no aerosol water / no H+ diagnosed
+       end if
        end do
 
        tmp_relh(nstep) = physta%relhum(1,1)
        tmp_temp(nstep) = physta%t(1,1)
-       tmp_pH_aer(nstep,1:ntot_amode) = pH_aer_work(1,1,1:ntot_amode)
 
 
        ! Store optical properties for each mode

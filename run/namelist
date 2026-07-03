@@ -1,10 +1,10 @@
 &time_input
 mam_dt         = 1200,
-mam_nstep      = 50,
+mam_nstep      = 2,
 /
 &cntl_input
 mdo_mambox     = 1,
-mdo_coldstart   = 1,
+mdo_coldstart  = 1,
 mdo_gaschem    = 1,
 mdo_gasaerexch = 1,
 mdo_rename     = 1,
@@ -12,29 +12,30 @@ mdo_newnuc     = 1,
 mdo_coag       = 1,
 /
 &met_input
-mtmin           = 275,
-mtmax           = 275,
-mrhmin          = 0.0,
-mrhmax         = 1.,
-press          = 100000,
+mtmin           = 290.99,
+mtmax           = 290.99,
+mrhmin          = 0.5,
+mrhmax          = 0.5,
+press           = 100940.15,
 /
 &chem_input
-numc = 1E4,1E4,5.,0.
-mfso4 = 0.9, 0.8, 0, 0
-mfpom = 0.1, 0, 0, 0.5
-mfsoa = 0.0, 0.2, 0, 0
-mfbc  = 0.0, 0, 0, 0.5
-mfdst = 0.0, 0, 0.5, 0
-mfncl = 0.0, 0, 0.3, 0
-mfno3 = 0, 0, 0, 0
-mfnh4 = 0, 0, 0, 0
-mfco3 = 0, 0, 0, 0
-mfca  = 0, 0, 0, 0
-mfcl  = 0.0, 0, 0.2, 0
-qso2          = 30,
-qh2so4        = 0,
-qsoag         = 0,
-qhno3         = 30,
-qnh3          = 5,
-qhcl          = 0
+masstot =   2.9784E+00,  6.7393E-02,  4.8205E+00,  1.7862E-02
+mfso4 =   0.4935,  0.5687,  0.0264,  0.0000
+mfpom =   0.0739,  0.0000,  0.0000,  0.7328
+mfsoa =   0.1544,  0.1526,  0.0000,  0.0000
+mfbc =   0.0207,  0.0000,  0.0000,  0.2672
+mfdst =   0.0000,  0.0000,  0.4961,  0.0000
+mfncl =   0.0043,  0.0000,  0.1930,  0.0000
+mfno3 =   0.0577,  0.0596,  0.0117,  0.0000
+mfnh4 =   0.1940,  0.2164,  0.0004,  0.0000
+mfco3 =   0.0000,  0.0000,  0.0000,  0.0000
+mfca =   0.0000,  0.0000,  0.0000,  0.0000
+mfcl =   0.0014,  0.0028,  0.2723,  0.0000
+qso2          =   0.,
+qh2so4        =   2.094525E-07,
+qsoag         =   2.025251E-02,
+qhno3         =   1.354441E+00,
+qnh3          =   3.584931E+00,
+qhcl          =   1.278906E-01
+
 /

@@ -146,6 +146,23 @@ if(COMPILER_SUPPORTS_ALLOW_ARG_MISMATCH)
     set(BASE_FCFLAGS "${BASE_FCFLAGS} -fallow-argument-mismatch")
 endif()
 
+# Performance: purely mechanical codegen improvements on top of -O2 (same optimization
+# level/semantics as GCHP, just better vectorization/unrolling) -- not -O3 or -ffast-math,
+# which would change floating-point operation ordering and reduce numerical comparability
+# with GCHP, and -ffast-math specifically would break the IEEE NaN handling the pH
+# diagnostic now relies on.
+# -march=native ties the binary to this machine's CPU (no AVX-level portability to a
+# different host); fine for a local research build, but rebuild if moving to another machine.
+check_fortran_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+if(COMPILER_SUPPORTS_MARCH_NATIVE)
+    set(BASE_FCFLAGS "${BASE_FCFLAGS} -march=native")
+endif()
+
+check_fortran_compiler_flag("-funroll-loops" COMPILER_SUPPORTS_UNROLL_LOOPS)
+if(COMPILER_SUPPORTS_UNROLL_LOOPS)
+    set(BASE_FCFLAGS "${BASE_FCFLAGS} -funroll-loops")
+endif()
+
 # Allow user override via cache; FORCE ensures the cache is refreshed on cmake re-run
 set(FCFLAGS "${BASE_FCFLAGS}" CACHE STRING "Fortran compiler flags" FORCE)
 
