@@ -176,7 +176,7 @@
       use physconst, only: mwdry,rga,rair
       use physics_types, only: physics_state, physics_ptend
       use physics_buffer, only: physics_buffer_desc, pbuf_get_chunk
-      use mam_utils, only: l_h2so4g, l_nh3g, l_so2g, l_hno3g, l_hclg, l_soag
+      use mam_utils, only: l_h2so4g, l_nh3g, l_so2g, l_hno3g, l_hclg, l_soag, alk_a0_na
       use modal_aero_data
       use modal_aero_calcsize, only: modal_aero_calcsize_sub
       use modal_aero_amicphys, only: modal_aero_amicphys_intr, &
@@ -206,6 +206,18 @@
       integer, parameter :: iqqcwtend_rnam = 1
 
       integer :: i, icalcaer_flag, iwaterup_flag
+      ! FAB (box-ssalk): emission term = first-order replacement of mode emis_mode by its initial (fresh)
+      ! state with mean residence emis_tau [s] (exponential age distribution); emis_fixgas = 1 holds
+      ! HNO3/HCl/NH3 at their initial values. Optional namelist &emis_input; emis_tau <= 0 = closed box.
+      real(r8) :: emis_tau, frel
+      ! FAB (box-ssalk): h2so4_prod [ppt/h] = constant H2SO4(g) production added before amicphys (0 = off)
+      real(r8) :: h2so4_prod
+      ! so4_add_r = sulfate added directly to mode emis_mode each step, as a fraction of the alkalinity emitted
+      ! in that step (eq/eq; stands for cloud-borne return, SO2+O3 and other closure-free sulfate inputs)
+      real(r8) :: so4_add_r
+      integer  :: emis_mode, emis_fixgas, ios_emis, lsp
+      real(r8), allocatable :: q_fresh(:,:,:)
+      namelist /emis_input/ emis_tau, emis_mode, emis_fixgas, h2so4_prod, so4_add_r
       integer :: istep
       integer :: itmpa, itmpb
       integer :: k
@@ -733,6 +745,16 @@ update_qaerwat = 1
 
 print*, 'starting time integration'
 call system_clock(t_clock1, t_clock_rate)
+      emis_tau = 0.0_r8; emis_mode = 3; emis_fixgas = 0; h2so4_prod = 0.0_r8; so4_add_r = 0.0_r8
+      open (UNIT = 102, FILE = 'namelist', STATUS = 'OLD')
+      read (102, emis_input, iostat=ios_emis)
+      close (102)
+      if (ios_emis /= 0) then; emis_tau = 0.0_r8; h2so4_prod = 0.0_r8; so4_add_r = 0.0_r8; end if
+      print '(a,es11.3,2i4,es11.3)', ' BOX emis_input: emis_tau [s], emis_mode, emis_fixgas, h2so4_prod [ppt/h] =', &
+         emis_tau, emis_mode, emis_fixgas, h2so4_prod
+      print '(a,es11.3)', ' BOX emis_input: so4_add_r [eq SO4 / eq alkalinity emitted] =', so4_add_r
+      allocate(q_fresh(pcols,pver,pcnst))
+
 main_time_loop:&
 do nstep = 1, nstop
       istep = nstep
@@ -767,6 +789,26 @@ do nstep = 1, nstop
 ! calcsize
 !
       loffset = imozart - 1
+
+IF (nstep == 1) q_fresh = physta%q
+
+      if (nstep > 1 .and. emis_tau > 0.0_r8) then
+         frel = 1.0_r8 - exp(-deltat/emis_tau)
+         physta%q(:,:,numptr_amode(emis_mode)) = physta%q(:,:,numptr_amode(emis_mode)) &
+            + frel*(q_fresh(:,:,numptr_amode(emis_mode)) - physta%q(:,:,numptr_amode(emis_mode)))
+         do lsp = 1, nspec_amode(emis_mode)
+            l = lmassptr_amode(lsp,emis_mode)
+            physta%q(:,:,l) = physta%q(:,:,l) + frel*(q_fresh(:,:,l) - physta%q(:,:,l))
+         end do
+         if (so4_add_r > 0.0_r8) physta%q(:,:,lptr_so4_a_amode(emis_mode)) =                    &
+            physta%q(:,:,lptr_so4_a_amode(emis_mode)) + so4_add_r*frel*alk_a0_na               &
+            *q_fresh(:,:,lptr_nacl_a_amode(emis_mode))/22.99_r8*0.5_r8*96.06_r8
+      end if
+      if (nstep > 1 .and. emis_fixgas == 1) then
+         if (l_hno3g > 0) physta%q(:,:,l_hno3g) = q_fresh(:,:,l_hno3g)
+         if (l_hclg  > 0) physta%q(:,:,l_hclg)  = q_fresh(:,:,l_hclg)
+         if (l_nh3g  > 0) physta%q(:,:,l_nh3g)  = q_fresh(:,:,l_nh3g)
+      end if
 
       write(*,'(/a,i8)') 'cambox_do_run doing calcsize, istep=', istep
 
@@ -850,6 +892,7 @@ IF (nstep >1) then
 !         vmr(:,:,lmz_h2so4g) = vmr(:,:,lmz_h2so4g) + 1.e-16_r8*deltat
       end if
 
+      if (h2so4_prod > 0.0_r8) vmr(:,:,lmz_h2so4g) = vmr(:,:,lmz_h2so4g) + h2so4_prod*1.0e-12_r8/3600.0_r8*deltat
       h2so4_aft_gaschem(:,:) = vmr(:,:,lmz_h2so4g)
 
 !
