@@ -11,6 +11,12 @@ import tempfile
 import uuid
 import shutil
 
+# Resolve the executable and optics files relative to this script, not the launch directory
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+GCMAMBOX_EXE = os.path.join(SCRIPT_DIR, 'gcmambox')
+ASSETS_DIR = os.path.join(SCRIPT_DIR, 'assets')
+DOC_FILE = os.path.join(SCRIPT_DIR, '..', 'doc', 'doc_gcmambox.md')
+
 # ============================================================================
 # Log-normal distribution functions (from original script)
 # ============================================================================
@@ -165,17 +171,18 @@ def get_optical_input_files(base_dir='./'):
         'mam4_mode4_rrtmg_c130628.nc',
     ]
     
-    # Check which files exist and return their full paths
+    # Check which files exist; return full paths of existing ones and names of missing ones
     existing_files = []
+    missing_files = []
     for fname in optical_files:
         fpath = os.path.join(base_dir, fname)
-        print(fpath)
         if os.path.exists(fpath):
             existing_files.append(fpath)
         else:
-            print(f"Warning: Optical file not found: {fpath}")
-    
-    return existing_files
+            print(f"Error: Optical file not found: {fpath}")
+            missing_files.append(fname)
+
+    return existing_files, missing_files
 
 def create_animated_figure(nc_file='mam_output.nc', dt=1200):
     """Create the animated plotly figure from NetCDF output"""
@@ -752,6 +759,31 @@ def create_mass_fraction_input(species, mode, default_value):
 
 app = dash.Dash(__name__)
 
+@app.server.route('/doc')
+def serve_doc():
+    """Render doc/doc_gcmambox.md as an HTML page (linked from the Doc button)"""
+    import html as htmllib
+    try:
+        with open(DOC_FILE, encoding='utf-8') as f:
+            text = f.read()
+    except OSError:
+        return f"Documentation file not found: {DOC_FILE}", 404
+    try:
+        import markdown
+        body = markdown.markdown(text, extensions=['tables', 'fenced_code'])
+    except ImportError:
+        body = f"<pre>{htmllib.escape(text)}</pre>"
+    return f"""<!doctype html><html><head><meta charset="utf-8">
+<title>GCMAMBOX documentation</title>
+<style>
+body {{ font-family: sans-serif; max-width: 900px; margin: 2em auto; padding: 0 1em; line-height: 1.5; }}
+table {{ border-collapse: collapse; margin: 1em 0; }}
+th, td {{ border: 1px solid #ccc; padding: 4px 10px; }}
+th {{ background: #f0f0f0; }}
+code, pre {{ background: #f5f5f5; }}
+pre {{ padding: 10px; overflow-x: auto; }}
+</style></head><body>{body}</body></html>"""
+
 app.layout = html.Div([
 
 #    html.Div([
@@ -763,7 +795,7 @@ html.Div([
     html.Img(src='assets/logo.png', style={'height': '130px', 'width': '419px'}),
     html.Div([
         html.A('📄 Doc !',
-               href='assets/doc.pdf',
+               href='/doc',
                target='_blank',
                style={'padding': '16px 16px',
                       'backgroundColor': '#0066cc', 'color': 'white', 'textDecoration': 'none',
@@ -1121,27 +1153,27 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
         }
 
         # Copy executable to temp directory
-        if os.path.exists('./gcmambox'):
-            shutil.copy('./gcmambox', temp_dir)
+        if os.path.exists(GCMAMBOX_EXE):
+            shutil.copy(GCMAMBOX_EXE, temp_dir)
         else:
             return (go.Figure().add_annotation(
-                text="gcmambox executable not found",
+                text=f"gcmambox executable not found: {GCMAMBOX_EXE}",
                 xref="paper", yref="paper",
                 x=0.5, y=0.5, showarrow=False,
                 font=dict(size=20, color='red')
             ), "❌ Executable not found")
 
-        # Copy optical input files to temp directory
-        optical_files = get_optical_input_files('./assets')
-        if not optical_files:
-            print("Warning: No optical input files found. Simulation may fail.")
-        else:
-            for fpath in optical_files:
-                try:
-                    shutil.copy(fpath, temp_dir)
-                    print(f"Copied optical file: {os.path.basename(fpath)}")
-                except Exception as e:
-                    print(f"Warning: Could not copy {fpath}: {e}")
+        # Copy optical input files to temp directory; gcmambox cannot run without all of them
+        optical_files, missing_files = get_optical_input_files(ASSETS_DIR)
+        if missing_files:
+            return (go.Figure().add_annotation(
+                text=f"Optical files missing in {ASSETS_DIR}:<br>" + "<br>".join(missing_files),
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False,
+                font=dict(size=16, color='red')
+            ), "❌ Optical input files missing")
+        for fpath in optical_files:
+            shutil.copy(fpath, temp_dir)
 
 
         # Write namelist file in temp directory
