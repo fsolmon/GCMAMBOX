@@ -212,12 +212,15 @@
       real(r8) :: emis_tau, frel
       ! FAB (box-ssalk): h2so4_prod [ppt/h] = constant H2SO4(g) production added before amicphys (0 = off)
       real(r8) :: h2so4_prod
+      ! FAB (box): constant gas production/emission rates [ppb/h] added with h2so4_prod (0 = off)
+      real(r8) :: hno3_prod, nh3_prod, hcl_prod, soag_prod
       ! so4_add_r = sulfate added directly to mode emis_mode each step, as a fraction of the alkalinity emitted
       ! in that step (eq/eq; stands for cloud-borne return, SO2+O3 and other closure-free sulfate inputs)
       real(r8) :: so4_add_r
       integer  :: emis_mode, emis_fixgas, ios_emis, lsp
       real(r8), allocatable :: q_fresh(:,:,:)
-      namelist /emis_input/ emis_tau, emis_mode, emis_fixgas, h2so4_prod, so4_add_r
+      namelist /emis_input/ emis_tau, emis_mode, emis_fixgas, h2so4_prod, so4_add_r, &
+                            hno3_prod, nh3_prod, hcl_prod, soag_prod
       integer :: istep
       integer :: itmpa, itmpb
       integer :: k
@@ -746,13 +749,18 @@ update_qaerwat = 1
 print*, 'starting time integration'
 call system_clock(t_clock1, t_clock_rate)
       emis_tau = 0.0_r8; emis_mode = 3; emis_fixgas = 0; h2so4_prod = 0.0_r8; so4_add_r = 0.0_r8
+      hno3_prod = 0.0_r8; nh3_prod = 0.0_r8; hcl_prod = 0.0_r8; soag_prod = 0.0_r8
       open (UNIT = 102, FILE = 'namelist', STATUS = 'OLD')
       read (102, emis_input, iostat=ios_emis)
       close (102)
-      if (ios_emis /= 0) then; emis_tau = 0.0_r8; h2so4_prod = 0.0_r8; so4_add_r = 0.0_r8; end if
+      if (ios_emis /= 0) then; emis_tau = 0.0_r8; h2so4_prod = 0.0_r8; so4_add_r = 0.0_r8
+         hno3_prod = 0.0_r8; nh3_prod = 0.0_r8; hcl_prod = 0.0_r8; soag_prod = 0.0_r8
+      end if
       print '(a,es11.3,2i4,es11.3)', ' BOX emis_input: emis_tau [s], emis_mode, emis_fixgas, h2so4_prod [ppt/h] =', &
          emis_tau, emis_mode, emis_fixgas, h2so4_prod
       print '(a,es11.3)', ' BOX emis_input: so4_add_r [eq SO4 / eq alkalinity emitted] =', so4_add_r
+      print '(a,4es11.3)', ' BOX emis_input: hno3/nh3/hcl/soag_prod [ppb/h] =', &
+         hno3_prod, nh3_prod, hcl_prod, soag_prod
       allocate(q_fresh(pcols,pver,pcnst))
 
 main_time_loop:&
@@ -893,6 +901,11 @@ IF (nstep >1) then
       end if
 
       if (h2so4_prod > 0.0_r8) vmr(:,:,lmz_h2so4g) = vmr(:,:,lmz_h2so4g) + h2so4_prod*1.0e-12_r8/3600.0_r8*deltat
+      ! constant gas sources [ppb/h -> mol/mol per step]; negative values act as sinks, floored at 0
+      if (hno3_prod /= 0.0_r8 .and. l_hno3g > 0) vmr(:,:,lmz_hno3g) = max(0.0_r8, vmr(:,:,lmz_hno3g) + hno3_prod*1.0e-9_r8/3600.0_r8*deltat)
+      if (nh3_prod  /= 0.0_r8 .and. l_nh3g  > 0) vmr(:,:,lmz_nh3g)  = max(0.0_r8, vmr(:,:,lmz_nh3g)  + nh3_prod *1.0e-9_r8/3600.0_r8*deltat)
+      if (hcl_prod  /= 0.0_r8 .and. l_hclg  > 0) vmr(:,:,lmz_hclg)  = max(0.0_r8, vmr(:,:,lmz_hclg)  + hcl_prod *1.0e-9_r8/3600.0_r8*deltat)
+      if (soag_prod /= 0.0_r8 .and. l_soag  > 0) vmr(:,:,lmz_soag)  = max(0.0_r8, vmr(:,:,lmz_soag)  + soag_prod*1.0e-9_r8/3600.0_r8*deltat)
       h2so4_aft_gaschem(:,:) = vmr(:,:,lmz_h2so4g)
 
 !

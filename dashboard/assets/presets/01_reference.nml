@@ -1,0 +1,53 @@
+! title: Reference: mixed aerosol, closed box
+! description: Dashboard default values. Mixed accumulation, Aitken, coarse (dust + sea salt) and primary-carbon aerosol with HNO3 and NH3 available; RH rises from 0.4 to 0.6 over 16.7 h. Shows gas-to-particle partitioning of nitrate and ammonium and hygroscopic growth.
+&time_input
+mam_dt         = 600,
+mam_nstep      = 100,
+/
+&cntl_input
+mdo_mambox     = 1,
+mdo_coldstart  = 1,
+mdo_gaschem    = 0,
+mdo_gasaerexch = 1,
+mdo_rename     = 1,
+mdo_newnuc     = 1,
+mdo_coag       = 1,
+accom_coef_h2so4 = 0.65,
+accom_coef_hno3  = 0.1,
+accom_coef_hcl   = 0.1,
+accom_coef_nh3   = 0.092,
+/
+&met_input
+mtmin           = 285,
+mtmax           = 285,
+mrhmin          = 0.4,
+mrhmax         = 0.6,
+press          = 100000.0,
+/
+&chem_input
+masstot = 10.0,2.0,20.0,1.5
+mfso4 = 0.3, 0.65, 0.0, 0.0
+mfpom = 0.1, 0.0, 0.0, 0.5
+mfsoa = 0.1, 0.2, 0.0, 0.0
+mfbc  = 0.05, 0.0, 0.0, 0.5
+mfdst = 0.05, 0.0, 0.35, 0.0
+mfncl = 0.05, 0.0, 0.32, 0.0
+mfno3 = 0.15, 0.0, 0.0, 0.0
+mfnh4 = 0.15, 0.15, 0.0, 0.0
+mfco3 = 0.0, 0.0, 0.0, 0.0
+mfca  = 0.0, 0.0, 0.0, 0.0
+mfcl  = 0.05, 0.0, 0.33, 0.0
+qso2          = 0.0,
+qh2so4        = 0.0,
+qsoag         = 0.05,
+qhno3         = 8.0,
+qnh3          = 10.0,
+qhcl          = 0.02
+/
+&emis_input
+h2so4_prod    = 0.0,
+hno3_prod     = 0.0,
+nh3_prod      = 0.0,
+hcl_prod      = 0.0,
+soag_prod     = 0.0,
+/

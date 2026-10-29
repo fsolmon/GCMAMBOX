@@ -1,0 +1,53 @@
+! title: Ammonium nitrate formation by cooling and humidification
+! description: Ammonium sulfate seed with 5 ppb HNO3 and 5 ppb NH3; over 12 h the air cools from 298 to 278 K while RH rises from 0.4 to 0.85. HNO3 and NH3 condense as ammonium nitrate and aerosol water increases strongly.
+&time_input
+mam_dt         = 600,
+mam_nstep      = 72,
+/
+&cntl_input
+mdo_mambox     = 1,
+mdo_coldstart  = 1,
+mdo_gaschem    = 0,
+mdo_gasaerexch = 1,
+mdo_rename     = 1,
+mdo_newnuc     = 1,
+mdo_coag       = 1,
+accom_coef_h2so4 = 0.65,
+accom_coef_hno3  = 0.1,
+accom_coef_hcl   = 0.1,
+accom_coef_nh3   = 0.092,
+/
+&met_input
+mtmin           = 298,
+mtmax           = 278,
+mrhmin          = 0.4,
+mrhmax         = 0.85,
+press          = 100000.0,
+/
+&chem_input
+masstot = 5.0,0.5,0.0,0.5
+mfso4 = 0.6, 0.8, 0.0, 0.0
+mfpom = 0.2, 0.0, 0.0, 0.5
+mfsoa = 0.0, 0.0, 0.0, 0.0
+mfbc  = 0.0, 0.0, 0.0, 0.5
+mfdst = 0.0, 0.0, 0.0, 0.0
+mfncl = 0.0, 0.0, 0.0, 0.0
+mfno3 = 0.0, 0.0, 0.0, 0.0
+mfnh4 = 0.2, 0.2, 0.0, 0.0
+mfco3 = 0.0, 0.0, 0.0, 0.0
+mfca  = 0.0, 0.0, 0.0, 0.0
+mfcl  = 0.0, 0.0, 0.0, 0.0
+qso2          = 0.0,
+qh2so4        = 0.0,
+qsoag         = 0.0,
+qhno3         = 5.0,
+qnh3          = 5.0,
+qhcl          = 0.0
+/
+&emis_input
+h2so4_prod    = 0.0,
+hno3_prod     = 0.0,
+nh3_prod      = 0.0,
+hcl_prod      = 0.0,
+soag_prod     = 0.0,
+/

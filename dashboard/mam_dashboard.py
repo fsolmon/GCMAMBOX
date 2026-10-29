@@ -16,6 +16,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GCMAMBOX_EXE = os.path.join(SCRIPT_DIR, 'gcmambox')
 ASSETS_DIR = os.path.join(SCRIPT_DIR, 'assets')
 DOC_FILE = os.path.join(SCRIPT_DIR, '..', 'doc', 'doc_gcmambox.md')
+PRESET_DIR = os.path.join(ASSETS_DIR, 'presets')
 
 # ============================================================================
 # Log-normal distribution functions (from original script)
@@ -46,7 +47,6 @@ def lognormal_volume_distribution(Dg, sigma_g, V_total, x_min=0.001, x_max=100.,
 # ============================================================================
 
 gascolor = {
-    'so2_gas': 'green',
     'h2so4_gas': 'lightgreen',
     'hno3_gas': 'blue',
     'nh3_gas': 'orange',
@@ -131,6 +131,13 @@ qhno3         = {params['qhno3']},
 qnh3          = {params['qnh3']},
 qhcl          = {params['qhcl']}
 /
+&emis_input
+h2so4_prod    = {params['h2so4_prod']},
+hno3_prod     = {params['hno3_prod']},
+nh3_prod      = {params['nh3_prod']},
+hcl_prod      = {params['hcl_prod']},
+soag_prod     = {params['soag_prod']},
+/
 """
     with open(namelist_path, 'w') as f:
         f.write(namelist_content)
@@ -184,7 +191,66 @@ def get_optical_input_files(base_dir='./'):
 
     return existing_files, missing_files
 
-def create_animated_figure(nc_file='mam_output.nc', dt=1200):
+# ============================================================================
+# Preset cases: namelist files in assets/presets/ (also runnable directly by gcmambox)
+# Header lines "! title: ..." and "! description: ..." are shown in the dashboard.
+# ============================================================================
+
+MF_SPECIES = ['so4', 'pom', 'soa', 'bc', 'dst', 'ncl', 'no3', 'nh4', 'co3', 'ca', 'cl']
+PROCESS_FLAGS = [('mdo_gasaerexch', 'gasaerexch'), ('mdo_rename', 'rename'),
+                 ('mdo_newnuc', 'newnuc'), ('mdo_coag', 'coag')]
+PRESET_SCALARS = ['mam_dt', 'mam_nstep', 'mtmin', 'mtmax', 'press', 'mrhmin', 'mrhmax',
+                  'qh2so4', 'qhno3', 'qnh3', 'qsoag', 'qhcl',
+                  'accom_coef_h2so4', 'accom_coef_hno3', 'accom_coef_hcl', 'accom_coef_nh3',
+                  'hno3_prod', 'nh3_prod', 'soag_prod', 'hcl_prod']
+# dashboard input ids filled by a preset
+PRESET_FIELDS = (['process_controls', 'h2so4_prod'] + PRESET_SCALARS
+                 + [f'masstot-{m}' for m in range(4)]
+                 + [f'mf{sp}-{m}' for sp in MF_SPECIES for m in range(4)])
+
+def read_preset(path):
+    """Parse a preset namelist file -> (title, description, {name: float or list})"""
+    title, description, values = os.path.basename(path), '', {}
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if line.lower().startswith('! title:'):
+                title = line.split(':', 1)[1].strip()
+            elif line.lower().startswith('! description:'):
+                description = line.split(':', 1)[1].strip()
+            line = line.split('!')[0].strip()
+            if '=' not in line or line.startswith('&'):
+                continue
+            key, val = line.split('=', 1)
+            nums = [float(v) for v in val.replace(',', ' ').split()]
+            values[key.strip().lower()] = nums[0] if len(nums) == 1 else nums
+    return title, description, values
+
+def list_presets():
+    """Dropdown options for the preset files, sorted by file name"""
+    if not os.path.isdir(PRESET_DIR):
+        return []
+    return [{'label': read_preset(os.path.join(PRESET_DIR, f))[0], 'value': f}
+            for f in sorted(os.listdir(PRESET_DIR)) if f.endswith('.nml')]
+
+def preset_to_inputs(values):
+    """Map preset namelist values to dashboard input values (ordered as PRESET_FIELDS)"""
+    out = {}
+    if any(flag in values for flag, _ in PROCESS_FLAGS):
+        out['process_controls'] = [name for flag, name in PROCESS_FLAGS if values.get(flag, 0) > 0]
+    if 'h2so4_prod' in values:
+        out['h2so4_prod'] = values['h2so4_prod'] / 1000.   # ppt/h in the namelist, ppb/h in the UI
+    for key in PRESET_SCALARS:
+        if key in values:
+            out[key] = int(values[key]) if key in ('mam_dt', 'mam_nstep') else values[key]
+    for m, v in enumerate(values.get('masstot', [])):
+        out[f'masstot-{m}'] = v
+    for sp in MF_SPECIES:
+        for m, v in enumerate(values.get(f'mf{sp}', [])):
+            out[f'mf{sp}-{m}'] = v
+    return [out.get(field, dash.no_update) for field in PRESET_FIELDS]
+
+def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
     """Create the animated plotly figure from NetCDF output"""
     try:
         ds = xr.open_dataset(nc_file)
@@ -209,7 +275,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
             trace = go.Scatter(
                 x=conc.nsteps.values,
                 y=conc.values,
-                name=g,
+                name=f'{g} ({float(df[g].values):.3g})',
                 line_color=gascolor[g],
                 legend='legend'
             )
@@ -222,8 +288,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
 
         x_rh_pos   = len(ds.nsteps) * 0.78
         x_temp_pos = len(ds.nsteps) * 0.92
-        y_rh_pos   = 10**1.5   # ~31 ppb on log scale
-        y_temp_pos = 10**1.5
+        y_rh_pos   = 10**1.15  # ~14 ppb on log scale, clear of the panel top
+        y_temp_pos = 10**1.15
 
         # RH colour: white → blue
         if rh_value > 75:
@@ -379,17 +445,18 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
         data_list.append(trace)
         ntrac2 = ntrac2+1
 
-# Number distribution
+# Number distribution, converted from #/kg-air to #/cm3 with the air density at this step
+        kg_to_cm3 = press / (287.05 * float(df['temp'])) * 1.e-6
         ymodcum = 0
         ntrac3 = ntrac2
         for m in df.mode.values:
             Dg = df['Dgn_mode'].sel(mode=m).values * 1.E6
             sigma_g = sigmag[m]
-            num = df['num_aer'].sel(mode=m).values
+            num = df['num_aer'].sel(mode=m).values * kg_to_cm3
             x_num, y_num = lognormal_distribution(Dg, sigma_g, num)
             trace = go.Scatter(
                 x=x_num, y=y_num, fill='tozeroy',
-                mode='none', name=modname[int(m)],
+                mode='none', name=f'{modname[int(m)]} ({float(num):.3g})',
                 legend='legend3'
             )
             data_list.append(trace)
@@ -397,7 +464,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
             ntrac3 = ntrac3+1
         trace = go.Scatter(
             x=x_num, y=ymodcum, mode='lines',
-            name='Total number', line_color='black',
+            name=f"Total number ({float(df['num_aer'].sum().values) * kg_to_cm3:.3g})", line_color='black',
             legend='legend3'
         )
         data_list.append(trace)
@@ -618,7 +685,11 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
         frames += [go.Frame(data=data_list, name='step%s' % s)]
 
     # Create figure with subplots
-    fig = go.Figure().set_subplots(4, 1, vertical_spacing=0.05, row_heights=[0.22, 0.22, 0.22, 0.34])
+    fig = go.Figure().set_subplots(4, 1, vertical_spacing=0.07, row_heights=[0.22, 0.26, 0.22, 0.30],
+                                   subplot_titles=('<b>Gas concentrations</b>',
+                                                   '<b>Aerosol mass size distribution</b>',
+                                                   '<b>Aerosol number size distribution</b>',
+                                                   '<b>Mode properties</b>'))
 
     fig.add_traces(frames[0].data[0:ntrac1], 1, 1)
     fig.add_traces(frames[0].data[ntrac1:ntrac2], 2, 1)
@@ -635,7 +706,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
     fig.update_yaxes(range=[0, np.max(ycum)], title='aer. dm/dlogD (µg.m⁻³)', row=2, col=1)
 
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=3, col=1)
-    fig.update_yaxes(type='log', range=[5, 11], title='aer. dN/dlogD (#.kg-1)', row=3, col=1)
+    fig.update_yaxes(type='log', range=[-1, 6], title='aer. dN/dlogD (#.cm⁻³)', row=3, col=1)
 
     
 #    fig.update_xaxes(type="log", range=[-3, 2], title='Wet Diameter (µm)', row=4, col=1)
@@ -650,7 +721,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
         "pad": {"b": 10, "t": 10},
         "len": 0.9,
         "x": 0.1,
-        "y": 1.0,  # Move to top
+        "y": 1.025,  # above the first subplot title
         "yanchor": "bottom",
         "currentvalue":{"prefix": "Time (mn) : "},
         "steps": [
@@ -673,29 +744,32 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
         sliders=sliders,
         barmode='stack',  # Enable stacking for AOD bars
         height=1600,
-        margin=dict(t=80, b=40, l=60, r=40),  # Add top margin for controls
-        # Legend 1 - Gas concentrations (top subplot, ~75% from bottom)
+        margin=dict(t=120, b=40, l=60, r=40),  # top margin for the play/slider controls
+        # Legends aligned with the top of their subplot (row domains from set_subplots)
+        # Legend 1 - Gas concentrations (top subplot)
         legend=dict(
-            x=1.02, y=0.98, xanchor='left', yanchor='top',
+            x=1.02, y=fig.layout.yaxis.domain[1], xanchor='left', yanchor='top',
             font=dict(size=14),
-            traceorder='normal'
+            traceorder='normal',
+            title=dict(text='<b>Gas Concentration (ppb)</b>', font=dict(size=14))
         ),
-        # Legend 2 - Volume distribution (~50% from bottom)
+        # Legend 2 - Mass distribution
         legend2=dict(
-            x=1.02, y=0.73, xanchor='left', yanchor='top',
+            x=1.02, y=fig.layout.yaxis2.domain[1], xanchor='left', yanchor='top',
             font=dict(size=14),
             traceorder='normal',
             title=dict(text='<b>Mass Concentration (µg/m³)</b>', font=dict(size=14))
         ),
-        # Legend 3 - Number distribution (~25% from bottom)
+        # Legend 3 - Number distribution
         legend3=dict(
-            x=1.02, y=0.40, xanchor='left', yanchor='top',
+            x=1.02, y=fig.layout.yaxis3.domain[1], xanchor='left', yanchor='top',
             font=dict(size=14),
-            traceorder='normal'
+            traceorder='normal',
+            title=dict(text='<b>Number Concentration (#/cm³)</b>', font=dict(size=14))
         ),
         # Legend 4 - AOD (bottom subplot)
         legend4=dict(
-            x=1.02, y=0.19, xanchor='left', yanchor='top',
+            x=1.02, y=fig.layout.yaxis4.domain[1], xanchor='left', yanchor='top',
             font=dict(size=14),
             traceorder='normal'
         ),
@@ -727,7 +801,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200):
             "type": "buttons",
             "x": 0.0,
             "xanchor": "left",
-            "y": 1.02,  # Move to top
+            "y": 1.045,  # above the first subplot title
             "yanchor": "bottom",
         }]
     )
@@ -809,6 +883,8 @@ html.Div([
         html.Div([
             html.Div([
                 html.H3("Simulation Controls", style={'marginTop': '0'}),
+                html.Div("Set the parameters below manually, or select a predefined case to prefill them.",
+                         style={'fontSize': '12px', 'marginBottom': '10px'}),
 
                 # Run button at the top
                 html.Button('Run Simulation', id='run-button', n_clicks=0,
@@ -817,6 +893,16 @@ html.Div([
                                  'border': 'none', 'cursor': 'pointer', 'borderRadius': '5px', 'marginBottom': '10px'}),
 
                 html.Div(id='status-message', style={'marginTop': '5px', 'marginBottom': '10px', 'fontWeight': 'bold', 'fontSize': '12px'}),
+
+                html.Hr(style={'margin': '10px 0'}),
+
+                # Predefined cases: fill all parameters below from a namelist in assets/presets/ (values stay editable)
+                html.H4("Predefined Case", style={'fontSize': '16px', 'marginTop': '10px'}),
+                dcc.Dropdown(id='preset',
+                             options=[{'label': 'Custom (keep current values)', 'value': 'custom'}] + list_presets(),
+                             value='custom', clearable=False,
+                             style={'fontSize': '12px', 'marginBottom': '5px'}),
+                html.Div(id='preset-description', style={'fontSize': '11px', 'fontStyle': 'italic', 'marginBottom': '10px'}),
 
                 html.Hr(style={'margin': '10px 0'}),
 
@@ -829,18 +915,17 @@ html.Div([
 
                 html.Hr(style={'margin': '10px 0'}),
 
-                # Process controls
-                html.H4("Process Controls", style={'fontSize': '16px', 'marginTop': '10px'}),
+                # Aerosol processes
+                html.H4("Aerosol Processes", style={'fontSize': '16px', 'marginTop': '10px'}),
                 dcc.Checklist(
                     id='process_controls',
                     options=[
-                        {'label': ' Gas Chemistry', 'value': 'gaschem'},
                         {'label': ' Gas-Aerosol Exchange', 'value': 'gasaerexch'},
                         {'label': ' Rename', 'value': 'rename'},
                         {'label': ' New Nucleation', 'value': 'newnuc'},
                         {'label': ' Coagulation', 'value': 'coag'},
                     ],
-                    value=['gaschem', 'gasaerexch', 'rename', 'newnuc', 'coag'],
+                    value=['gasaerexch', 'rename', 'newnuc', 'coag'],
                     style={'fontSize': '12px'}
                 ),
 
@@ -861,10 +946,10 @@ html.Div([
 
                 html.Hr(style={'margin': '10px 0'}),
 
-                # Gas concentrations
-                html.H4("Gas Concentrations (ppb)", style={'fontSize': '16px', 'marginTop': '10px'}),
-                html.Label("SO2:", style={'fontSize': '12px'}),
-                dcc.Input(id='qso2', type='number', value=10., style={'width': '100%', 'marginBottom': '5px'}),
+                # Gas phase: initial concentrations + production rates
+                # (SO2 and its oxidation are not used: mdo_gaschem = 0, qso2 = 0)
+                html.H4("Gas Phase", style={'fontSize': '16px', 'marginTop': '10px'}),
+                html.Div("Initial concentrations (ppb)", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                 html.Label("H2SO4:", style={'fontSize': '12px'}),
                 dcc.Input(id='qh2so4', type='number', value=0., style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("HNO3:", style={'fontSize': '12px'}),
@@ -876,25 +961,28 @@ html.Div([
                 html.Label("HCl:", style={'fontSize': '12px'}),
                 dcc.Input(id='qhcl', type='number', value=0.02, style={'width': '100%', 'marginBottom': '10px'}),
 
-                # Accommodation coefficients (collapsible)
+                # Constant production rates of aerosol precursor gases (collapsible)
                 html.Details([
-                    html.Summary("Accommodation Coefficients", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Summary("Production rates (ppb/h)", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
                         html.Label("H2SO4:", style={'fontSize': '12px'}),
-                        dcc.Input(id='accom_coef_h2so4', type='number', value=0.650, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                        dcc.Input(id='h2so4_prod', type='number', value=0., step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
                         html.Label("HNO3:", style={'fontSize': '12px'}),
-                        dcc.Input(id='accom_coef_hno3', type='number', value=0.100, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
-                        html.Label("HCl:", style={'fontSize': '12px'}),
-                        dcc.Input(id='accom_coef_hcl', type='number', value=0.100, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                        dcc.Input(id='hno3_prod', type='number', value=0., step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
                         html.Label("NH3:", style={'fontSize': '12px'}),
-                        dcc.Input(id='accom_coef_nh3', type='number', value=0.092, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                        dcc.Input(id='nh3_prod', type='number', value=0., step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("SOAG:", style={'fontSize': '12px'}),
+                        dcc.Input(id='soag_prod', type='number', value=0., step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("HCl:", style={'fontSize': '12px'}),
+                        dcc.Input(id='hcl_prod', type='number', value=0., step=0.01, style={'width': '100%', 'marginBottom': '5px'}),
                     ], style={'marginTop': '5px'})
                 ], style={'marginBottom': '10px'}),
 
                 html.Hr(style={'margin': '10px 0'}),
 
-                # Total mass per mode
-                html.H4("Mode Total Mass (µg/m³)", style={'fontSize': '16px', 'marginTop': '10px'}),
+                # Aerosol initial conditions: total mass per mode + mass fractions
+                html.H4("Aerosol Initial Conditions", style={'fontSize': '16px', 'marginTop': '10px'}),
+                html.Div("Mode total mass (µg/m³)", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                 html.Label("Accum:", style={'fontSize': '12px'}),
                 dcc.Input(id='masstot-0', type='number', value=10.0, min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Aitken:", style={'fontSize': '12px'}),
@@ -904,10 +992,8 @@ html.Div([
                 html.Label("Prim C:", style={'fontSize': '12px'}),
                 dcc.Input(id='masstot-3', type='number', value=1.5,  min=0, step=0.1, style={'width': '100%', 'marginBottom': '10px'}),
 
-                html.Hr(style={'margin': '10px 0'}),
-
                 # Mass fractions by mode
-                html.H4("Mass Fractions by Mode", style={'fontSize': '16px', 'marginTop': '10px'}),
+                html.Div("Mass fractions by mode", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
 
                 # Mode 0
                 html.Details([
@@ -981,6 +1067,24 @@ html.Div([
                     ], style={'paddingLeft': '10px', 'paddingTop': '5px'})
                 ], open=False, style={'marginBottom': '10px'}),
 
+                html.Hr(style={'margin': '10px 0'}),
+
+                # Accommodation coefficients (gas-aerosol exchange parameters, collapsible)
+                html.Details([
+                    html.Summary("Accommodation Coefficients", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Div([
+                        html.Label("H2SO4:", style={'fontSize': '12px'}),
+                        dcc.Input(id='accom_coef_h2so4', type='number', value=0.650, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("HNO3:", style={'fontSize': '12px'}),
+                        dcc.Input(id='accom_coef_hno3', type='number', value=0.100, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("HCl:", style={'fontSize': '12px'}),
+                        dcc.Input(id='accom_coef_hcl', type='number', value=0.100, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("NH3:", style={'fontSize': '12px'}),
+                        dcc.Input(id='accom_coef_nh3', type='number', value=0.092, min=0, max=1, step=0.001, style={'width': '100%', 'marginBottom': '5px'}),
+                    ], style={'marginTop': '5px'})
+                ], style={'marginBottom': '10px'}),
+
+
             ], style={'padding': '15px', 'overflowY': 'auto', 'minHeight': '100%'})
         ], style={'width': '15%', 'minHeight': '1650px', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
 
@@ -1001,6 +1105,18 @@ html.Div([
 # ============================================================================
 
 @app.callback(
+    [Output(field, 'value') for field in PRESET_FIELDS] + [Output('preset-description', 'children')],
+    Input('preset', 'value'),
+    prevent_initial_call=True
+)
+def load_preset(preset):
+    """Fill the inputs from the selected preset file ('custom' leaves them unchanged)"""
+    if preset == 'custom':
+        return [dash.no_update] * len(PRESET_FIELDS) + ['']
+    _, description, values = read_preset(os.path.join(PRESET_DIR, preset))
+    return preset_to_inputs(values) + [description]
+
+@app.callback(
     [Output('animation-plot', 'figure'),
      Output('status-message', 'children')],
     [Input('run-button', 'n_clicks')],
@@ -1012,7 +1128,6 @@ html.Div([
      State('press', 'value'),
      State('mrhmin', 'value'),
      State('mrhmax', 'value'),
-     State('qso2', 'value'),
      State('qh2so4', 'value'),
      State('qhno3', 'value'),
      State('qnh3', 'value'),
@@ -1023,6 +1138,12 @@ html.Div([
      State('accom_coef_hno3', 'value'),
      State('accom_coef_hcl', 'value'),
      State('accom_coef_nh3', 'value'),
+     # Gas production rates (ppb/h)
+     State('h2so4_prod', 'value'),
+     State('hno3_prod', 'value'),
+     State('nh3_prod', 'value'),
+     State('soag_prod', 'value'),
+     State('hcl_prod', 'value'),
      # Total mass per mode (µg/m³)
      State('masstot-0', 'value'),
      State('masstot-1', 'value'),
@@ -1080,8 +1201,9 @@ html.Div([
     prevent_initial_call=False
 )
 def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, mrhmin,mrhmax,
-                   qso2, qh2so4, qhno3, qnh3, qsoag, qhcl,
+                   qh2so4, qhno3, qnh3, qsoag, qhcl,
                    accom_coef_h2so4, accom_coef_hno3, accom_coef_hcl, accom_coef_nh3,
+                   h2so4_prod, hno3_prod, nh3_prod, soag_prod, hcl_prod,
                    masstot0, masstot1, masstot2, masstot3,
                    # Mode 0 mass fractions
                    mfso4_0, mfpom_0, mfsoa_0, mfbc_0, mfdst_0, mfncl_0,
@@ -1116,7 +1238,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
         params = {
             'mam_dt': mam_dt,
             'mam_nstep': mam_nstep,
-            'mdo_gaschem': 1 if 'gaschem' in processes else 0,
+            'mdo_gaschem': 0,
             'mdo_gasaerexch': 1 if 'gasaerexch' in processes else 0,
             'mdo_rename': 1 if 'rename' in processes else 0,
             'mdo_newnuc': 1 if 'newnuc' in processes else 0,
@@ -1140,7 +1262,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             'mfco3': [mfco3_0, mfco3_1, mfco3_2, mfco3_3],
             'mfca': [mfca_0, mfca_1, mfca_2, mfca_3],
             'mfcl': [mfcl_0, mfcl_1, mfcl_2, mfcl_3],
-            'qso2': qso2,
+            'qso2': 0.,
             'qh2so4': qh2so4,
             'qsoag': qsoag,
             'qhno3': qhno3,
@@ -1150,6 +1272,13 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             'accom_coef_hno3': accom_coef_hno3,
             'accom_coef_hcl': accom_coef_hcl,
             'accom_coef_nh3': accom_coef_nh3,
+            # empty input fields come back as None -> no source
+            # h2so4_prod is in ppt/h in the namelist, ppb/h in the UI
+            'h2so4_prod': (h2so4_prod or 0.) * 1000.,
+            'hno3_prod': hno3_prod or 0.,
+            'nh3_prod': nh3_prod or 0.,
+            'soag_prod': soag_prod or 0.,
+            'hcl_prod': hcl_prod or 0.,
         }
 
         # Copy executable to temp directory
@@ -1199,7 +1328,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             shutil.copy(output_nc, session_output)
             print('mam_dt',mam_dt)
             # Create figure from session-specific results
-            fig = create_animated_figure(session_output, dt=mam_dt)
+            fig = create_animated_figure(session_output, dt=mam_dt, press=press)
 
             # Clean up session-specific output file after creating figure
             try:
@@ -1224,5 +1353,9 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
             print(f"Warning: Could not clean up temp directory {temp_dir}: {e}")
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8050)
+    import argparse
+    parser = argparse.ArgumentParser(description='MAM box model dashboard')
+    parser.add_argument('-p', '--port', type=int, default=8050, help='port to serve on (default: 8050)')
+    args = parser.parse_args()
+    app.run(debug=True, host='0.0.0.0', port=args.port)
 
