@@ -177,7 +177,7 @@ def get_optical_input_files(base_dir='./'):
         'mam4_mode3_rrtmg_aeronetdust_c141106.nc',
         'mam4_mode4_rrtmg_c130628.nc',
     ]
-    
+
     # Check which files exist; return full paths of existing ones and names of missing ones
     existing_files = []
     missing_files = []
@@ -469,10 +469,10 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         )
         data_list.append(trace)
         ntrac3 = ntrac3+1
-              
+
 #  Modal AOD Bar Chart
         ntrac4 = ntrac3
-        
+
         # Check if AOD data exists in dataset
         if 'aod_mode' in ds.variables:
             # Get wet diameters for bar X positions (convert to micrometers)
@@ -488,7 +488,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
             #    x_left = 10**(log_center - log_width/2)
             #    x_right = 10**(log_center + log_width/2)
             #    bar_widths.append(x_right - x_left)
-            
+
             # Define species and colors for stacking
             aod_species = ['aod_sulfate', 'aod_bc', 'aod_pom','aod_mom', 'aod_soa', 'aod_dust', 'aod_seasalt','aod_no3',  'aod_nh4']
             species_colors = {
@@ -499,10 +499,10 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
                 'aod_dust': 'yellow',
                 'aod_seasalt': 'grey',
                 'aod_mom': 'brown',      # Marine organic matter
-                'aod_no3': 'blue',       
-                'aod_nh4': 'orange',     
+                'aod_no3': 'blue',
+                'aod_nh4': 'orange',
             }
-            
+
             # Create stacked bars for each species
             for species in aod_species:
                 if species in ds.variables:
@@ -511,7 +511,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
                     for m in [1,3,0,2]:
                        aod_val = df[species].sel(mode=m).values
                        y_values.append(float(aod_val))
-                    
+
                     # Create bar trace
                     trace = go.Bar(
                         x=x_positions,
@@ -524,7 +524,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
                     )
                     data_list.append(trace)
                     ntrac4 = ntrac4 + 1
-            
+
             # Add total SSA arkers at top of stacks
             total_aod_values = []
             total_ssa_values = []
@@ -543,7 +543,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
             print(df['hygro_aer'].values)
             for m in [1,3,0,2]:
                 #if 'aod_mode' in ds.variables:
-                    total_aod = df['aod_mode'].sel(mode=m).values 
+                    total_aod = df['aod_mode'].sel(mode=m).values
                     total_aod_values.append(float(total_aod))
                     total_ssa =  df['ssa_mode'].sel(mode=m).values
                     total_ssa_values.append(float(total_ssa))
@@ -554,8 +554,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
                     if 'aod_lw_mode' in ds.variables:
                         total_lwabs = df['aod_lw_mode'].sel(mode=m).values
                         total_lwabs_values.append(float(total_lwabs))
-                    ytextpos = 0.85 * maxyaod  
-                    ytextpos_values.append(float(ytextpos)) 
+                    ytextpos = 0.85 * maxyaod
+                    ytextpos_values.append(float(ytextpos))
                     ytextpos = 0.80 * maxyaod
                     ytextpos_ssa_values.append(float(ytextpos))
                     ytextpos = 0.75 * maxyaod
@@ -578,8 +578,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
             # ssa as scatter plot on top
             trace = go.Scatter(
                 x=x_positions,
-               # y=total_aod_values ,switch to fixed position 
-                y= ytextpos_hyg_values , 
+               # y=total_aod_values ,switch to fixed position
+                y= ytextpos_hyg_values ,
                 mode='text',
                 name='mode hygrosc.',
                 marker=dict(size=14, color='black', symbol='diamond'),
@@ -610,7 +610,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
 
             trace = go.Scatter(
                 x=x_positions,
-               # y=total_aod_values ,switch to fixed position 
+               # y=total_aod_values ,switch to fixed position
                 y= ytextpos_ssa_values ,
                 mode='text',
                 name='Mode ssa',
@@ -626,7 +626,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
 
             trace = go.Scatter(
                 x=x_positions,
-               # y=total_aod_values ,switch to fixed position 
+               # y=total_aod_values ,switch to fixed position
                 y= ytextpos_g_values ,
                 mode='text',
                 name='Mode asy',
@@ -708,7 +708,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=3, col=1)
     fig.update_yaxes(type='log', range=[-1, 6], title='aer. dN/dlogD (#.cm⁻³)', row=3, col=1)
 
-    
+
 #    fig.update_xaxes(type="log", range=[-3, 2], title='Wet Diameter (µm)', row=4, col=1)
     fig.update_xaxes(title='MAM mode', tickfont=dict(size=16), row=4, col=1)
     fig.update_yaxes(range=[0, maxyaod ], title='wet AOD @ 550nm / DZ =1 km', row=4, col=1)
