@@ -1323,17 +1323,9 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
         # Copy output file back to main directory with unique session name
         output_nc = os.path.join(temp_dir, 'mam_output.nc')
         if os.path.exists(output_nc):
-            session_output = f'mam_output_{session_id}.nc'
-            shutil.copy(output_nc, session_output)
             print('mam_dt',mam_dt)
             # Create figure from session-specific results
-            fig = create_animated_figure(session_output, dt=mam_dt, press=press)
-
-            # Clean up session-specific output file after creating figure
-            try:
-                os.remove(session_output)
-            except Exception as e:
-                print(f"Warning: Could not remove {session_output}: {e}")
+            fig = create_animated_figure(output_nc, dt=mam_dt, press=press)
 
             return fig, "✅ " + message
         else:
