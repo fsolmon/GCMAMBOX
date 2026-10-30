@@ -539,8 +539,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
             ytextpos_hyg_values = []
             ytextpos_lwabs_values = []
             ytextpos_pH_values = []
-            #for m in df.mode.values:
-            print(df['hygro_aer'].values)
+
             for m in [1,3,0,2]:
                 #if 'aod_mode' in ds.variables:
                     total_aod = df['aod_mode'].sel(mode=m).values
