@@ -13,7 +13,7 @@ import shutil
 
 # Resolve the executable and optics files relative to this script, not the launch directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-GCMAMBOX_EXE = os.path.join(SCRIPT_DIR, 'gcmambox')
+GCMAMBOX_EXE = os.path.join(SCRIPT_DIR, "..", "modbin", 'gcmambox')
 ASSETS_DIR = os.path.join(SCRIPT_DIR, 'assets')
 DOC_FILE = os.path.join(SCRIPT_DIR, '..', 'doc', 'doc_gcmambox.md')
 PRESET_DIR = os.path.join(ASSETS_DIR, 'presets')
