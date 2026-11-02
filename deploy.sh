@@ -9,7 +9,12 @@ export UV_CACHE_DIR=/var/cache/gcmambox-uv
 
 cd "$APP_DIR"
 
-git fetch upstream --tags
+if [ ! -z "$(git status --porcelain)" ]; then
+  echo "Uncommited changes - aborting"
+  exit 1;
+fi
+
+git fetch origin --tags
 git reset --hard origin/main
 
 uv sync --frozen
