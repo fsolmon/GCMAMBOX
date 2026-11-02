@@ -10,7 +10,7 @@ export UV_CACHE_DIR=/var/cache/gcmambox-uv
 cd "$APP_DIR"
 
 git fetch upstream --tags
-git reset --hard origin/main
+git reset --hard upstream/main
 
 uv sync --frozen
 
