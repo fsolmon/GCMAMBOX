@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "dash>=4.5.0",
-    "gunicorn>=23.0.0",
+    "gunicorn>=26.2.0",
     "matplotlib>=3.9.4",
     "netcdf4>=1.7.2",
     "numpy>=2.0.2",
