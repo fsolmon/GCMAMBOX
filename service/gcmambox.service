@@ -1,0 +1,26 @@
+[Unit]
+Description=DASHBOARD FOR GCMAMBOX (Modal Aerosol Module boxmodel for dev in Geos-Chem)
+After=network-online.target
+Wants=network-online.target
+# StartLimitIntervalSec=300
+# StartLimitBurst=1
+
+[Service]
+Type=simple
+User=gcmambox
+Group=gcmambox
+ExecStart=/opt/GCMAMBOX/service/start_gcmambox.sh
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+CacheDirectory=gcmambox
+
+# sandboxing
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
