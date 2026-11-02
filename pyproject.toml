@@ -18,7 +18,7 @@ dependencies = [
 dev = [
     "black>=25.11.0",
     "ipython>=8.18.1",
-    "ruff>=0.14.8",
+    "ruff>=0.17.3",
 ]
 
 
