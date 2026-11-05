@@ -332,9 +332,9 @@ real(r8), dimension(nstop,ntot_amode) :: tmp_asm_sulfate, tmp_asm_bc, &
                                          tmp_asm_mode
 
 ! LW optical diagnostics - per-mode total LW absorption optical depth
-! and per-species contributions.  Reference band: ilw=9 (atmospheric window,
-! ~8-12 um, 1000-1390 cm-1), analogous to isw=10 (550 nm) for the SW.
-integer, parameter :: ilw_diag = 9   ! LW diagnostic band index
+! and per-species contributions.  Reference band: ilw=7 (atmospheric window,
+! 980-1080 cm-1, 9.3-10.2 um; as idx_lw_diag in CAM), analogous to isw=10 (550 nm) for the SW.
+integer, parameter :: ilw_diag = 7   ! LW diagnostic band index
 real(r8), dimension(nstop,ntot_amode) :: tmp_aod_lw_mode, &
                                          tmp_aod_lw_sulfate, &
                                          tmp_aod_lw_bc, &
@@ -601,7 +601,7 @@ call check(nf90_put_att(ncid, varid(44), "units", "none") )
 call check(nf90_put_att(ncid, varid(44), "long_name", "Total mode asymmetry parameter at 550nm") )
 
 ! -----------------------------------------------------------------------
-! LW absorption optical depth variables (reference band: ilw_diag=9, ~8-12 um)
+! LW absorption optical depth variables (reference band: ilw_diag=7, 9.3-10.2 um)
 ! varid(54-60): mode total + 6 species
 ! -----------------------------------------------------------------------
 call check(nf90_def_var(ncid, "aod_lw_mode", NF90_DOUBLE, dimids, varid(54)), "aod_lw_mode" )
@@ -635,21 +635,21 @@ call check(nf90_put_att(ncid, varid(53), "units", "none") )
 call check(nf90_put_att(ncid, varid(53), "long_name", "Ammonium asymmetry parameter at 550nm") )
 #endif
 
-! LW optical depth attributes (reference band ilw_diag=9, atmospheric window ~8-12 um)
+! LW optical depth attributes (reference band ilw_diag=7, atmospheric window 9.3-10.2 um)
 call check(nf90_put_att(ncid, varid(54), "units", "none") )
-call check(nf90_put_att(ncid, varid(54), "long_name", "Total mode LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(54), "long_name", "Total mode LW absorption optical depth (band 7, 9.3-10.2 um)") )
 call check(nf90_put_att(ncid, varid(55), "units", "none") )
-call check(nf90_put_att(ncid, varid(55), "long_name", "Sulfate LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(55), "long_name", "Sulfate LW absorption optical depth (band 7, 9.3-10.2 um)") )
 call check(nf90_put_att(ncid, varid(56), "units", "none") )
-call check(nf90_put_att(ncid, varid(56), "long_name", "BC LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(56), "long_name", "BC LW absorption optical depth (band 7, 9.3-10.2 um)") )
 call check(nf90_put_att(ncid, varid(57), "units", "none") )
-call check(nf90_put_att(ncid, varid(57), "long_name", "POM LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(57), "long_name", "POM LW absorption optical depth (band 7, 9.3-10.2 um)") )
 call check(nf90_put_att(ncid, varid(58), "units", "none") )
-call check(nf90_put_att(ncid, varid(58), "long_name", "SOA LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(58), "long_name", "SOA LW absorption optical depth (band 7, 9.3-10.2 um)") )
 call check(nf90_put_att(ncid, varid(59), "units", "none") )
-call check(nf90_put_att(ncid, varid(59), "long_name", "Dust LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(59), "long_name", "Dust LW absorption optical depth (band 7, 9.3-10.2 um)") )
 call check(nf90_put_att(ncid, varid(60), "units", "none") )
-call check(nf90_put_att(ncid, varid(60), "long_name", "Sea salt LW absorption optical depth (band 9, ~8-12 um)") )
+call check(nf90_put_att(ncid, varid(60), "long_name", "Sea salt LW absorption optical depth (band 7, 9.3-10.2 um)") )
 
 ! Add global attribute
       call check( nf90_put_att(ncid, NF90_GLOBAL, &
@@ -1076,7 +1076,7 @@ do i = 1, ntot_amode
    tmp_asm_seasalt(nstep,i)  = mamoptdiag(i)%vasm_seasalt(1,1,10)
    tmp_asm_mode(nstep,i)     = mamoptdiag(i)%vasm_mode(1,1,10)
 
-   ! LW absorption optical depth (reference band ilw_diag, ~8-12 um)
+   ! LW absorption optical depth (reference band ilw_diag, 9.3-10.2 um)
    ! tauxar_lw already has units of optical depth (dimensionless)
    ! vext_lw_* is m2/kg-air -> multiply by pdeldry*rga to get optical depth
    tmp_aod_lw_mode    (nstep,i) = mamoptdiag(i)%tauxar_lw(1,1,ilw_diag)
@@ -1223,7 +1223,7 @@ call check( nf90_put_var(ncid, varid(43), &
 call check( nf90_put_var(ncid, varid(44), &
             tmp_asm_mode(1:nstop,1:ntot_amode)) )
 
-! Write LW absorption optical depth (reference band ilw_diag=9, ~8-12 um)
+! Write LW absorption optical depth (reference band ilw_diag=7, 9.3-10.2 um)
 call check( nf90_put_var(ncid, varid(54), &
             tmp_aod_lw_mode(1:nstop,1:ntot_amode)) )
 call check( nf90_put_var(ncid, varid(55), &
