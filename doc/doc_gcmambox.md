@@ -7,6 +7,9 @@ other key modal aerosol properties such as optical properties,
 hygroscopicity and pH. The dashboard lets you set up a case, run
 it, and watch the evolution as an animation.
 
+**Contact:** Fabien Solmon, Atmospheric Chemistry group, IAC, ETH Zürich —
+fsolmon -at- env.ethz.ch. Code: <https://github.com/fsolmon/GCMAMBOX>.
+
 ### Origin of the box model
 
 GCMAMBOX is built on a MAM4-MOSAIC library: the Modal Aerosol Model (MAM;
@@ -34,31 +37,31 @@ the mode's mass and number.
 | 4 | Primary carbon | 0.050 µm | 1.6 |
 
 Species: sulfate (SO4), primary organic matter (POM), secondary organic
-aerosol (SOA), black carbon (BC), dust, sea salt (NaCl), nitrate (NO3),
-ammonium (NH4), carbonate (CO3), calcium (Ca), chloride (Cl). Not every mode
+aerosol (SOA), black carbon (BC), dust (DST non CaCO3), nitrate (NO3),
+ammonium (NH4), carbonate (CO3), calcium (Ca), sodium(Na), chloride (Cl). Aerosol water mass is calculated in function of RH and modal properties. Not every mode
 carries every species; a mass fraction given for a species a mode does not
 carry is ignored.
 
-Gases: H2SO4, HNO3, NH3, HCl and SOAG (the gas-phase SOA precursor); the
-model also carries SO2.
+Gases: H2SO4, HNO3, NH3, HCl and SOAG (the gas-phase SOA precursor).
+
 
 ### Processes
 
 | Process | What it does |
-|---|---|
-| **Gas production** | Constant production (or emission) rates of the aerosol precursor gases H2SO4, HNO3, NH3, HCl and SOAG, added at every step |
+|---|---
 | **Gas–aerosol exchange** | Condensation/evaporation of H2SO4, HNO3, HCl, NH3 and SOAG on each mode. Inorganic partitioning and aerosol thermodynamics are computed with **MOSAIC** (it includes nitrate, ammonium and chloride, plus aerosol pH) |
 | **Rename** | Moves particles that have grown past the Aitken size range into the accumulation mode |
 | **New particle formation** | Nucleation of new particles from H2SO4 (and NH3) into the Aitken mode |
 | **Coagulation** | Collisions between particles, within and between modes |
+| **Primary-carbon aging** | Moves primary-carbon particles (fresh BC/POM) to the accumulation mode once they are coated by a few molecular layers of condensed material or by coagulation; part of gas–aerosol exchange and coagulation |
+| **Aitken ↔ accumulation size adjustment** | Always on (the rename switch does not turn it off). Each mode is a lognormal of fixed width with a size range; when the median size of the Aitken or accumulation mode leaves its range, part of the particles is moved to the other mode. The Aitken mode can therefore receive particles that were not nucleated (see the Black carbon aging case) |
+| **Gas sources** | No explicit gas-phase chemistry: the precursor gases (H2SO4, HNO3, NH3, HCl, SOAG) come only from their initial concentrations andi/or from constant production rates set by the user (ppb/h), added at every step |
 
 The four aerosol processes (gas–aerosol exchange, rename, nucleation,
-coagulation) can each be switched on or off. The model also contains a simple
-SO2 → H2SO4 oxidation ("gas chemistry"); the dashboard does not use it and
-sets the H2SO4 production rate directly instead.
+coagulation) can each be switched on or off.
 
 Water uptake (hygroscopic growth) is always computed from the ambient RH and
-the hygroscopicity of each mode's composition. There are no clouds in the box.
+the hygroscopicity of each mode's composition. There are no clouds in the box for now, although there is a specific cloud path in MAM ( maybe added to dashboard in the future) .
 
 ### Optical properties
 
@@ -67,7 +70,14 @@ At every step the model computes, from the wet size and composition of each mode
 - **Shortwave**: aerosol optical depth (AOD), single scattering albedo and
   asymmetry parameter, per mode and per species, on the RRTMG bands
   (the dashboard shows AOD at 550 nm).
-- **Longwave**: absorption optical depth on the RRTMG longwave bands.
+- **Longwave**: absorption optical depth on the RRTMG longwave bands
+  (the dashboard shows the 9.3–10.2 µm band, in the atmospheric window).
+
+The parameterisation is the CESM (CAM) modal optics of Ghan and Zaveri
+(2007): the refractive index of each mode is the volume average of its
+components, water included, and the optical properties come from Chebyshev
+fits of Mie calculations as a function of wet size. The same optics are used
+for MAM in GEOS-Chem.
 
 The box is treated as a layer about 1 km thick (100 hPa), so the AOD values
 correspond to a 1 km layer with the chosen aerosol load.
@@ -115,17 +125,29 @@ You can set the parameters manually, or start from a predefined case.
 
 **Predefined Case** — loads an illustrative test case: it prefills every
 parameter section below with the case's values. You can then change any value
-and run; choose **Custom** to keep the values currently in the panel.
+and run. To reload a case after changing its values, select another case and
+then the case again.
 
-| Case | What it shows |
-|---|---|
-| **Reference: mixed aerosol, closed box** | The default values. Mixed accumulation, Aitken, coarse (dust + sea salt) and primary-carbon aerosol with HNO3 and NH3 available, RH rising from 0.4 to 0.6. Gas-to-particle partitioning of nitrate and ammonium, and hygroscopic growth. |
-| **Nucleation from clean air** | No initial aerosol, a constant H2SO4 production of 0.1 ppb/h and 1 ppb NH3, over 24 h. A burst of new particles appears in the Aitken mode within the first steps; they grow by condensation (≈10 nm → 50 nm), coagulate, and are progressively renamed into the accumulation mode. |
-| **Ammonium nitrate formation by cooling and humidification** | Ammonium sulfate seed with 5 ppb HNO3 and 5 ppb NH3. Over 12 h the air cools from 298 to 278 K while RH rises from 0.4 to 0.85: HNO3 and NH3 condense as ammonium nitrate (≈12 µg/m³ of nitrate at the end) and aerosol water increases strongly. |
+The cases go from one process at a time to more chemistry (nucleation,
+SOA, black-carbon aging, ammonium nitrate, sea salt, dust, nitrate mode
+shift). Each one is described briefly in the dashboard when selected.
 
 **Time Parameters**
 - *Time step* (s) and *Number of steps*. Total simulated time = step × number
-  of steps (e.g. 600 s × 100 = 16.7 h).
+  of steps (e.g. 300 s × 200 = 16.7 h). The default and the predefined cases
+  use 300 s, the usual GEOS-Chem chemistry time step.
+- *MOSAIC substeps* (1–10; 1 = standard MAM): splits each time step
+  into that many substeps for the aerosol microphysics (gas–aerosol exchange
+  with MOSAIC, renaming, nucleation, coagulation, aging), each of length
+  time step / substeps. Gas production and the meteorology are still updated
+  once per time step. In MAM, the NH3 produced during a step is given to
+  MOSAIC all at once at the start of the step (H2SO4 is spread over the
+  step); with substeps it is given in smaller portions. Use more substeps
+  when gas or aerosol curves jump from one step to the next; they cost
+  less than a shorter time step.
+- At most 2000 steps per run, to keep runs short on a shared server. Long
+  runs are animated with at most 150 frames (every k-th step), while the gas
+  curves keep every step.
 
 **Aerosol Processes**
 - Tick the processes to include (see the table above). Switching processes
@@ -153,7 +175,7 @@ and run; choose **Custom** to keep the values currently in the panel.
 
 **Accommodation Coefficients** (collapsible)
 - Sticking probability (0–1) of H2SO4, HNO3, HCl and NH3 on particles. They
-  control how fast these gases condense; the defaults rarely need changing.
+  control how fast these gases condense.
 
 ### Running
 
@@ -167,7 +189,7 @@ The figure has four panels, animated over the time steps. The legend of each
 panel gives the current value of each item (gas concentration, species mass,
 mode number):
 
-1. **Gas concentrations** vs time (ppb, log scale).
+1. **Gas concentrations** vs time in hours (ppb, log scale).
 2. **Aerosol mass size distribution** dm/dlogD (µg/m³) versus diameter (µm),
    stacked by species.
 3. **Aerosol number size distribution** dN/dlogD (#/cm³) versus diameter,
@@ -219,6 +241,9 @@ appears in the menu, ordered by file name.
 
 ## 4. References
 
+- Ghan, S. J. and Zaveri, R. A.: Parameterization of optical properties for
+  hydrated internally mixed aerosol, *J. Geophys. Res.*, 112, D10201,
+  <https://doi.org/10.1029/2006JD007927>, 2007.
 - Liu, X., Easter, R. C., Ghan, S. J., Zaveri, R., et al.: Toward a minimal
   representation of aerosols in climate models: description and evaluation in
   the Community Atmosphere Model CAM5, *Geosci. Model Dev.*, 5, 709–739,
