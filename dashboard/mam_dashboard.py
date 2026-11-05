@@ -54,13 +54,15 @@ gascolor = {
     'hcl_gas': 'cyan',
 }
 
-def coltr(colo,t):
-    if (colo == 'toto'):
-      out = 'rgba'+ str(mpc.to_rgba(colo)[:3]+(t,))
-    else:
-      out = colo
-    return out
-tr = 0.8
+def coltr(colo, t):
+    """Named color -> 'rgba(r, g, b, t)' with 0-255 channels, as plotly expects."""
+    r, g, b = (round(255 * v) for v in mpc.to_rgb(colo))
+    return f'rgba({r}, {g}, {b}, {t})'
+
+# Transparency of the dm/dlogD fills (only water is transparent). It must be in
+# the fill color: with fill='tonexty' plotly draws each fill in the previous
+# trace's layer, so the trace 'opacity' does not apply to its own fill.
+tr = 1.0
 specolor = {
  'bc_aer':  coltr('black', tr),
  'pom_aer': coltr('magenta', tr),
@@ -73,7 +75,7 @@ specolor = {
     'no3_aer': coltr('blue',tr),
     'nh4_aer': coltr('orange', tr),
     'soa_aer': coltr('indigo',tr),
-'wat_aer': coltr('lightblue', 0.6),
+'wat_aer': coltr('lightblue', 0.15),
 
     }
 
@@ -81,15 +83,56 @@ modname = {0: 'Accumulation', 1: 'Aitken', 2: 'Coarse', 3: 'Primary Carbon'}
 
 sigmag = np.array([1.800, 1.600, 1.800, 1.600])
 
+# Mode colours, shared by the number panel and the mode-property panels; chosen apart
+# from the species colours. modfill = same colour, semi-transparent, for overlaid fills
+modcolor = {0: '#2a9d8f',    # Accumulation: blue-green (teal)
+            1: '#a78bfa',    # Aitken: light violet
+            2: '#e9894a',    # Coarse: soft orange
+            3: '#8b5a3c'}    # Primary Carbon: brown
+MODE_FILL_ALPHA = 0.45
+modfill = {m: 'rgba' + str(tuple(int(c[i:i+2], 16) for i in (1, 3, 5)) + (MODE_FILL_ALPHA,))
+           for m, c in modcolor.items()}
+MODE_ORDER = [1, 3, 0, 2]   # Aitken, Primary Carbon, Accumulation, Coarse (by size)
+MODE_SHORT = {0: 'Accum.', 1: 'Aitken', 2: 'Coarse', 3: 'PC'}
+PROP_VARS = ['aod_mode', 'ssa_mode', 'asm_mode', 'aod_lw_mode', 'hygro_aer', 'pH_aer']
+PROP_TITLES = ['AOD 550 nm', 'Single scattering albedo', 'Asymmetry parameter g (light →)',
+               'LW absorption optical depth, 9.3–10.2 µm', 'Hygroscopicity κ', 'pH']
+PH_RANGE = [-1, 8]
+MAX_FRAMES = 150      # animation frames per run (steps are thinned beyond that)
+MAX_STEPS = 2000      # longest run accepted (server load)
+MAX_SUBSTEPS = 10     # MOSAIC/amicphys substeps per time step (mam_nsubstep)
+MIN_MODE_MASS = 1.e-3   # µg/m³
+# Phase-function lobes of the asymmetry panel: half-size in x (mode units) and y (g units)
+LOBE_THETA = np.linspace(0., 2. * np.pi, 61)
+LOBE_RX, LOBE_RY = 0.42, 0.14
+G_EMPTY = 0.5
+# Colour scales of the circles (SSA, hygroscopicity, pH), with the values mapped to
+# both ends. 'colorscale' can also be any plotly named scale, e.g. 'Viridis', 'Plasma',
+# 'Teal', 'ice', 'gray' (add '_r' to reverse): see plotly.express.colors.sequential
+CIRCLE_SCALES = {
+    'ssa_mode':  dict(colorscale=[[0, 'black'], [1, '#f8f8f8']], cmin=0.5, cmax=1.0),
+    # yellow (weakly hygroscopic) -> pure blue, through near-white rather than the
+    # grey/green of a direct yellow-blue blend; still light at kappa ~ 0.4
+    'hygro_aer': dict(colorscale=[[0, '#ffe066'], [0.3, '#f5f8ff'], [0.6, '#7fb2ff'],
+                                  [1, '#0033ff']], cmin=0.0, cmax=1.0),
+    # magenta (very acidic) -> violet -> green -> yellow at neutral pH 7; no blue step
+    # (kept for hygroscopicity), and a short violet-green transition to limit the grey
+    'pH_aer':    dict(colorscale=[[0, '#e040fb'], [0.36, '#9c6cff'], [0.4, '#66d17a'],
+                                  [1, '#ffee58']], cmin=0.0, cmax=7.0),
+}
+
 # ============================================================================
 # Utility functions - ONLY MODIFIED write_namelist and run_fortran_model
 # ============================================================================
 
 def write_namelist(params, namelist_path='namelist'):
     """Write namelist file from parameters dictionary"""
+    # written only when > 1, so the namelist still works with binaries built before mam_nsubstep
+    nsubstep = int(params.get('mam_nsubstep', 1) or 1)
+    nsubstep_line = f"\nmam_nsubstep   = {nsubstep}," if nsubstep > 1 else ""
     namelist_content = f"""&time_input
 mam_dt         = {params['mam_dt']},
-mam_nstep      = {params['mam_nstep']},
+mam_nstep      = {params['mam_nstep']},{nsubstep_line}
 /
 &cntl_input
 mdo_mambox     = {params['mdo_mambox']},
@@ -199,7 +242,7 @@ def get_optical_input_files(base_dir='./'):
 MF_SPECIES = ['so4', 'pom', 'soa', 'bc', 'dst', 'ncl', 'no3', 'nh4', 'co3', 'ca', 'cl']
 PROCESS_FLAGS = [('mdo_gasaerexch', 'gasaerexch'), ('mdo_rename', 'rename'),
                  ('mdo_newnuc', 'newnuc'), ('mdo_coag', 'coag')]
-PRESET_SCALARS = ['mam_dt', 'mam_nstep', 'mtmin', 'mtmax', 'press', 'mrhmin', 'mrhmax',
+PRESET_SCALARS = ['mam_dt', 'mam_nstep', 'mam_nsubstep', 'mtmin', 'mtmax', 'press', 'mrhmin', 'mrhmax',
                   'qh2so4', 'qhno3', 'qnh3', 'qsoag', 'qhcl',
                   'accom_coef_h2so4', 'accom_coef_hno3', 'accom_coef_hcl', 'accom_coef_nh3',
                   'hno3_prod', 'nh3_prod', 'soag_prod', 'hcl_prod']
@@ -242,7 +285,9 @@ def preset_to_inputs(values):
         out['h2so4_prod'] = values['h2so4_prod'] / 1000.   # ppt/h in the namelist, ppb/h in the UI
     for key in PRESET_SCALARS:
         if key in values:
-            out[key] = int(values[key]) if key in ('mam_dt', 'mam_nstep') else values[key]
+            out[key] = int(values[key]) if key in ('mam_dt', 'mam_nstep', 'mam_nsubstep') else values[key]
+    if 'mam_dt' in values:
+        out.setdefault('mam_nsubstep', 1)     # presets without it: back to standard MAM
     for m, v in enumerate(values.get('masstot', [])):
         out[f'masstot-{m}'] = v
     for sp in MF_SPECIES:
@@ -250,10 +295,75 @@ def preset_to_inputs(values):
             out[f'mf{sp}-{m}'] = v
     return [out.get(field, dash.no_update) for field in PRESET_FIELDS]
 
+def _round_sig(v, sig=4):
+    """Round numbers (array or list) to `sig` significant digits, NaN -> None.
+    Vectorized: round(a * 10**d) / 10**d gives floats with a short repr in JSON"""
+    if isinstance(v, (list, tuple)) and any(isinstance(x, str) for x in v):
+        return v                                   # category labels
+    try:
+        a = np.asarray(v, dtype=float)
+    except (TypeError, ValueError):
+        return v
+    with np.errstate(divide='ignore', invalid='ignore'):
+        dec = sig - 1 - np.floor(np.log10(np.abs(a)))
+    dec = np.where(np.isfinite(dec), dec, 0)
+    scale = 10.0 ** np.abs(dec)
+    r = np.where(dec >= 0, np.round(a * scale) / scale, np.round(a / scale) * scale)
+    out = r.tolist()
+    if np.isnan(a).any():                          # None (JSON null) for NaN
+        out = np.where(np.isnan(a), None, r.astype(object)).tolist()
+    return out
+
+class _StepView:
+    """Fast in-memory stand-in for ds.sel(nsteps=s) in create_animated_figure:
+    df[var].sel(mode=m), .values, float(), df.mode.values, df[var].sum()"""
+    def __init__(self, arrays, modes, s):
+        self._arrays, self._s = arrays, s
+        self.mode = _VarView(modes, {})
+        self._modes = {int(m): i for i, m in enumerate(modes)}
+
+    def __getitem__(self, var):
+        return _VarView(self._arrays[var][self._s], self._modes)
+
+class _VarView:
+    def __init__(self, a, modes):
+        self.values, self._modes = a, modes
+
+    def sel(self, mode):
+        return _VarView(self.values[self._modes[int(mode)]], self._modes)
+
+    def sum(self):
+        return _VarView(self.values.sum(), self._modes)
+
+    def __float__(self):
+        return float(self.values)
+
+    def __mul__(self, other):
+        return self.values * other
+    __rmul__ = __mul__
+
+def _trace(kind, **kw):
+    """Plotly trace as a plain dict. Much faster than go.Scatter/go.Bar for the
+    hundreds of animation frames, which plotly would otherwise validate one by one.
+    Expands the marker_/line_ shortcuts and rounds the data arrays to 4 significant
+    digits to keep the page small."""
+    out = {'type': kind}
+    for k, v in kw.items():
+        if k in ('x', 'y', 'base', 'customdata'):
+            v = _round_sig(v)
+        prefix, _, sub = k.partition('_')
+        if sub and prefix in ('marker', 'line'):
+            out.setdefault(prefix, {})[sub] = v
+        else:
+            out[k] = v
+    return out
+
 def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
     """Create the animated plotly figure from NetCDF output"""
     try:
-        ds = xr.open_dataset(nc_file)
+        # load into memory once: reading values lazily from the file is slow
+        with xr.open_dataset(nc_file) as f:
+            ds = f.load()
         print('open', nc_file)
     except FileNotFoundError:
         return go.Figure().add_annotation(
@@ -264,17 +374,35 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         )
     maxyaod = ds['aod_mode'].max(dim='nsteps').max(dim='mode').values * 1.4
 
+    # Animate at most MAX_FRAMES steps (every k-th step, always including the last);
+    # the gas time series still use every step
+    nsteps = len(ds.nsteps)
+    stride = -(-nsteps // MAX_FRAMES)
+    frame_steps = [int(s) for s in ds.nsteps.values[::stride]]
+    if frame_steps[-1] != int(ds.nsteps.values[-1]):
+        frame_steps.append(int(ds.nsteps.values[-1]))
+    t_end = nsteps * dt / 3600.   # run length in hours
+
+    # per-variable numpy arrays (nsteps first): much faster than xarray .sel per value
+    arrays = {v: ds[v].transpose('nsteps', ...).values
+              for v in ds.data_vars if 'nsteps' in ds[v].dims}
+    modes = ds['mode'].values
+
     frames = []
-    for s in ds.nsteps:
-        df = ds.sel(nsteps=s)
+    max_dmdlogd = 0.   # mass panel y range: max over all frames, not the last one
+    for s in frame_steps:
+        df = _StepView(arrays, modes, s)
         data_list = []
         ntrac1 = 0
         # Gas concentrations
         for g in list(gascolor.keys()):
             conc = ds[g].sel(nsteps=slice(0, int(s+1)))
-            trace = go.Scatter(
-                x=conc.nsteps.values,
+            trace = _trace('scatter',
+                x=conc.nsteps.values * dt / 3600.,
                 y=conc.values,
+                # dot on the current value only, so the curve is visible from step 0
+                mode='lines+markers',
+                marker=dict(size=[0] * (conc.size - 1) + [7]),
                 name=f'{g} ({float(df[g].values):.3g})',
                 line_color=gascolor[g],
                 legend='legend'
@@ -286,8 +414,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         rh_value   = float(df['relhum'] * 100)
         temp_value = float(df['temp'])
 
-        x_rh_pos   = len(ds.nsteps) * 0.78
-        x_temp_pos = len(ds.nsteps) * 0.92
+        x_rh_pos   = t_end * 0.78
+        x_temp_pos = t_end * 0.92
         y_rh_pos   = 10**1.15  # ~14 ppb on log scale, clear of the panel top
         y_temp_pos = 10**1.15
 
@@ -311,7 +439,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         else:
             temp_outer = '#FFE6E6'; temp_inner = '#FFFFFF';  text_color_temp = 'black'
 
-        trace_rh_bg = go.Scatter(
+        trace_rh_bg = _trace('scatter',
             x=[x_rh_pos, x_rh_pos, x_rh_pos],
             y=[y_rh_pos, y_rh_pos, y_rh_pos],
             mode='markers',
@@ -326,7 +454,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         data_list.append(trace_rh_bg)
         ntrac1 = ntrac1 + 1
 
-        trace_rh_text = go.Scatter(
+        trace_rh_text = _trace('scatter',
             x=[x_rh_pos], y=[y_rh_pos],
             mode='text',
             text=[f'<b>RH</b><br>{rh_value:.0f}<br><b>%</b>'],
@@ -337,7 +465,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         data_list.append(trace_rh_text)
         ntrac1 = ntrac1 + 1
 
-        trace_temp_bg = go.Scatter(
+        trace_temp_bg = _trace('scatter',
             x=[x_temp_pos, x_temp_pos, x_temp_pos],
             y=[y_temp_pos, y_temp_pos, y_temp_pos],
             mode='markers',
@@ -352,7 +480,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         data_list.append(trace_temp_bg)
         ntrac1 = ntrac1 + 1
 
-        trace_temp_text = go.Scatter(
+        trace_temp_text = _trace('scatter',
             x=[x_temp_pos], y=[y_temp_pos],
             mode='text',
             text=[f'<b>TEMP</b><br>{temp_value:.0f}<br><b>K</b>'],
@@ -395,8 +523,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
 
             sp_total = species_total_mass[c]
             m_masses = species_mode_mass[c]
-            significant = grand_total > 0 and sp_total / grand_total > 0.01
-            trace_name = f'{c} ({sp_total:.2f})' if significant else c
+            trace_name = f'{c} ({sp_total:.3g})' if sp_total > 1.e-3 else c
 
             # customdata columns: [total, mode0, mode1, ...] in µg/m³
             cdata = np.tile([sp_total] + m_masses, (len(x_vol), 1))
@@ -411,12 +538,16 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
                 + '<extra></extra>'
             )
 
-            trace = go.Scatter(
+            # water: lighter and hatched, so it reads as water and not as dry mass
+            water = c == 'wat_aer'
+            trace = _trace('scatter',
                 x=x_vol, y=ycum, fill=fil,
                 mode='none', fillcolor=specolor[c],
-                opacity=0.3, name=trace_name,
+                name=trace_name,
                 legend='legend2',
-                customdata=cdata, hovertemplate=htemplate
+                customdata=cdata, hovertemplate=htemplate,
+                **({'fillpattern': {'shape': '/', 'fgcolor': 'steelblue', 'size': 8, 'solidity': 0.3}}
+                   if water else {})
             )
             data_list.append(trace)
             ntrac2 = ntrac2+1
@@ -436,7 +567,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
             )
             + '<extra></extra>'
         )
-        trace = go.Scatter(
+        trace = _trace('scatter',
             x=x_vol, y=ycum, mode='lines',
             name=f'Total Mass ({grand_total:.2f})', line_color='grey',
             legend='legend2',
@@ -444,6 +575,7 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         )
         data_list.append(trace)
         ntrac2 = ntrac2+1
+        max_dmdlogd = max(max_dmdlogd, float(np.max(ycum)))
 
 # Number distribution, converted from #/kg-air to #/cm3 with the air density at this step
         kg_to_cm3 = press / (287.05 * float(df['temp'])) * 1.e-6
@@ -454,15 +586,15 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
             sigma_g = sigmag[m]
             num = df['num_aer'].sel(mode=m).values * kg_to_cm3
             x_num, y_num = lognormal_distribution(Dg, sigma_g, num)
-            trace = go.Scatter(
+            trace = _trace('scatter',
                 x=x_num, y=y_num, fill='tozeroy',
                 mode='none', name=f'{modname[int(m)]} ({float(num):.3g})',
-                legend='legend3'
+                line_color=modcolor[int(m)], fillcolor=modfill[int(m)], legend='legend3'
             )
             data_list.append(trace)
             ymodcum = ymodcum + y_num
             ntrac3 = ntrac3+1
-        trace = go.Scatter(
+        trace = _trace('scatter',
             x=x_num, y=ymodcum, mode='lines',
             name=f"Total number ({float(df['num_aer'].sum().values) * kg_to_cm3:.3g})", line_color='black',
             legend='legend3'
@@ -470,249 +602,196 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         data_list.append(trace)
         ntrac3 = ntrac3+1
 
-#  Modal AOD Bar Chart
+#  Mode properties: 2 x 3 small bar charts (AOD by species, SSA, g, LW abs, kappa, pH)
         ntrac4 = ntrac3
+        p4_bounds = []          # trace index after each mini panel, in PROP_PANELS order
+        x_positions = [MODE_SHORT[m] for m in MODE_ORDER]
+        # modes with negligible mass (e.g. 1e-13 µg/m³ left by rename) are shown empty
+        mode_has_mass = [mode_total_mass.get(m, 0.0) > MIN_MODE_MASS for m in MODE_ORDER]
 
-        # Check if AOD data exists in dataset
-        if 'aod_mode' in ds.variables:
-            # Get wet diameters for bar X positions (convert to micrometers)
-            x_positions = ['Aitken', 'PC','Accum','Coarse' ]
-            #for m in df.mode.values:
-            #    Dg_wet = df['Dgn_mode'].sel(mode=m).values * 1.E6
-            #    x_positions.append(Dg_wet)
-            #    # Calculate bar widths for constant visual width on log scale
-            #log_width = 0.25  # Width in log10 units (adjust to taste)
-            #bar_widths = []
-            #for x_center in x_positions:
-            #    log_center = np.log10(x_center)
-            #    x_left = 10**(log_center - log_width/2)
-            #    x_right = 10**(log_center + log_width/2)
-            #    bar_widths.append(x_right - x_left)
+        def mode_values(var):
+            if var not in ds.variables:
+                return [np.nan] * len(MODE_ORDER)
+            return [float(df[var].sel(mode=m).values) for m in MODE_ORDER]
 
-            # Define species and colors for stacking
-            aod_species = ['aod_sulfate', 'aod_bc', 'aod_pom','aod_mom', 'aod_soa', 'aod_dust', 'aod_seasalt','aod_no3',  'aod_nh4']
-            species_colors = {
-                'aod_sulfate': 'green',
-                'aod_bc': 'black',
-                'aod_pom': 'magenta',
-                'aod_soa': 'indigo',
-                'aod_dust': 'yellow',
-                'aod_seasalt': 'grey',
-                'aod_mom': 'brown',      # Marine organic matter
-                'aod_no3': 'blue',
-                'aod_nh4': 'orange',
-            }
+        props = {
+            'aod_mode':    mode_values('aod_mode'),
+            'ssa_mode':    mode_values('ssa_mode'),
+            'asm_mode':    mode_values('asm_mode'),
+            'aod_lw_mode': mode_values('aod_lw_mode'),
+            'hygro_aer':   mode_values('hygro_aer'),
+            'pH_aer':      mode_values('pH_aer'),
+        }
+        # Same hover box on every bar: all the properties of the mode
+        cdata = [[props[v][i] for v in PROP_VARS] for i in range(len(MODE_ORDER))]
+        htemplate = ('<b>%{x}</b><br>'
+                     'AOD 550: %{customdata[0]:.3g}<br>SSA: %{customdata[1]:.3f}<br>'
+                     'g: %{customdata[2]:.3f}<br>LW abs.: %{customdata[3]:.3g}<br>'
+                     'κ: %{customdata[4]:.3f}<br>pH: %{customdata[5]:.2f}<extra></extra>')
 
-            # Create stacked bars for each species
-            for species in aod_species:
-                if species in ds.variables:
-                    y_values = []
-             #       for m in df.mode.values:
-                    for m in [1,3,0,2]:
-                       aod_val = df[species].sel(mode=m).values
-                       y_values.append(float(aod_val))
+        # (a) AOD at 550 nm, stacked by species
+        aod_species = ['aod_sulfate', 'aod_bc', 'aod_pom', 'aod_mom', 'aod_soa',
+                       'aod_dust', 'aod_seasalt', 'aod_no3', 'aod_nh4']
+        species_colors = {
+            'aod_sulfate': 'green', 'aod_bc': 'black', 'aod_pom': 'magenta',
+            'aod_mom': 'brown', 'aod_soa': 'indigo', 'aod_dust': 'yellow',
+            'aod_seasalt': 'grey', 'aod_no3': 'blue', 'aod_nh4': 'orange',
+        }
+        for species in aod_species:
+            if species in ds.variables:
+                data_list.append(_trace('bar',
+                    x=x_positions, y=mode_values(species),
+                    name=species.replace('aod_', ''),
+                    marker_color=species_colors[species], opacity=0.75,
+                    legend='legend4',
+                    customdata=cdata, hovertemplate=htemplate,
+                ))
+                ntrac4 += 1
+        # total AOD written on top of each stack: an invisible zero-height bar stacked
+        # last, so the label moves with the bars during the animation
+        data_list.append(_trace('bar',
+            x=x_positions, y=[1.e-12] * len(MODE_ORDER), marker_opacity=0,
+            text=[f'{v:.3g}' if ok else '' for v, ok in zip(props['aod_mode'], mode_has_mass)],
+            textposition='outside', cliponaxis=False,
+            showlegend=False, hoverinfo='skip',
+        ))
+        ntrac4 += 1
+        p4_bounds.append(ntrac4)
 
-                    # Create bar trace
-                    trace = go.Bar(
-                        x=x_positions,
-                        y=y_values,
-                        name=species, #.replace('aod_', '').upper(),
-                        marker_color=species_colors[species],
-                        opacity=0.75,
-                        legend='legend4'
-                        #width=bar_widths,  # Array of widths for constant log appear
-                    )
-                    data_list.append(trace)
-                    ntrac4 = ntrac4 + 1
-
-            # Add total SSA arkers at top of stacks
-            total_aod_values = []
-            total_ssa_values = []
-            total_g_values   = []
-            total_hyg_values = []
-            total_lwabs_values = []
-            total_pH_values = []
-            mode_mass_aod = []
-            ytextpos_values = []
-            ytextpos_ssa_values = []
-            ytextpos_g_values = []
-            ytextpos_hyg_values = []
-            ytextpos_lwabs_values = []
-            ytextpos_pH_values = []
-
-            for m in [1,3,0,2]:
-                #if 'aod_mode' in ds.variables:
-                    total_aod = df['aod_mode'].sel(mode=m).values
-                    total_aod_values.append(float(total_aod))
-                    total_ssa =  df['ssa_mode'].sel(mode=m).values
-                    total_ssa_values.append(float(total_ssa))
-                    total_g =  df['asm_mode'].sel(mode=m).values
-                    total_g_values.append(float(total_g))
-                    total_hyg =  df['hygro_aer'].sel(mode=m).values
-                    total_hyg_values.append(float(total_hyg))
-                    if 'aod_lw_mode' in ds.variables:
-                        total_lwabs = df['aod_lw_mode'].sel(mode=m).values
-                        total_lwabs_values.append(float(total_lwabs))
-                    ytextpos = 0.85 * maxyaod
-                    ytextpos_values.append(float(ytextpos))
-                    ytextpos = 0.80 * maxyaod
-                    ytextpos_ssa_values.append(float(ytextpos))
-                    ytextpos = 0.75 * maxyaod
-                    ytextpos_g_values.append(float(ytextpos))
-                    ytextpos = 0.91 * maxyaod
-                    ytextpos_hyg_values.append(float(ytextpos))
-                    ytextpos = 0.70 * maxyaod
-                    ytextpos_lwabs_values.append(float(ytextpos))
-                    if 'pH_aer' in ds.variables:
-                        # pH_aer is already actual pH (-log10 of the linearly-averaged
-                        # H+ concentration), computed in driver.F90; NaN means no aerosol
-                        # water / no H+ diagnosed for that mode.
-                        total_pH_values.append(float(df['pH_aer'].sel(mode=m).values))
-                    mode_mass_aod.append(mode_total_mass.get(int(m), 0.0))
-                    ytextpos = 0.65 * maxyaod
-                    ytextpos_pH_values.append(float(ytextpos))
-                #else:
-                #    total_aod_values.append(0.0)
-                #    mode_ssa_values.append(0.0)
-            # ssa as scatter plot on top
-            trace = go.Scatter(
-                x=x_positions,
-               # y=total_aod_values ,switch to fixed position
-                y= ytextpos_hyg_values ,
-                mode='text',
-                name='mode hygrosc.',
-                marker=dict(size=14, color='black', symbol='diamond'),
-             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
-                text=['hygros. = '+ f'{v:.3f}' for v in total_hyg_values],
-                textposition='top center',
-                textfont=dict(size=16, color='blue'),
-                showlegend=False
+        def circles(var, fmt, empty_label, y_empty):
+            # One circle per mode, coloured by value. Every mode always keeps its point
+            # (fixed ids, invisible when empty) so that plotly animates each circle up
+            # and down instead of shuffling the points when a mode appears/disappears.
+            values = masked(var)
+            scale = CIRCLE_SCALES[var]
+            empty = [v is None or np.isnan(v) for v in values]
+            return _trace('scatter',
+                x=x_positions, y=[y_empty if e else v for v, e in zip(values, empty)],
+                ids=x_positions, mode='markers+text',
+                marker=dict(size=24, color=[scale['cmin'] if e else v for v, e in zip(values, empty)],
+                            **scale,
+                            opacity=[0 if e else 0.75 for e in empty],
+                            line=dict(color='black', width=1)),
+                text=[empty_label if e else format(v, fmt) for v, e in zip(values, empty)],
+                textposition=['middle center' if e else 'middle right' for e in empty],
+                textfont=dict(size=12, color=['grey' if e else '#444' for e in empty]),
+                showlegend=False, customdata=cdata, hovertemplate=htemplate,
+                cliponaxis=False,
             )
-            data_list.append(trace)
-            ntrac4 = ntrac4 + 1
 
-            trace = go.Scatter(
-                x=x_positions,
-               # y=total_aod_values ,switch to fixed position
-                y= ytextpos_values ,
-                mode='text',
-                name='Mode AOD',
-                marker=dict(size=14, color='black', symbol='diamond'),
-             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
-                text=['aod = '+ f'{v:.3f}' for v in total_aod_values],
-                textposition='top center',
-                textfont=dict(size=16, color='black'),
-                showlegend=False
-            )
-            data_list.append(trace)
-            ntrac4 = ntrac4 + 1
+        def masked(var):
+            return [v if ok else None for v, ok in zip(props[var], mode_has_mass)]
 
-            trace = go.Scatter(
-                x=x_positions,
-               # y=total_aod_values ,switch to fixed position
-                y= ytextpos_ssa_values ,
-                mode='text',
-                name='Mode ssa',
-                marker=dict(size=14, color='black', symbol='diamond'),
-             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
-                text=['ssa = '+ f'{v:.3f}' for v in total_ssa_values],
-                textposition='top center',
-                textfont=dict(size=16, color='black'),
-                showlegend=False
-            )
-            data_list.append(trace)
-            ntrac4 = ntrac4 + 1
+        # (b) SSA: circles, dark (absorbing) -> light (scattering)
+        data_list.append(circles('ssa_mode', '.3f', '', 0.5))
+        ntrac4 += 1
+        p4_bounds.append(ntrac4)
 
-            trace = go.Scatter(
-                x=x_positions,
-               # y=total_aod_values ,switch to fixed position
-                y= ytextpos_g_values ,
-                mode='text',
-                name='Mode asy',
-                marker=dict(size=14, color='black', symbol='diamond'),
-             #   text=['ssa = '+ f'{v:.3f}' for v in mode_ssa_values],
-                text=['asy = '+ f'{v:.3f}' for v in total_g_values],
-                textposition='top center',
-                textfont=dict(size=16, color='black'),
-                showlegend=False
-            )
-            data_list.append(trace)
-            ntrac4 = ntrac4 + 1
+        # (c) asymmetry parameter: Henyey-Greenstein phase-function lobe of each mode,
+        # placed at height g, light coming from the left: round for g = 0 (isotropic),
+        # stretched to the right for forward scattering. Radius ~ (P/Pmax)^(1/3) so
+        # that the lobe stays visible for large g. Fixed number of points per lobe and
+        # fixed ids, so that the lobes animate smoothly; empty modes collapse to a point.
+        g_vals = [None if v is None or np.isnan(v) else v for v in masked('asm_mode')]
+        for i, g in enumerate(g_vals):
+            if g is None:
+                xs = np.full(LOBE_THETA.size, float(i))
+                ys = np.full(LOBE_THETA.size, G_EMPTY)
+            else:
+                p = (1 - g**2) / (1 + g**2 - 2 * g * np.cos(LOBE_THETA))**1.5
+                r = (p / p.max())**(1. / 3.)
+                xs = i + LOBE_RX * r * np.cos(LOBE_THETA)
+                ys = g + LOBE_RY * r * np.sin(LOBE_THETA)
+            data_list.append(_trace('scatter',
+                x=xs, y=ys, mode='lines', fill='toself',
+                line=dict(color=modcolor[MODE_ORDER[i]], width=1),
+                fillcolor=modfill[MODE_ORDER[i]],
+                showlegend=False, hoverinfo='skip',
+            ))
+        # the particle (dot, with hover) and the value written above the lobe
+        data_list.append(_trace('scatter',
+            x=list(range(len(MODE_ORDER))), y=[G_EMPTY if g is None else g for g in g_vals],
+            ids=x_positions, mode='markers',
+            marker=dict(size=6, color='black', opacity=[0 if g is None else 1 for g in g_vals]),
+            showlegend=False, customdata=cdata, hovertemplate=htemplate,
+        ))
+        data_list.append(_trace('scatter',
+            x=list(range(len(MODE_ORDER))),
+            y=[G_EMPTY if g is None else g + LOBE_RY for g in g_vals],
+            ids=x_positions, mode='text',
+            text=['' if g is None else f'{g:.3f}' for g in g_vals],
+            textposition='top center', textfont=dict(size=12, color='#444'),
+            showlegend=False, hoverinfo='skip', cliponaxis=False,
+        ))
+        ntrac4 += len(MODE_ORDER) + 2
+        p4_bounds.append(ntrac4)
 
-            if 'aod_lw_mode' in ds.variables and total_lwabs_values:
-                trace = go.Scatter(
-                    x=x_positions,
-                    y=ytextpos_lwabs_values,
-                    mode='text',
-                    name='abs LW',
-                    text=['LW aaod = ' + f'{v:.3f}' for v in total_lwabs_values],
-                    textposition='top center',
-                    textfont=dict(size=16, color='red'),
-                    showlegend=False
-                )
-                data_list.append(trace)
-                ntrac4 = ntrac4 + 1
+        # (d) LW absorption: one bar per mode, mode colours
+        yv = masked('aod_lw_mode')
+        data_list.append(_trace('bar',
+            x=x_positions, y=yv,
+            marker_color=[modcolor[m] for m in MODE_ORDER], opacity=0.8,
+            text=[format(v, '.2g') if v is not None else '' for v in yv],
+            textposition='outside', cliponaxis=False,
+            showlegend=False, customdata=cdata, hovertemplate=htemplate,
+        ))
+        ntrac4 += 1
+        p4_bounds.append(ntrac4)
 
-            if 'pH_aer' in ds.variables and total_pH_values:
-                trace = go.Scatter(
-                    x=x_positions,
-                    y=ytextpos_pH_values,
-                    mode='text',
-                    name='pH',
-                    text=['pH = ' + (f'{v:.2f}' if not np.isnan(v) and mode_mass_aod[i] > 0 else 'N/A')
-                          for i, v in enumerate(total_pH_values)],
-                    textposition='top center',
-                    textfont=dict(size=16, color='purple'),
-                    showlegend=False
-                )
-                data_list.append(trace)
-                ntrac4 = ntrac4 + 1
+        # (e) hygroscopicity: circles
+        data_list.append(circles('hygro_aer', '.2f', '', 0.6))
+        ntrac4 += 1
+        p4_bounds.append(ntrac4)
 
-        else:
-            # Placeholder if no AOD data
-            trace = go.Scatter(
-                x=[0.1], y=[0.1],
-                mode='text',
-                text=['AOD data not available'],
-                textfont=dict(size=14, color='red'),
-                showlegend=False
-            )
-            data_list.append(trace)
-            ntrac4 = ntrac4 + 1
+        # (f) pH: circles; "no water" written mid-panel where pH is undefined
+        data_list.append(circles('pH_aer', '.2f', 'no water', PH_RANGE[1] / 2))
+        ntrac4 += 1
+        p4_bounds.append(ntrac4)
 
+        frames.append(dict(name='step%s' % s, data=data_list))
 
-        frames += [go.Frame(data=data_list, name='step%s' % s)]
+    # Create figure: 3 full-width panels, then the mode properties as 2 x 3 small panels
+    full = [{'colspan': 3}, None, None]
+    fig = go.Figure().set_subplots(
+        5, 3, specs=[full, full, full, [{}, {}, {}], [{}, {}, {}]],
+        vertical_spacing=0.05, horizontal_spacing=0.07,
+        row_heights=[0.20, 0.24, 0.20, 0.18, 0.18],
+        subplot_titles=('<b>Gas concentrations</b>',
+                        '<b>Aerosol mass size distribution</b>',
+                        '<b>Aerosol number size distribution</b>')
+                       + tuple(f'<b>{t}</b>' for t in PROP_TITLES))
 
-    # Create figure with subplots
-    fig = go.Figure().set_subplots(4, 1, vertical_spacing=0.07, row_heights=[0.22, 0.26, 0.22, 0.30],
-                                   subplot_titles=('<b>Gas concentrations</b>',
-                                                   '<b>Aerosol mass size distribution</b>',
-                                                   '<b>Aerosol number size distribution</b>',
-                                                   '<b>Mode properties</b>'))
-
-    fig.add_traces(frames[0].data[0:ntrac1], 1, 1)
-    fig.add_traces(frames[0].data[ntrac1:ntrac2], 2, 1)
-    fig.add_traces(frames[0].data[ntrac2:ntrac3], 3, 1)
-    fig.add_traces(frames[0].data[ntrac3:ntrac4], 4, 1)
-
-
+    fig.add_traces(frames[0]['data'][0:ntrac1], 1, 1)
+    fig.add_traces(frames[0]['data'][ntrac1:ntrac2], 2, 1)
+    fig.add_traces(frames[0]['data'][ntrac2:ntrac3], 3, 1)
+    start = ntrac3
+    for k, end in enumerate(p4_bounds):
+        fig.add_traces(frames[0]['data'][start:end], 4 + k // 3, 1 + k % 3)
+        start = end
 
     # Update axes
-    fig.update_xaxes(range=[-1, len(ds.nsteps)], title='time steps', row=1, col=1)
-    fig.update_yaxes(type='log', range=[-1., 2], title='gas conc. (ppb)', row=1, col=1)
+    fig.update_xaxes(range=[-0.01 * t_end, t_end], title='time (h)', row=1, col=1)
+    fig.update_yaxes(type='log', range=[-2., np.log10(70.)], title='gas conc. (ppb)', row=1, col=1)
 
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=2, col=1)
-    fig.update_yaxes(range=[0, np.max(ycum)], title='aer. dm/dlogD (µg.m⁻³)', row=2, col=1)
+    fig.update_yaxes(range=[0, 1.05 * max_dmdlogd or 1.], title='aer. dm/dlogD (µg.m⁻³)', row=2, col=1)
 
     fig.update_xaxes(type="log", range=[-3, 2], title='D (microm)', row=3, col=1)
     fig.update_yaxes(type='log', range=[-1, 6], title='aer. dN/dlogD (#.cm⁻³)', row=3, col=1)
 
+    # Mode properties: fixed ranges so that the animation does not rescale
+    maxlw = float(ds['aod_lw_mode'].max()) * 1.3 if 'aod_lw_mode' in ds.variables else 1.0
+    prop_ranges = [[0, maxyaod], [0, 1.1], [-0.05, 1.25], [0, maxlw or 1.0], [-0.1, 1.4], PH_RANGE]
+    for k, yr in enumerate(prop_ranges):
+        fig.update_yaxes(range=yr, row=4 + k // 3, col=1 + k % 3)
+        fig.update_xaxes(tickfont=dict(size=11), row=4 + k // 3, col=1 + k % 3)
+    fig.update_yaxes(title='wet, 1 km layer', row=4, col=1)
+    # asymmetry panel uses a numeric x axis (lobes drawn around each mode position)
+    fig.update_xaxes(tickvals=list(range(len(MODE_ORDER))),
+                     ticktext=[MODE_SHORT[m] for m in MODE_ORDER],
+                     range=[-0.6, len(MODE_ORDER) - 0.4], showgrid=False, zeroline=False,
+                     row=4, col=3)
 
-#    fig.update_xaxes(type="log", range=[-3, 2], title='Wet Diameter (µm)', row=4, col=1)
-    fig.update_xaxes(title='MAM mode', tickfont=dict(size=16), row=4, col=1)
-    fig.update_yaxes(range=[0, maxyaod ], title='wet AOD @ 550nm / DZ =1 km', row=4, col=1)
-
-    fig.frames = frames
 
 # Animation controls
     fr_duration = 500
@@ -722,27 +801,27 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         "x": 0.1,
         "y": 1.025,  # above the first subplot title
         "yanchor": "bottom",
-        "currentvalue":{"prefix": "Time (mn) : "},
+        "currentvalue":{"prefix": "Time (h) : "},
         "steps": [
             {
-                "args": [[f.name], {
+                "args": [[f['name']], {
                     "frame": {"duration": fr_duration},
                     "mode": "immediate",
                     "fromcurrent": True,
                     "transition": {"duration": fr_duration, "easing": "linear"},
                 }],
 #                "label": f"tstep{k+1}",add time label in mn
-                "label": (k)*dt / 60.,
+                "label": f'{s * dt / 3600.:.2f}',
                 "method": "animate",
             }
-            for k, f in enumerate(fig.frames)
+            for s, f in zip(frame_steps, frames)
         ],
     }]
 
     fig.update_layout(
         sliders=sliders,
         barmode='stack',  # Enable stacking for AOD bars
-        height=1600,
+        height=1800,
         margin=dict(t=120, b=40, l=60, r=40),  # top margin for the play/slider controls
         # Legends aligned with the top of their subplot (row domains from set_subplots)
         # Legend 1 - Gas concentrations (top subplot)
@@ -770,7 +849,8 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         legend4=dict(
             x=1.02, y=fig.layout.yaxis4.domain[1], xanchor='left', yanchor='top',
             font=dict(size=14),
-            traceorder='normal'
+            traceorder='normal',
+            title=dict(text='<b>AOD by species</b>', font=dict(size=14))
         ),
         updatemenus=[{
             "buttons": [
@@ -805,7 +885,11 @@ def create_animated_figure(nc_file='mam_output.nc', dt=1200, press=1.e5):
         }]
     )
 
-    return fig
+    # Frames are added as plain dicts (no plotly validation, see _trace); dcc.Graph
+    # accepts the figure as a dict
+    fig_dict = fig.to_dict()
+    fig_dict['frames'] = frames
+    return fig_dict
 
 # ============================================================================
 # Helper function for creating mass fraction inputs
@@ -844,8 +928,20 @@ def serve_doc():
     try:
         import markdown
         body = markdown.markdown(text, extensions=['tables', 'fenced_code'])
+        script = ""
     except ImportError:
-        body = f"<pre>{htmllib.escape(text)}</pre>"
+        # No python markdown package (e.g. on a server): render in the browser
+        # with marked.js; the plain text stays visible if the CDN is unreachable
+        body = f'<pre id="doc-src">{htmllib.escape(text)}</pre>'
+        script = """<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+if (window.marked) {
+  const src = document.getElementById('doc-src');
+  const div = document.createElement('div');
+  div.innerHTML = marked.parse(src.textContent);
+  src.replaceWith(div);
+}
+</script>"""
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <title>GCMAMBOX documentation</title>
 <style>
@@ -855,9 +951,11 @@ th, td {{ border: 1px solid #ccc; padding: 4px 10px; }}
 th {{ background: #f0f0f0; }}
 code, pre {{ background: #f5f5f5; }}
 pre {{ padding: 10px; overflow-x: auto; }}
-</style></head><body>{body}</body></html>"""
+</style></head><body>{body}{script}</body></html>"""
 
-app.layout = html.Div([
+def serve_layout():
+    """Page layout, rebuilt at each page load so the cases menu sees new or removed preset files"""
+    return html.Div([
 
 #    html.Div([
 #           html.Img(src='assets/logo.png', style={'height': '130px', 'width': '600px'}),],
@@ -898,8 +996,8 @@ html.Div([
                 # Predefined cases: fill all parameters below from a namelist in assets/presets/ (values stay editable)
                 html.H4("Predefined Case", style={'fontSize': '16px', 'marginTop': '10px'}),
                 dcc.Dropdown(id='preset',
-                             options=[{'label': 'Custom (keep current values)', 'value': 'custom'}] + list_presets(),
-                             value='custom', clearable=False,
+                             options=list_presets(), value=None, placeholder='Choose a case...',
+                             clearable=False,
                              style={'fontSize': '12px', 'marginBottom': '5px'}),
                 html.Div(id='preset-description', style={'fontSize': '11px', 'fontStyle': 'italic', 'marginBottom': '10px'}),
 
@@ -908,9 +1006,12 @@ html.Div([
                 # Time parameters
                 html.H4("Time Parameters", style={'fontSize': '16px', 'marginTop': '10px'}),
                 html.Label("Time step (s):", style={'fontSize': '12px'}),
-                dcc.Input(id='mam_dt', type='number', value=600, style={'width': '100%', 'marginBottom': '5px'}),
+                dcc.Input(id='mam_dt', type='number', value=300, style={'width': '100%', 'marginBottom': '5px'}),
                 html.Label("Number of steps:", style={'fontSize': '12px'}),
-                dcc.Input(id='mam_nstep', type='number', value=100, style={'width': '100%', 'marginBottom': '10px'}),
+                dcc.Input(id='mam_nstep', type='number', value=200, style={'width': '100%', 'marginBottom': '5px'}),
+                html.Label("MOSAIC substeps:", style={'fontSize': '12px'}),
+                dcc.Input(id='mam_nsubstep', type='number', value=1, min=1, max=MAX_SUBSTEPS, step=1,
+                          style={'width': '100%', 'marginBottom': '10px'}),
 
                 html.Hr(style={'margin': '10px 0'}),
 
@@ -1099,6 +1200,8 @@ html.Div([
     ], style={'display': 'flex', 'minHeight': '1650px'}),
 ], style={'fontFamily': 'Arial, sans-serif', 'margin': '0', 'padding': '0', 'backgroundColor': '#e6f2ff'})
 
+app.layout = serve_layout
+
 # ============================================================================
 # Callbacks - ONLY MODIFIED THE SIMULATION EXECUTION PART
 # ============================================================================
@@ -1109,8 +1212,8 @@ html.Div([
     prevent_initial_call=True
 )
 def load_preset(preset):
-    """Fill the inputs from the selected preset file ('custom' leaves them unchanged)"""
-    if preset == 'custom':
+    """Fill the inputs from the selected preset file (none selected: inputs unchanged)"""
+    if not preset:
         return [dash.no_update] * len(PRESET_FIELDS) + ['']
     _, description, values = read_preset(os.path.join(PRESET_DIR, preset))
     return preset_to_inputs(values) + [description]
@@ -1121,6 +1224,7 @@ def load_preset(preset):
     [Input('run-button', 'n_clicks')],
     [State('mam_dt', 'value'),
      State('mam_nstep', 'value'),
+     State('mam_nsubstep', 'value'),
      State('process_controls', 'value'),
      State('mtmin', 'value'),
      State('mtmax', 'value'),
@@ -1199,7 +1303,7 @@ def load_preset(preset):
     ],
     prevent_initial_call=False
 )
-def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, mrhmin,mrhmax,
+def run_simulation(n_clicks, mam_dt, mam_nstep, mam_nsubstep, processes, mtmin,mtmax, press, mrhmin,mrhmax,
                    qh2so4, qhno3, qnh3, qsoag, qhcl,
                    accom_coef_h2so4, accom_coef_hno3, accom_coef_hcl, accom_coef_nh3,
                    h2so4_prod, hno3_prod, nh3_prod, soag_prod, hcl_prod,
@@ -1228,6 +1332,20 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
         )
         return empty_fig, "Ready to run simulation"
 
+    # Keep runs short on a shared server
+    if not mam_nstep or mam_nstep > MAX_STEPS:
+        message = f"Number of steps must be between 1 and {MAX_STEPS} (got {mam_nstep})"
+        error_fig = go.Figure().add_annotation(
+            text=message, xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False, font=dict(size=20, color='red'))
+        return error_fig, f"❌ {message}"
+    if not mam_nsubstep or not 1 <= mam_nsubstep <= MAX_SUBSTEPS:
+        message = f"MOSAIC substeps must be between 1 and {MAX_SUBSTEPS} (got {mam_nsubstep})"
+        error_fig = go.Figure().add_annotation(
+            text=message, xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False, font=dict(size=20, color='red'))
+        return error_fig, f"❌ {message}"
+
     # Create unique temporary directory for this simulation
     session_id = str(uuid.uuid4())
     temp_dir = tempfile.mkdtemp(prefix=f'mam_sim_{session_id}_')
@@ -1237,6 +1355,7 @@ def run_simulation(n_clicks, mam_dt, mam_nstep, processes, mtmin,mtmax, press, m
         params = {
             'mam_dt': mam_dt,
             'mam_nstep': mam_nstep,
+            'mam_nsubstep': int(mam_nsubstep),
             'mdo_gaschem': 0,
             'mdo_gasaerexch': 1 if 'gasaerexch' in processes else 0,
             'mdo_rename': 1 if 'rename' in processes else 0,

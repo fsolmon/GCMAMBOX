@@ -1,0 +1,53 @@
+! title: Nitrate mode shift
+! description: Ammonium nitrate and sulfate in the accumulation mode (30 µg/m³), sea salt in the coarse mode (40 µg/m³), 6 ppb NH3, at 280 K and RH 0.5; H2SO4 production of 0.4 ppb/h over 18 h. The sulfate first takes up the excess NH3; once NH3 is used up, the fine particles acidify, nitrate is driven out as HNO3 and condenses on the sea salt, which releases HCl.
+&time_input
+mam_dt         = 300,
+mam_nstep      = 216,
+/
+&cntl_input
+mdo_mambox     = 1,
+mdo_coldstart  = 1,
+mdo_gaschem    = 0,
+mdo_gasaerexch = 1,
+mdo_rename     = 1,
+mdo_newnuc     = 0,
+mdo_coag       = 1,
+accom_coef_h2so4 = 0.65,
+accom_coef_hno3  = 0.1,
+accom_coef_hcl   = 0.1,
+accom_coef_nh3   = 0.092,
+/
+&met_input
+mtmin           = 280,
+mtmax           = 280,
+mrhmin          = 0.5,
+mrhmax         = 0.5,
+press          = 100000.0,
+/
+&chem_input
+masstot = 30, 0.0, 40, 0.0
+mfso4 = 0.21, 0.0, 0.0, 0.0
+mfpom = 0.0, 0.0, 0.0, 0.0
+mfsoa = 0.0, 0.0, 0.0, 0.0
+mfbc = 0.0, 0.0, 0.0, 0.0
+mfdst = 0.0, 0.0, 0.0, 0.0
+mfncl = 0.0, 0.0, 0.39, 0.0
+mfno3 = 0.55, 0.0, 0.0, 0.0
+mfnh4 = 0.24, 0.0, 0.0, 0.0
+mfco3 = 0.0, 0.0, 0.0, 0.0
+mfca = 0.0, 0.0, 0.0, 0.0
+mfcl = 0.0, 0.0, 0.61, 0.0
+qso2          = 0.0,
+qh2so4        = 0.0,
+qsoag         = 0.0,
+qhno3         = 0.0,
+qnh3          = 6,
+qhcl          = 0.0
+/
+&emis_input
+h2so4_prod    = 400,
+hno3_prod     = 0.0,
+nh3_prod      = 0.0,
+hcl_prod      = 0.0,
+soag_prod     = 0.0,
+/

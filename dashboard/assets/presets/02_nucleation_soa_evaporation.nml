@@ -1,13 +1,13 @@
-! title: Nucleation from clean air
-! description: No initial aerosol; constant H2SO4 production of 0.1 ppb/h with 1 ppb NH3 over 24 h. New particles nucleate in the Aitken mode, grow by condensation, coagulate and are renamed into the accumulation mode.
+! title: Nucleation burst, SOA growth and evaporation
+! description: No initial aerosol; 0.25 ppb H2SO4 and no NH3 at the start (binary nucleation), SOAG production of 0.5 ppb/h, RH 0.5, over 12 h while the air warms from 285 to 315 K. A burst of new particles appears in the first minutes, the Aitken mode grows by SOA condensation and is partly renamed into the accumulation mode; in the last hours, as the air warms past ~310 K, part of the SOA evaporates back to the gas phase.
 &time_input
-mam_dt         = 600,
+mam_dt         = 300,
 mam_nstep      = 144,
 /
 &cntl_input
 mdo_mambox     = 1,
 mdo_coldstart  = 1,
-mdo_gaschem    = 0,
+mdo_gaschem    = 1,
 mdo_gasaerexch = 1,
 mdo_rename     = 1,
 mdo_newnuc     = 1,
@@ -19,7 +19,7 @@ accom_coef_nh3   = 0.092,
 /
 &met_input
 mtmin           = 285,
-mtmax           = 285,
+mtmax           = 315,
 mrhmin          = 0.5,
 mrhmax         = 0.5,
 press          = 100000.0,
@@ -38,16 +38,16 @@ mfco3 = 0.0, 0.0, 0.0, 0.0
 mfca  = 0.0, 0.0, 0.0, 0.0
 mfcl  = 0.0, 0.0, 0.0, 0.0
 qso2          = 0.0,
-qh2so4        = 0.0,
+qh2so4        = 0.25,
 qsoag         = 0.0,
 qhno3         = 0.0,
-qnh3          = 1.0,
+qnh3          = 0.0,
 qhcl          = 0.0
 /
 &emis_input
-h2so4_prod    = 100.0,
+h2so4_prod    = 0.0,
 hno3_prod     = 0.0,
 nh3_prod      = 0.0,
 hcl_prod      = 0.0,
-soag_prod     = 0.0,
+soag_prod     = 0.5,
 /

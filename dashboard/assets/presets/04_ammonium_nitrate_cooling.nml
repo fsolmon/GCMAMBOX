@@ -1,8 +1,8 @@
 ! title: Ammonium nitrate formation by cooling and humidification
 ! description: Ammonium sulfate seed with 5 ppb HNO3 and 5 ppb NH3; over 12 h the air cools from 298 to 278 K while RH rises from 0.4 to 0.85. HNO3 and NH3 condense as ammonium nitrate and aerosol water increases strongly.
 &time_input
-mam_dt         = 600,
-mam_nstep      = 72,
+mam_dt         = 300,
+mam_nstep      = 144,
 /
 &cntl_input
 mdo_mambox     = 1,

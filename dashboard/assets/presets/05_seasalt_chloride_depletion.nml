@@ -1,0 +1,53 @@
+! title: Sea-salt chloride depletion
+! description: Sea-salt coarse mode (30 µg/m³, with seawater calcium as CaCO3 alkalinity) at RH 0.8 and 290 K, no gas at the start, with an HNO3 production of 0.5 ppb/h over 24 h. HNO3 first titrates the carbonate (pH ≈7, no HCl), then displaces chloride: HCl is released to the gas phase, particle nitrate replaces chloride, the particles become acidic and their hygroscopicity decreases.
+&time_input
+mam_dt         = 300,
+mam_nstep      = 288,
+/
+&cntl_input
+mdo_mambox     = 1,
+mdo_coldstart  = 1,
+mdo_gaschem    = 0,
+mdo_gasaerexch = 1,
+mdo_rename     = 1,
+mdo_newnuc     = 0,
+mdo_coag       = 1,
+accom_coef_h2so4 = 0.65,
+accom_coef_hno3  = 0.1,
+accom_coef_hcl   = 0.1,
+accom_coef_nh3   = 0.092,
+/
+&met_input
+mtmin           = 290,
+mtmax           = 290,
+mrhmin          = 0.8,
+mrhmax         = 0.8,
+press          = 100000.0,
+/
+&chem_input
+masstot = 0.0, 0.0, 30.0, 0.0
+mfso4 = 0.0, 0.0, 0.0, 0.0
+mfpom = 0.0, 0.0, 0.0, 0.0
+mfsoa = 0.0, 0.0, 0.0, 0.0
+mfbc = 0.0, 0.0, 0.0, 0.0
+mfdst = 0.0, 0.0, 0.0, 0.0
+mfncl = 0.0, 0.0, 0.3754, 0.0
+mfno3 = 0.0, 0.0, 0.0, 0.0
+mfnh4 = 0.0, 0.0, 0.0, 0.0
+mfco3 = 0.0, 0.0, 0.0225, 0.0
+mfca = 0.0, 0.0, 0.0150, 0.0
+mfcl = 0.0, 0.0, 0.5871, 0.0
+qso2          = 0.0,
+qh2so4        = 0.0,
+qsoag         = 0.0,
+qhno3         = 0.0,
+qnh3          = 0.0,
+qhcl          = 0.0
+/
+&emis_input
+h2so4_prod    = 0.0,
+hno3_prod     = 0.5,
+nh3_prod      = 0.0,
+hcl_prod      = 0.0,
+soag_prod     = 0.0,
+/

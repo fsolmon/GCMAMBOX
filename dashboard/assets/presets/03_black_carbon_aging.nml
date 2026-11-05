@@ -1,0 +1,53 @@
+! title: Black carbon aging
+! description: Fresh BC (6 µg/m³) and POM (9 µg/m³) in the primary-carbon mode, no other aerosol, 8 ppb NH3, and production of H2SO4 (0.15 ppb/h), HNO3 (0.5 ppb/h) and SOAG (0.3 ppb/h), over 12 h. Coated by ammonium sulfate, ammonium nitrate and SOA, the primary-carbon particles are transferred to the accumulation mode within a few hours: the accumulation mode is made of aged, internally mixed BC, and its single scattering albedo rises as the coating thickens.
+&time_input
+mam_dt         = 300,
+mam_nstep      = 144,
+/
+&cntl_input
+mdo_mambox     = 1,
+mdo_coldstart  = 1,
+mdo_gaschem    = 0,
+mdo_gasaerexch = 1,
+mdo_rename     = 1,
+mdo_newnuc     = 1,
+mdo_coag       = 1,
+accom_coef_h2so4 = 0.65,
+accom_coef_hno3  = 0.1,
+accom_coef_hcl   = 0.1,
+accom_coef_nh3   = 0.092,
+/
+&met_input
+mtmin           = 295,
+mtmax           = 295,
+mrhmin          = 0.6,
+mrhmax         = 0.6,
+press          = 100000.0,
+/
+&chem_input
+masstot = 0.0, 0.0, 0.0, 15.0
+mfso4 = 0.0, 0.0, 0.0, 0.0
+mfpom = 0.0, 0.0, 0.0, 0.6
+mfsoa = 0.0, 0.0, 0.0, 0.0
+mfbc = 0.0, 0.0, 0.0, 0.4
+mfdst = 0.0, 0.0, 0.0, 0.0
+mfncl = 0.0, 0.0, 0.0, 0.0
+mfno3 = 0.0, 0.0, 0.0, 0.0
+mfnh4 = 0.0, 0.0, 0.0, 0.0
+mfco3 = 0.0, 0.0, 0.0, 0.0
+mfca = 0.0, 0.0, 0.0, 0.0
+mfcl = 0.0, 0.0, 0.0, 0.0
+qso2          = 0.0,
+qh2so4        = 0.0,
+qsoag         = 0.0,
+qhno3         = 0.0,
+qnh3          = 8,
+qhcl          = 0.0
+/
+&emis_input
+h2so4_prod    = 150,
+hno3_prod     = 0.5,
+nh3_prod      = 0.0,
+hcl_prod      = 0.0,
+soag_prod     = 0.3,
+/
