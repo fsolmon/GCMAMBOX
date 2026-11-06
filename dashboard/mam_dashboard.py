@@ -914,7 +914,7 @@ def create_mass_fraction_input(species, mode, default_value):
 # Dash App Layout
 # ============================================================================
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, title="GCMAMBOX")
 
 @app.server.route('/doc')
 def serve_doc():
