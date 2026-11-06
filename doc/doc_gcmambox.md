@@ -98,9 +98,9 @@ humidification or cooling event.
 
 ## 2. Using the dashboard
 
-### Starting it -  
+### Starting it
 
-This relevant only if you have deployed/installed/compiled the GCMAMBOX locally on your machine from github repository.   
+This is relevant only if you have installed and compiled GCMAMBOX locally from the GitHub repository.
 
 ```bash
 cd GCMAMBOX/dashboard
@@ -140,12 +140,13 @@ shift). Each one is described briefly in the dashboard when selected.
   use 300 s, the usual GEOS-Chem chemistry time step.
 - *MOSAIC substeps* (1–10; 1 = standard MAM): splits each time step
   into that many substeps for the aerosol microphysics (gas–aerosol exchange
-  with MOSAIC), each of length
+  with MOSAIC, renaming, nucleation, coagulation, aging), each of length
   time step / substeps. Gas production and the meteorology are still updated
   once per time step. In MAM, the NH3 produced during a step is given to
   MOSAIC all at once at the start of the step (H2SO4 is spread over the
   step); with substeps it is given in smaller portions. Use more substeps
-  when gas or aerosol curves shows some oscillations ; they cost less than a shorter model time step.
+  when gas or aerosol curves show oscillations; they cost less than a shorter
+  model time step.
 - At most 2000 steps per run, to keep runs short on a shared server. Long
   runs are animated with at most 150 frames (every k-th step), while the gas
   curves keep every step.
