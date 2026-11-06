@@ -1049,17 +1049,21 @@ html.Div([
                 # Gas phase: initial concentrations + production rates
                 # (SO2 and its oxidation are not used: mdo_gaschem = 0, qso2 = 0)
                 html.H4("Gas Phase", style={'fontSize': '16px', 'marginTop': '10px'}),
-                html.Div("Initial concentrations (ppb)", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                html.Label("H2SO4:", style={'fontSize': '12px'}),
-                dcc.Input(id='qh2so4', type='number', value=0., style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("HNO3:", style={'fontSize': '12px'}),
-                dcc.Input(id='qhno3', type='number', value=8., style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("NH3:", style={'fontSize': '12px'}),
-                dcc.Input(id='qnh3', type='number', value=10., style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("SOAG:", style={'fontSize': '12px'}),
-                dcc.Input(id='qsoag', type='number', value=0.05, style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("HCl:", style={'fontSize': '12px'}),
-                dcc.Input(id='qhcl', type='number', value=0.02, style={'width': '100%', 'marginBottom': '10px'}),
+                html.Details([
+                    html.Summary("Initial concentrations (ppb)", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Div([
+                        html.Label("H2SO4:", style={'fontSize': '12px'}),
+                        dcc.Input(id='qh2so4', type='number', value=0., style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("HNO3:", style={'fontSize': '12px'}),
+                        dcc.Input(id='qhno3', type='number', value=8., style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("NH3:", style={'fontSize': '12px'}),
+                        dcc.Input(id='qnh3', type='number', value=10., style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("SOAG:", style={'fontSize': '12px'}),
+                        dcc.Input(id='qsoag', type='number', value=0.05, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("HCl:", style={'fontSize': '12px'}),
+                        dcc.Input(id='qhcl', type='number', value=0.02, style={'width': '100%', 'marginBottom': '10px'}),
+                    ], style={'marginTop': '5px'})
+                ], style={'marginBottom': '10px'}),
 
                 # Constant production rates of aerosol precursor gases (collapsible)
                 html.Details([
@@ -1082,22 +1086,26 @@ html.Div([
 
                 # Aerosol initial conditions: total mass per mode + mass fractions
                 html.H4("Aerosol Initial Conditions", style={'fontSize': '16px', 'marginTop': '10px'}),
-                html.Div("Mode total mass (µg/m³)", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                html.Label("Accum:", style={'fontSize': '12px'}),
-                dcc.Input(id='masstot-0', type='number', value=10.0, min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("Aitken:", style={'fontSize': '12px'}),
-                dcc.Input(id='masstot-1', type='number', value=2.0,  min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("Coarse:", style={'fontSize': '12px'}),
-                dcc.Input(id='masstot-2', type='number', value=20.0, min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
-                html.Label("Prim C:", style={'fontSize': '12px'}),
-                dcc.Input(id='masstot-3', type='number', value=1.5,  min=0, step=0.1, style={'width': '100%', 'marginBottom': '10px'}),
+                html.Details([
+                    html.Summary("Mode total mass (µg/m³)", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Div([
+                        html.Label("Accum:", style={'fontSize': '12px'}),
+                        dcc.Input(id='masstot-0', type='number', value=10.0, min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("Aitken:", style={'fontSize': '12px'}),
+                        dcc.Input(id='masstot-1', type='number', value=2.0,  min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("Coarse:", style={'fontSize': '12px'}),
+                        dcc.Input(id='masstot-2', type='number', value=20.0, min=0, step=0.1, style={'width': '100%', 'marginBottom': '5px'}),
+                        html.Label("Prim C:", style={'fontSize': '12px'}),
+                        dcc.Input(id='masstot-3', type='number', value=1.5,  min=0, step=0.1, style={'width': '100%', 'marginBottom': '10px'}),
+                    ], style={'marginTop': '5px'})
+                ], style={'marginBottom': '10px'}),
 
                 # Mass fractions by mode
-                html.Div("Mass fractions by mode", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
+                html.Div("Mass fractions by mode", style={'fontSize': '13px', 'fontWeight': 'bold', 'marginTop': '20px', 'marginBottom': '5px'}),
 
                 # Mode 0
                 html.Details([
-                    html.Summary("Mode 0 - Accumulation", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Summary("Mode 1 - Accumulation", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
                         create_mass_fraction_input("SO4", 0, 0.30),
                         create_mass_fraction_input("POM", 0, 0.10),
@@ -1115,7 +1123,7 @@ html.Div([
 
                 # Mode 1
                 html.Details([
-                    html.Summary("Mode 1 - Aitken", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Summary("Mode 2 - Aitken", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
                         create_mass_fraction_input("SO4", 1, 0.65),
                         create_mass_fraction_input("POM", 1, 0.0),
@@ -1133,7 +1141,7 @@ html.Div([
 
                 # Mode 2
                 html.Details([
-                    html.Summary("Mode 2 - Coarse", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Summary("Mode 3 - Coarse", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
                         create_mass_fraction_input("SO4", 2, 0.0),
                         create_mass_fraction_input("POM", 2, 0.0),
@@ -1151,7 +1159,7 @@ html.Div([
 
                 # Mode 3
                 html.Details([
-                    html.Summary("Mode 3 - Primary Carbon", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
+                    html.Summary("Mode 4 - Primary Carbon", style={'fontSize': '13px', 'fontWeight': 'bold', 'cursor': 'pointer'}),
                     html.Div([
                         create_mass_fraction_input("SO4", 3, 0.0),
                         create_mass_fraction_input("POM", 3, 0.5),
@@ -1186,7 +1194,7 @@ html.Div([
 
 
             ], style={'padding': '15px', 'overflowY': 'auto', 'minHeight': '100%'})
-        ], style={'width': '15%', 'minHeight': '1650px', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
+        ], style={'width': '15%', 'backgroundColor': '#f5f5f5', 'boxSizing': 'border-box'}),
 
         # Right panel - Visualization
         html.Div([
@@ -1197,7 +1205,7 @@ html.Div([
             ),
         ], style={'width': '85%', 'height': '100%', 'padding': '10px', 'boxSizing': 'border-box', 'backgroundColor': '#e6f2ff'}),
 
-    ], style={'display': 'flex', 'minHeight': '1650px'}),
+    ], style={'display': 'flex'}),
 ], style={'fontFamily': 'Arial, sans-serif', 'margin': '0', 'padding': '0', 'backgroundColor': '#e6f2ff'})
 
 app.layout = serve_layout
@@ -1467,5 +1475,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MAM box model dashboard')
     parser.add_argument('-p', '--port', type=int, default=8050, help='port to serve on (default: 8050)')
     args = parser.parse_args()
-    app.run(debug=True, host='0.0.0.0', port=args.port)
+    app.run(debug=True, dev_tools_ui=False, host='0.0.0.0', port=args.port)
 

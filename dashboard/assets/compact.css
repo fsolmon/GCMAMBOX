@@ -1,0 +1,17 @@
+/* Compact number fields for the side panel (loaded automatically by Dash).
+   Dash 4 draws dcc.Input with -/+ buttons and a taller box; with about 30 fields
+   this makes the panel taller than the figure. */
+.dash-input-stepper {
+    display: none !important;
+}
+
+.dash-input-container {
+    height: 24px !important;
+    min-height: 0 !important;
+}
+
+.dash-input-element {
+    height: 100% !important;
+    padding: 0 6px !important;
+    text-align: left !important;
+}
